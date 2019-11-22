@@ -1,0 +1,12 @@
+FROM openjdk:11.0-jdk-stretch
+
+ENV AGENT_TAG=jdk11
+
+COPY agent_entry.sh /
+COPY logging.properties /
+
+RUN chmod +x /agent_entry.sh && \
+    mkdir /workspace && \
+    chmod ugo+rwx /workspace
+
+ENTRYPOINT ["/agent_entry.sh"]

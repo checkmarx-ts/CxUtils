@@ -1,0 +1,52 @@
+version: "3.7"
+services:
+  jenkins-master:
+    image: ${JENKINS_IMAGE}
+    environment:
+      JAVA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044"
+    volumes:
+      - type: bind
+        source: ${STORAGE_LOC}
+        target: /var/jenkins_home
+    ports:
+      - "8080:8080"
+      - "1044:1044"
+    dns:
+      - 8.8.8.8
+
+  jenkins-agent-jdk8:
+    build:
+      context: .
+      dockerfile: Dockerfile-agent-jdk8
+    image: jenkins-agent-jdk8
+    depends_on: 
+      - jenkins-master
+    healthcheck:
+      test: test -e /agent.jar
+      interval: 30s
+    restart: always
+    dns:
+      - 8.8.8.8
+    environment:
+      JAVA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044"
+    ports:
+      - "1048:1044"
+
+  jenkins-agent-jdk11:
+    build:
+      context: .
+      dockerfile: Dockerfile-agent-jdk11
+    image: jenkins-agent-jdk11
+    depends_on: 
+      - jenkins-master
+    healthcheck:
+      test: test -e /agent.jar
+      interval: 30s
+    restart: always
+    dns:
+      - 8.8.8.8
+    environment:
+      JAVA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:1044"
+    ports:
+      - "1041:1044"
+
