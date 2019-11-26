@@ -1,5 +1,9 @@
 FROM openjdk:11.0-jdk-stretch
 
+RUN apt-get update && \
+apt-get install -y maven gradle && \
+apt-get clean
+
 ENV AGENT_TAG=jdk11
 
 COPY agent_entry.sh /
