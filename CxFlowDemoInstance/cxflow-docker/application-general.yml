@@ -1,0 +1,107 @@
+server:
+  port: 8585
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+        
+logging:
+  pattern:
+    console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{15}){cyan}  [%clr(%X{cx}){blue}] %clr(:){faint} %m%n%wEx"
+
+  level:
+    com:
+      checkmarx:
+        flow: info
+         
+cx-flow:
+  bug-tracker: Jira
+  bug-tracker-impl:
+    - CxXml
+    - Json
+    - GitLab
+    - GitHub
+    - Csv
+  branches:
+    - master
+
+github:
+  webhook-token: # put the value you provided to GitHub when creating the webhook
+  token: # put a personal access token so cx-flow can write feedback into the pull request
+  url: https://github.com
+  api-url: https://api.github.com/repos/
+  false-positive-label: false-positive
+  block-merge: true
+  detailed: false
+
+checkmarx:
+  username: # put the SAST account username here
+  password: # put the SAST account password here
+  base-url: # put the URL of your SAST instance here
+  team: # put the SAST team here
+  scan-preset: # Put your desired scan preset here
+
+  client-secret: 014DF517-39D1-4453-B7B3-9930C563627C
+  url: ${checkmarx.base-url}/cxrestapi
+  multi-tenant: false
+  incremental: false
+  configuration: Default Configuration
+  scan-timeout: 120
+#WSDL Config
+  portal-url: ${checkmarx.base-url}/cxwebinterface/Portal/CxWebService.asmx
+  sdk-url: ${checkmarx.base-url}/cxwebinterface/SDK/CxSDKWebService.asmx
+  portal-wsdl: ${checkmarx.base-url}/Portal/CxWebService.asmx?wsdl
+  sdk-wsdl: ${checkmarx.base-url}/SDK/CxSDKWebService.asmx?wsdl
+  portal-package: checkmarx.wsdl.portal
+  preserve-xml: true
+  jira-project-field:
+  jira-custom-field:
+  jira-issuetype-field:
+  jira-assignee-field:
+  
+  
+jira:
+  url: http://jira-server:8080
+  username: # put the JIRA account username here
+  token: # put the JIRA account password or token here
+  project: # put the name of the JIRA project where tickets will be created here
+  issue-type: Bug
+  priorities:
+    High: High
+    Medium: Medium
+    Low: Low
+    Informational: Lowest
+  open-transition: In Review
+  close-transition: Done
+  open-status:
+    - To Do
+    - In Progress
+    - In Review
+  closed-status:
+    - Done
+  fields:
+    - type: result
+      name: application
+      jira-field-name: Application
+      jira-field-type: label
+    - type: result
+      name: cve
+      jira-field-name: CVEs
+      jira-field-type: label
+    - type: result
+      name: cwe
+      jira-field-name: CWEs
+      jira-field-type: label
+    - type: result
+      name: category
+      jira-field-name: Category
+      jira-field-type: label
+    - type: result
+      name: loc
+      jira-field-name: LOC
+      jira-field-type: label
+
+

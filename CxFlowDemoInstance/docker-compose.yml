@@ -1,0 +1,31 @@
+version: "3.7"
+services:
+  cxflow-webhook:
+    build:
+      context: cxflow-docker
+    depends_on: 
+      - jira-server
+    environment:
+      JAVA_OPTS: ${JAVA_OPTS}
+      CXFLOW_MODE: ${CXFLOW_MODE}
+      CX_CONFIG: ${CX_CONFIG}
+    ports:
+      - "8585:8585"
+      - "1040:1044"
+    dns:
+      - 8.8.8.8
+    restart: always
+
+
+  jira-server:
+    image: atlassian/jira-software:8.6
+    volumes:
+      - type: bind
+        source: ${STORAGE_LOC}
+        target: /var/atlassian/jira
+    dns:
+      - 8.8.8.8
+    ports:
+      - "8000:8080"
+    restart: always
+
