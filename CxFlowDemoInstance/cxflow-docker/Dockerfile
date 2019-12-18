@@ -4,7 +4,7 @@ COPY cxflow-exec.sh /cxflow-exec.sh
 COPY *.yml /
 
 RUN chmod +x /cxflow-exec.sh && \
-chmod 644 /*.yml
+chmod 644 /application-*.yml
 
 ENTRYPOINT ["/cxflow-exec.sh"]
 

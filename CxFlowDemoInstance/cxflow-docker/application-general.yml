@@ -30,7 +30,7 @@ cx-flow:
 
 github:
   webhook-token: # put the value you provided to GitHub when creating the webhook
-  token: # put a personal access token so cx-flow can write feedback into the pull request
+  token: # put a GitHub personal access token here so cx-flow can write feedback into the pull request
   url: https://github.com
   api-url: https://api.github.com/repos/
   false-positive-label: false-positive
@@ -38,11 +38,11 @@ github:
   detailed: false
 
 checkmarx:
-  username: # put the SAST account username here
-  password: # put the SAST account password here
-  base-url: # put the URL of your SAST instance here
-  team: # put the SAST team here
-  scan-preset: # Put your desired scan preset here
+  username: # TODO: put the SAST account username here
+  password: # TODO: put the SAST account password here
+  base-url: # TODO: put the URL of your SAST instance here
+  team: # TODO: put the SAST team here
+  scan-preset: # TODO: Put your desired scan preset here
 
   client-secret: 014DF517-39D1-4453-B7B3-9930C563627C
   url: ${checkmarx.base-url}/cxrestapi
@@ -64,10 +64,12 @@ checkmarx:
   
   
 jira:
+  username: # TODO: put the JIRA account username here
+  token: # TODO: put the JIRA account password or token here
+  project: # TODO: put the name of the JIRA project where tickets will be created here
+
+
   url: http://jira-server:8080
-  username: # put the JIRA account username here
-  token: # put the JIRA account password or token here
-  project: # put the name of the JIRA project where tickets will be created here
   issue-type: Bug
   priorities:
     High: High

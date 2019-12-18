@@ -1,15 +1,14 @@
 param(
 [String]$StorageLoc="jira-data",
 [String]$Config="general",
-[Switch]$Dbg,
-[String]$Mode="web"
+[Switch]$Dbg
 )
 
 . .\scripts\common.ps1
 
 $env:STORAGE_LOC = $StorageLoc
 $env:JAVA_OPTS = " "
-$env:CXFLOW_MODE = $Mode
+$env:CXFLOW_MODE = "web"
 $env:CX_CONFIG=$Config
 
 if ($Dbg)
