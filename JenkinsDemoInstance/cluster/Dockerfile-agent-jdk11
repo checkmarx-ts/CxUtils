@@ -9,6 +9,8 @@ ENV AGENT_TAG=jdk11
 COPY agent_entry.sh /
 COPY logging.properties /
 
+COPY --from=checkmarxts/cxflow:latest /*.jar /
+
 RUN chmod +x /agent_entry.sh && \
     mkdir /workspace && \
     chmod ugo+rwx /workspace
