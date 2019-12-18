@@ -1,5 +1,5 @@
 param(
-[String]$StorageLoc="jira-data",
+[String]$StorageLoc="jira_data",
 [String]$Config="general",
 [Switch]$Dbg
 )

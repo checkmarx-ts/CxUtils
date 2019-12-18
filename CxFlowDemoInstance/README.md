@@ -23,7 +23,7 @@ In the `cxflow-docker` directory there is a file `application-general.yml` that 
 
 For example, if it was neccessary to make a configuration named "mypoc", a copy of `application-general.yml` can be made with the name `application-mypoc.yml`.  The configuration option `mypoc` can be provided as an argument to one of the execution powershell scripts (described later in this document).
 
-In the `application-general.yml` file, there are several configuration fields with `# TODO:` comments that must be configured prior to executing cx-flow. For a simple demonstration environment, the other configuration options can be left unmodified.
+In the `application-general.yml` file, there are several configuration fields with `# TODO:` comments that must be configured prior to executing Cx-Flow. For a simple demonstration environment, the other configuration options can be left unmodified.
 
 ## Step 2: Run the Cx-Flow and Jira Server Containers
 
@@ -33,9 +33,9 @@ The powershell script `run_cxflow+jira_server.ps1` will start a Docker instance 
 
 Option | Default | Description
 --- | --- | ---
-StorageLoc | ./jira-data | The folder where Jira data will be stored.  By default, it creates the folder `jira-data` in the working directory.  An absolute or relative path can be provided to store the data in an alternate location.
-Config | general | The configuration option used to locate the `application-{config name}.yml` file for cx-flow startup.  Using `-Config mypoc` would cause cx-flow to start with the configuration file `application-mypoc.yml`.
-Dbg | false | Including `-Dbg` starts cx-flow with a debugger available for connecting via port 1040.
+StorageLoc | ./jira_data | The folder where Jira data will be stored.  By default, it creates the folder `jira-data` in the working directory.  An absolute or relative path can be provided to store the data in an alternate location.
+Config | general | The configuration option used to locate the `application-{config name}.yml` file for Cx-Flow startup.  Using `-Config mypoc` would cause Cx-Flow to start with the configuration file `application-mypoc.yml`.
+Dbg | false | Including `-Dbg` starts Cx-Flow with a debugger available for connecting via port 1040.
 
 The Jira and Cx-Flow servers will execute and display log output in your powershell window.  Press CTRL-C at any time to shut down the containers.  It is possible to tail logs of each individual container.  See the [docker logs](https://docs.docker.com/engine/reference/commandline/logs/) and [docker ps](https://docs.docker.com/engine/reference/commandline/ps/) command documentation for more details.
 
