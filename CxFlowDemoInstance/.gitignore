@@ -4,5 +4,5 @@ cxflow-docker/*.yml
 /*.ps1
 !/run*.ps1
 
-jira-data
+jira_data
 
