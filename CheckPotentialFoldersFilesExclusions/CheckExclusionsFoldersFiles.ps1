@@ -23,13 +23,13 @@ Param(
         Position = 0,
         Mandatory = $true,
         HelpMessage = "Checkmarx Server URL (i.e. https://checkmarx.company.com)"
-    )][string] $cxserver,
+    )][string] $cxserver = "http://localhost",
     # Checkmarx Username (i.e. first.last@company.com)
     [Parameter(
         Position = 1,
         Mandatory = $true,
         HelpMessage = "Checkmarx Username (i.e. first.last@company.com)"
-    )][string] $cxUsername,
+    )][string] $cxUsername = "admin@cx",
     # Checkmarx Password
     [Parameter(
         Position = 2,
@@ -45,7 +45,7 @@ Param(
     # Exclusions file generated (i.e. D:\exclusions.json)
     [Parameter(
         Position = 4,
-        Mandatory = $true,
+        Mandatory = $false,
         HelpMessage = "Exclusions file generated (i.e. D:\exclusions.json)"
     )][string] $generatedFile = "exclusions.json"
 )
@@ -121,7 +121,7 @@ $exclusionFolderList = @(
     "modernizr", #3rd Party Libraries (JS)
     "bower_components", #3rd Party Libraries (Bower)
     "jspm_packages", #3rd Party Libraries (JS)
-    "typings",  #3rd Party Libraries (Typescript)
+    "typings", #3rd Party Libraries (Typescript)
     "dojo", #3rd Party Libraries
     "package", #3rd Party Libraries (CSharp)
     "vendor", #3rd Party Libraries (Golang)
@@ -129,177 +129,202 @@ $exclusionFolderList = @(
 )
 $exclusionFileList = @(
     "min.js", # 3rd Party Libraries (JS)
-    "spec", # Tests (JS/Typescript/Node JS)
+    ".spec", # Tests (JS/Typescript/Node JS)
     "test", # Tests
     "mock" # Tests
 )
 
-function getOAuth2Token(){
+function getOAuth2Token() {
     $body = @{
-        username = $cxUsername
-        password = $cxPassword
-        grant_type = "password"
-        scope = "sast_rest_api"
-        client_id = "resource_owner_client"
+        username      = $cxUsername
+        password      = $cxPassword
+        grant_type    = "password"
+        scope         = "sast_rest_api"
+        client_id     = "resource_owner_client"
         client_secret = "014DF517-39D1-4453-B7B3-9930C563627C"
     }
     
     try {
         $response = Invoke-RestMethod -uri "${restEndpoint}/auth/identity/connect/token" -method post -body $body -contenttype 'application/x-www-form-urlencoded'
         return $response.token_type + " " + $response.access_token
-    } catch {
+    }
+    catch {
         Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
         Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
-        throw "Could not authenticate"
+        Write-Host "Could not authenticate - Project Name will not be discovered"
+        return $null
     }
 }
-$token = getOAuth2Token
-$authHeader = @{
-    Authorization = $token
-} 
-function getProjectById($id){
+function getProjectById($id) {
     try {
         $response = Invoke-RestMethod -uri "${restEndpoint}/projects/${id}" -method get -headers $authHeader
         return $response
-    } catch {
+    }
+    catch {
         Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
         Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
-        throw "Cannot Get Project ${id}"
+        Write-Host "Cannot Get Project ${id}"
+        return $null
     }
 }
-function getProjectExcludeSettingsById($id){
+function getProjectExcludeSettingsById($id) {
     try {
         $response = Invoke-RestMethod -uri "${restEndpoint}/projects/${id}/sourceCode/excludeSettings" -method get -headers $authHeader
         return $response
-    } catch {
+    }
+    catch {
         Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
         Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
-        throw "Cannot Get Project ${id} Exclude Settings"
+        Write-Host "Cannot Get Project ${id} Exclude Settings"
+        return $null
     }
 }
 
 $exclusions = @()
-$children = Get-ChildItem -Path $cxSrcFolder -recurse
+$cxSrcFolder = $cxSrcFolder.ToLowerInvariant()
+if(Test-Path $cxSrcFolder -PathType Container){
+    
+    $token = getOAuth2Token
+    if ($token) {
+        $authHeader = @{
+            Authorization = $token
+        } 
+    }
+    $children = Get-ChildItem -Path $cxSrcFolder -recurse
+    $totalCount = $children.Count
+    Write-Host "`nAnalysing ${totalCount} Files/Folders..."
 
-$totalCount = $children.Count
-Write-Host "Analysing ${totalCount} Files/Folders..."
-
-for($i=0; $i -lt $totalCount; $i++){
-    $percentage = [math]::Round(($i/$totalCount)*100,2)
-    Write-Host "Progress...${i} out of ${totalCount} (${percentage}%)"
-    $child = $children[$i]
-    $shortName = $child.PSChildName
-    $fullPath = $child.FullName
-    $projectId = $fullPath.Split("_")[0].Replace("${cxSrcFolder}\","")
-    if($child.PSIsContainer){ # Is Folder
-        foreach($exclusionFolder in $exclusionFolderList){
-            if($shortName -match $exclusionFolder){
-                $exclusions += @{
-                    projectId=$projectId
-                    type="folder"
-                    shortName=$shortName
-                    fullPath=$fullPath
-                }
-                break;
-            }
+    for ($i = 0; $i -lt $totalCount; $i++) {
+        $percentage = [math]::Round(($i / $totalCount) * 100, 2)
+        if([math]::Round($percentage, 0) % 5 -eq 0){
+            Write-Host "Progress...${i} out of ${totalCount} (${percentage}%)"
+            Write-Progress -Activity "Analysing ${i} out of ${totalCount} Files/Folders..." -Status "${percentage}% Complete:" -PercentComplete $percentage
         }
-    } else { # Is File
-        foreach($c in $child){
-            $shortName = $c.PSChildName
-            $fullPath = $c.FullName
-            foreach($exclusionFile in $exclusionFileList){
-                if($shortName -match $exclusionFile){
+        $child = $children[$i]
+        $shortName = $child.PSChildName
+        $fullPath = $child.FullName.ToLowerInvariant()
+        $projectId = $fullPath.Split("_")[0].Replace("${cxSrcFolder}\", "")
+        if ($child.PSIsContainer) {
+            # Is Folder
+            foreach ($exclusionFolder in $exclusionFolderList) {
+                if ($shortName -match $exclusionFolder) {
                     $exclusions += @{
-                        projectId=$projectId
-                        type="file"
-                        shortName=$shortName
-                        fullPath=$fullPath
+                        projectId = $projectId
+                        type      = "folder"
+                        shortName = $shortName
+                        fullPath  = $fullPath
                     }
                     break;
                 }
             }
         }
+        else {
+            # Is File
+            foreach ($c in $child) {
+                $shortName = $c.PSChildName
+                $fullPath = $c.FullName
+                foreach ($exclusionFile in $exclusionFileList) {
+                    if ($shortName -match $exclusionFile) {
+                        $exclusions += @{
+                            projectId = $projectId
+                            type      = "file"
+                            shortName = $shortName
+                            fullPath  = $fullPath
+                        }
+                        break;
+                    }
+                }
+            }
+        }
     }
-}
 
-### Group Exclusions per Project IDs
-$finalExclusions = @()
-foreach($exclusion in $exclusions){
-    $projectId = $exclusion.projectId
-    $shortName = $exclusion.shortName
-    $fullPath = $exclusion.fullPath
-    $type = $exclusion.type
-    $addNew = $true
-    for($i = 0; $i -lt $finalExclusions.Count; $i++){
-        if($finalExclusions[$i].projectId -eq $projectId){
-            $shortNames = @()
-            $fullPaths = @()
-            $proposedExclusions = $finalExclusions[$i].proposedExclusions
-           if($type -eq "file"){
-               $files = $proposedExclusions.files
-               $shortNames = $files.shortNames
-               $fullPaths = $files.fullPaths
-               if($fullPaths -notcontains $fullPath){
-                $finalExclusions[$i].proposedExclusions.files.fullPaths += $fullPath
-               }
-               if($shortNames -notcontains $shortName){
-                $finalExclusions[$i].proposedExclusions.files.shortNames += $shortName
-               }
-           } else{
-               $folders = $proposedExclusions.folders
-               $shortNames = $folders.shortNames
-               $fullPaths = $folders.fullPaths
-               if($fullPaths -notcontains $fullPath){
-                $finalExclusions[$i].proposedExclusions.folders.fullPaths += $fullPath
-               }
-               if($shortNames -notcontains $shortName){
-                $finalExclusions[$i].proposedExclusions.folders.shortNames += $shortName
-               }
-           }
-           $addNew = $false
-           break
+    ### Group Exclusions per Project IDs
+    $finalExclusions = @()
+    foreach ($exclusion in $exclusions) {
+        $projectId = $exclusion.projectId
+        $shortName = $exclusion.shortName
+        $fullPath = $exclusion.fullPath
+        $type = $exclusion.type
+        $addNew = $true
+        for ($i = 0; $i -lt $finalExclusions.Count; $i++) {
+            if ($finalExclusions[$i].projectId -eq $projectId) {
+                $shortNames = @()
+                $fullPaths = @()
+                $proposedExclusions = $finalExclusions[$i].proposedExclusions
+                if ($type -eq "file") {
+                    $files = $proposedExclusions.files
+                    $shortNames = $files.shortNames
+                    $fullPaths = $files.fullPaths
+                    if ($fullPaths -notcontains $fullPath) {
+                        $finalExclusions[$i].proposedExclusions.files.fullPaths += $fullPath
+                    }
+                    if ($shortNames -notcontains $shortName) {
+                        $finalExclusions[$i].proposedExclusions.files.shortNames += $shortName
+                    }
+                }
+                else {
+                    $folders = $proposedExclusions.folders
+                    $shortNames = $folders.shortNames
+                    $fullPaths = $folders.fullPaths
+                    if ($fullPaths -notcontains $fullPath) {
+                        $finalExclusions[$i].proposedExclusions.folders.fullPaths += $fullPath
+                    }
+                    if ($shortNames -notcontains $shortName) {
+                        $finalExclusions[$i].proposedExclusions.folders.shortNames += $shortName
+                    }
+                }
+                $addNew = $false
+                break
+            }
         }
-    }
-    if($addNew){
-        $project = getProjectById $projectId
-        $excludeSettings = getProjectExcludeSettingsById $projectId
-        $files = @{
-            shortNames = @()
-            fullPaths = @()
-        }
-        $folders = @{
-            shortNames = @()
-            fullPaths = @()
-        }
-        if($type -eq "file"){
+        if ($addNew) {
+            if ($token) {
+                $project = getProjectById $projectId
+                if ($project) {
+                    $excludeSettings = getProjectExcludeSettingsById $projectId
+                }
+            }
             $files = @{
-                shortNames = @($shortName)
-                fullPaths = @($fullPath)
+                shortNames = @()
+                fullPaths  = @()
             }
-        }else {
             $folders = @{
-                shortNames = @($shortName)
-                fullPaths = @($fullPath)
+                shortNames = @()
+                fullPaths  = @()
             }
-        }
+            if ($type -eq "file") {
+                $files = @{
+                    shortNames = @($shortName)
+                    fullPaths  = @($fullPath)
+                }
+            }
+            else {
+                $folders = @{
+                    shortNames = @($shortName)
+                    fullPaths  = @($fullPath)
+                }
+            }
 
-        $finalExclusions += @{
-            projectId = $projectId
-            projectName = $project.name
-            teamId = $project.teamId
-            currentExclusions = @{
-                folders = @($excludeSettings.excludeFoldersPattern)
-                files = @($excludeSettings.excludeFilesPattern)
+            $finalExclusions += @{
+                projectId          = $projectId
+                projectName        = $project.name
+                teamId             = $project.teamId
+                currentExclusions  = @{
+                    folders = @($excludeSettings.excludeFoldersPattern)
+                    files   = @($excludeSettings.excludeFilesPattern)
+                }
+                proposedExclusions = @{
+                    files   = $files
+                    folders = $folders
+                }  
             }
-            proposedExclusions = @{
-                files = $files
-                folders = $folders
-            }  
         }
     }
-}
 
-$finalExclusions = ($finalExclusions | ConvertTo-Json -Depth 99)
-$finalExclusions
-$finalExclusions | Out-File $generatedFile
-Write-Host "Potential exclusions TODO:" $exclusions.Count "`n"
+    $finalExclusions = ($finalExclusions | ConvertTo-Json -Depth 99)
+    $finalExclusions | Out-File $generatedFile
+    Write-Host "`nPotential exclusions TODO:" $exclusions.Count
+    Write-Host "File ${generatedFile} was generated !`n"
+} else {
+    Write-Host "Folder ${cxSrcFolder} does not exists"
+}
