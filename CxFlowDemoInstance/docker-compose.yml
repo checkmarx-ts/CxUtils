@@ -22,7 +22,7 @@ services:
     volumes:
       - type: bind
         source: ${STORAGE_LOC}
-        target: /var/atlassian/jira
+        target: /var/atlassian/application-data/jira
     dns:
       - 8.8.8.8
     ports:
