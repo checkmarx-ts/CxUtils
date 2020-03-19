@@ -1,0 +1,50 @@
+/*
+Author: Nathan Leach (nathan.leach_at_checkmarx.com)
+Date: Sometime in 2019
+Desc: Used to de-duplicate code and comment flows. This is a
+non-executable CxQL method.
+*/
+
+// Param 0: A CxList of results found with a Code search (FindByRegex)
+// Param 1: A CxList of results found with a comment search (FindByRegexExt)
+// Will remove comments that duplicate results in the code list, then find flows
+// for the code components.
+
+if (param.Length == 2)
+{
+	CxList findAsCodeResult = param[0] as CxList;
+	CxList findAsCommentResult = param[1] as CxList;
+		
+			
+	HashSet<String> codeElements = new HashSet<String> ();
+		
+	foreach (CxList codeVersion in findAsCodeResult)
+	{
+		IGraph codeV = codeVersion.data.GetByIndex(0);
+		
+		codeElements.Add(String.Format ("{0}-{1}", codeV.LinePragma.FileName, 
+			codeV.LinePragma.Line));
+	}
+
+
+	CxList removeList = All.NewCxList();
+	foreach (CxList commentVersion in findAsCommentResult)
+	{
+		IGraph commentV = commentVersion.data.GetByIndex(0);
+		String commentHash = String.Format("{0}-{1}", commentV.LinePragma.FileName, 
+			commentV.LinePragma.Line);
+		
+		if (codeElements.Contains (commentHash) )
+			removeList.Add(commentVersion);
+	}
+
+
+	if (findAsCommentResult != null && findAsCommentResult.Count > 0)
+		result.Add(findAsCommentResult - removeList);
+	
+	CxList codeFlows = findAsCodeResult.DataInfluencingOn(All)
+		.ReduceFlow(CxList.ReduceFlowType.ReduceSmallFlow);
+
+	result.Add(codeFlows + findAsCodeResult);
+
+}

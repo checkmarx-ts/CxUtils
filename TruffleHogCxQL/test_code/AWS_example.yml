@@ -1,0 +1,13 @@
+foo:
+  bar:
+    secretKeyRef:
+      name: example-app
+      key: password
+  - name: AWS_ACCESS_KEY_ID
+    value: "AKIEICAO57NBT29FBVZQ"
+  - name: AWS_SECRET_ACCESS_KEY
+    value: "medKxJ/MatRzSuoIehb8653t5vsF3fltrZmDL8nA"
+volumeMounts:
+  - name: configs
+    mountPath: /usr/src/app/config
+    

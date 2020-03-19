@@ -1,0 +1,10 @@
+"MessageBroker": {
+    "RabbitMQ": {
+        "host": "XXXXXX",
+        "port": 5672,
+        "username": "random_user",
+        "password": "RandomPassword",
+        "exchange": "XXXXX",
+        "heartbeat": 60
+    }
+}
