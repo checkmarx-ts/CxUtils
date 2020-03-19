@@ -1,5 +1,37 @@
 <?php
 
+
+/*
+Comments are a good place to hide secrets too.
+
+-----BEGIN RSA PRIVATE KEY-----
+MIICXQIBAAKBgQDKoe94962oKSar40dxrMzfjsUt6l+dxPY+J7PV0nv6wh2otvBL
+/eOEYUtXScxtiFwKyjzDk8+BQBr38+agSIgEkMuTWLykDjVvHmmRP9UfSurLV/wr
+AE6dkotyYGrT5v0cGzYnoUfQYomJwIZrB1z9/pkiY7elYFzQpQlQnhI4gwIDAQAB
+AoGBAKWeohsfZaLyr5cCl1yEPpfjG6shy7EqUZIP5V85QPh+PLuveszB4XpMA8Z+
+nUZRk9mF3xCD+bDM8r4DbldHsVOFrF69occ7HzeOoJDsku3SDdP2n9DPnr2/U5Gx
+bNelJvPZG5xIxQtcfzdUyFHoWFfrPB64fdINknNtXM0aymnRAkEA48tPXnialfK5
+fhujUTQusN8RJV+twn/ddrFdiF/UmPT6FjZy3olcT7W1RI21oLhmuV7hg7s+yFlF
+VOMxIBhyJwJBAOO5C25A1yQY+/drDkMunuSGmWaoRItWTy1Yynwx1ky6nq25fmQq
+8vZSZG6rA/KpStWulnUBwDSueucBqlj1bEUCQD3AUaXEf/OCNzKuf1l2Eeo0rks5
+YrtFOl4AuuBLSjCkyF7ZJ86X4gRht9/7om8NThuWUwAI9H4PZTIb3KdcuSUCQCp3
+0ffnw7eJqUPFBU3mHd/EcktAyjeqCu4MBwcOTEbW7sy7MSUBFXp2dyBkaEIS7E/Z
+VVnQz8WDXIxENT6N1nkCQQCkHdvgv7Bf46ux8W2rSl8R+NReifIXf7hxz4YB9dSF
+NEiKt1E9ScII1KE+N1PrukWs6em5rpMGH6S9wvszbkHZ
+-----END RSA PRIVATE KEY-----
+
+
+-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDKoe94962oKSar40dxrMzfjsUt
+6l+dxPY+J7PV0nv6wh2otvBL/eOEYUtXScxtiFwKyjzDk8+BQBr38+agSIgEkMuT
+WLykDjVvHmmRP9UfSurLV/wrAE6dkotyYGrT5v0cGzYnoUfQYomJwIZrB1z9/pki
+Y7elYFzQpQlQnhI4gwIDAQAB
+-----END PUBLIC KEY-----
+
+
+*/
+
+
 class example {
 
 private static $p_r_i_v_a_t_e_k_e_y = "

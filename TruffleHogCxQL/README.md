@@ -97,9 +97,30 @@ matches.  The ability to recognize sensitive data is directly related to the abi
 of the provided Regex to match the pattern of the sensitive data.
   
 ## Test Code
-  A directory of test code was provided to simulate the examples given for the CxQL
-  queries.  This can be opened with CxAudit to evaluate how the CxQL queries recognize
-  sensitive data.  The best test is known-vulnerable, real code to validate how the
-  sensitive data is reported as a result.
+A directory of test code was provided to simulate the examples given for the CxQL
+queries.  This can be opened with CxAudit to evaluate how the CxQL queries recognize
+sensitive data.  The best test is known-vulnerable, real code to validate how the
+sensitive data is reported as a result.
   
-  
+
+## False Negatives/Positives
+A good way to see false negatives/positives is to run TruffleHog itself against the
+CxPSPowerHacks repository to see what it detects:
+
+```
+docker run  dxa4481/trufflehog --entropy=True https://github.com/checkmarx-ts/CxPsPowerHacks.git
+```
+
+There are a few cases where the shorter passwords are not detected by the high-entropy sub-routines; this is a false
+negative.  Running it with the `--regex` option can pick up some of the shorter passwords.
+
+```
+docker run  dxa4481/trufflehog --regex --entropy=True https://github.com/checkmarx-ts/CxPsPowerHacks.git
+```
+
+Running TruffleHog against your own branch, then running the TruffleHog CxQL queries during a scan should yield
+similar results.
+
+
+## Performance
+The iterative nature of some of these queries may make them perform poorly.
