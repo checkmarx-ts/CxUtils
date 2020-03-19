@@ -1,0 +1,128 @@
+/*
+Author: Nathan Leach (nathan.leach_at_checkmarx.com)
+Date: March 19, 2020
+Desc: A CxQL port of TruffleHog high entropy string detection from: https://github.com/dxa4481/truffleHog
+Which borrowed it from: http://blog.dkbza.org/2007/05/scanning-data-for-entropy-anomalies.html
+
+Finds secrets in any type of file included in a scan, reports them
+as vulnerabilities with flows if applicable.
+*/
+
+/* Tuning Parameters - Test your changes sufficiently.*/
+
+// The TruffleHog implementation defaults the minium length of strings
+// detected containing potential secrets to 20. 
+int MIN_STRING_LEN = 20;
+
+// TruffleHog embeds the the following entropy thresholds into the code.
+// Why were these values chosen?  That is a very good question.
+double BASE64_ENTROPY = 4.5;
+double HEX_ENTROPY = 3;
+
+
+/**** No tuning needed below this line  ****/
+String BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+String HEX_CHARS = "1234567890abcdefABCDEF";
+
+Func<string, char, int> countOccurences = (theString, theChar) =>
+	{
+	int count = 0;
+	foreach (char c in theString)
+		if (c == theChar)
+			count++;
+	
+	return count;
+	};
+
+
+Func<String, String, List<string> > get_strings_of_set = (stringToCheck, charSet) => 
+	{
+
+	// TODO: threshold for min string width is tunable.  TruffleHog defaults to 20
+	int threshold = MIN_STRING_LEN;
+	
+	List<string> found = new List<string> ();
+	System.Text.StringBuilder curFound = new System.Text.StringBuilder ();
+	
+	int count = 0;
+	
+	foreach (char strChar in stringToCheck)
+	{
+		if (charSet.IndexOf(strChar) >= 0)
+		{
+			count++;
+			curFound.Append(strChar);
+		}
+		else
+		{
+			if (count > threshold)
+				found.Add(curFound.ToString());
+			count = 0;
+			curFound.Clear();
+		}
+	}
+
+	if (count > threshold)
+		found.Add(curFound.ToString());
+	
+	return found;
+	};
+
+
+Func<string, string, double> shannon_entropy =  
+	(word, charSet) =>
+	{
+	double entropy = 0.0;
+	
+	foreach (char x in charSet)
+	{
+		double p_x = (double)(countOccurences(word, x)) / word.Length;
+		
+		if (p_x > 0)
+			entropy += -p_x * Math.Log(p_x, 2.0);
+	}
+	
+	return entropy;
+	};
+
+	
+
+
+CxList searchStrings = All.FindByType(typeof (StringLiteral));
+searchStrings.Add (All.FindByRegexExt(".*", "*.*", true, 
+	CxList.CxRegexOptions.SearchOnlyInComments,
+	System.Text.RegularExpressions.RegexOptions.None));
+
+foreach (CxList str in searchStrings)
+{
+	// Must split the text by whitespace, get the strings for each
+	// component or "word"
+	foreach (String word in str.GetName().Split(null) )
+	{
+		bool added = false;
+		
+		List<string> base64_strings = get_strings_of_set(word, BASE64_CHARS);
+		foreach (String s in base64_strings)
+		{
+			if (shannon_entropy(s, BASE64_CHARS) > BASE64_ENTROPY)
+			{
+				added = true;
+				result.Add(str);
+			}
+		}
+		
+		if (added)
+			continue;
+
+		List<string> hex_strings = get_strings_of_set(word, HEX_CHARS);
+		foreach (String s in hex_strings)
+		{
+			if (shannon_entropy(s, HEX_CHARS) > HEX_ENTROPY)
+				result.Add(str);
+		}
+		
+	}
+}
+
+
+

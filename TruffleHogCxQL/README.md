@@ -29,11 +29,18 @@ queries **each** language for which it should be executed.
 	  * Choose categories as needed (likely fits in Sensitive Data Exposure categories)
 	  * CWE ID 798
 	  * Executable should be checked
+
+   * TruffleHog_HighEntropy_Strings:
+	  * Set severity to the level desired
+	  * Choose categories as needed (likely fits in Sensitive Data Exposure categories)
+	  * CWE ID 798
+	  * Executable should be checked
    
    * Resolve_Code_And_Comment_Flows:
      * Only uncheck the "Executable" checkbox.  All other properties are not applicable.
 
-4. Save the queries and exit CxAudit.
+4. Save the queries and exit CxAudit. Adjust your presets to include your new TruffleHog
+queries.
 
 5. (Optional) Execute the SQL script in file "Proc_AddFileExtToLanguage.sql" in the CxDB. This
 adds the required stored procedure to the SQL server for adding extensions of files
@@ -95,6 +102,21 @@ In at least two cases that are indicated in the list of TruffleHog queries incor
 in the query, the TruffleHog Regexes were not formed to properly recognize general
 matches.  The ability to recognize sensitive data is directly related to the ability
 of the provided Regex to match the pattern of the sensitive data.
+
+## TruffleHog_HighEntropy_Strings
+
+### Things to know
+
+* The TruffleHog project is moving away from using high entropy string detection in favor
+of using regular expressions.  
+* The high entropy detection method implemented in TruffleHog comes from a [blog post](http://blog.dkbza.org/2007/05/scanning-data-for-entropy-anomalies.html).
+* There are some constants embedded in the TruffleHog code that are used as entropy thresholds.
+
+
+### What does this mean?
+
+While there is no denying that the TruffleHog implementation can detect some known secrets, it is hard to know which unknown secrets it can't detect.  False positives may not be as much of a concern until there are thousands to sift through.  It may be necessary to tune some of the different threshold parameters to dial down the amount false positives.  If you are implementing this CxQL query as part of your preset, you will have to perform any required tuning to make it work best for your scanned projects.
+
   
 ## Test Code
 A directory of test code was provided to simulate the examples given for the CxQL
