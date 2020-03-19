@@ -1,0 +1,11 @@
+"Services": {
+    "magistrate": {
+        "MAGISTRATE_VAULT_PATH": "xxxxxxxxxxxxx",
+        "MAGISTRATE_VAULT_LEASE_TIME": "2h",
+        "MAGISTRATE_COMMON_NAME": "xxxxxxxxxxxx"
+    },
+    "vault": {
+        "VAULT_ENDPOINT": "http://foo:bar@myvault.company.com:8200",
+        "VAULT_TOKEN": "82ca7f25-772d-19af-c110-fd4086db954b"
+    }
+}
