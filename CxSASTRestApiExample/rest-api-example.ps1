@@ -15,7 +15,7 @@ The name of the user to connect to API.
 The password of the user
 
 .EXAMPLE
-rest-api-example.ps1 -cxServer "localhost" -username "user" -password "password"
+rest-api-example.ps1 -server "localhost" -cxUsername "user" -cxPassword "password"
 #>
 
 param(
