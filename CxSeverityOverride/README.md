@@ -22,6 +22,7 @@ This tool performs the following operations.
 ### Installation
 
 * Downloading the solution
+
 * Required Configuration -
 	1. Install python.
 	2. Install 'pyodbc' using PIP, eg: 'pip install pyodbc'.
@@ -33,39 +34,76 @@ This tool performs the following operations.
 		e. Set default database to CxDB.
 		f. You use integrated authentication or SQL authentication, depending on your database setup.
 
-  * Refer to Repository Wiki for full/advanced details
+### Things to know
+
+
+#### Severity Types
+Severity | Value
+|---|---|
+Informational | 0
+Low 		  | 1
+Medium 		  | 2
+High 		  | 3
+	
+#### PackageType values	
+PackageType | PackageTypeName 
+|---|---|
+0 |	Cx	
+1 |	Corp
+2 |	Project
+3 |	Team
+
+##### Columns in 'query.csv' file
+
+No. | Name | Allowed to change | Allowed values | Comments
+|---|---|---|---|---|--|
+1| UserDefined  | Yes | 1-No, 2-Yes    | To specify that the query details are modified. To be used in query.csv
+2| QueryId 		| No  | Not Applicable | QueryId from db.
+3| QueryName 	| No  | Not Applicable | QueryName from db.
+4| Severity 	| Yes | (0/1/2/3)      | Refer Severity table for allowed values.
+5| PackageId 	| No  | Not Applicable | PackageId of the package(group) to which the query belongs.
+6| Langauge 	| No  | Not Applicable | Language for the query.
+7| Group Name 	| No  | Not Applicable | Name of the package(group) to which the query belongs.
+8| PackageType 	| Yes | (0/1/2/3) 	   | Refer the PackageType table for allowed values.
+9| PackageType Name | Yes | Cx/Corp/Project/Team | Refer the PackageType table for allowed values.
+10| PresetId 	| Yes | List of PresetIds | Refer the presets.csv for available PresetIds.
+11| User Comments | Yes | Not Applicable | This column is optional and can be used for documenting the changes being made to query.
+
+![columns in query.csv](images/query-snap.png)
+
+
+
 
 ### Execution
 
-* Steps to execute
-	* To export the available queries from CxDB, run this command : py export_query_info
-	* This will generate two csv files.
-	1. presest.csv - This includes all the available presets along with their preset ids. This file is only used for reference to preset ids.
-	2. query.csv - This includes all the details required to update the severity,package type or preset of the queries.
+* Execution Flow -
+1) Fetch all the presets and the queries from db
+2) Do any of the following:
+	a) Modify the severity of the query
+	b) Modify the package type of the query
+	c) Add the query to any preset
+3) Run the import script to push your changes to db.
+	
+1. To export the available queries from CxDB, run this command : 
+````
+py export_query_info.py
+````
+ * This will generate two csv files.
+	a. presest.csv - This includes all the available presets along with their preset ids. This file is only used for reference to preset ids.
 			
-
-
-## Additional Documentation
-
-	Severity values :
-	0 - Informational
-	1 - Low
-	2 - Medium
-	3 - High
+	b. query.csv - This includes all the details required to update the severity,package type or preset of the queries.
+			
+2. Open the 'query.csv' file and make the changes to any of the allowed fields.
+	a. To update the severity, refer the values for severity and update the value under the column no 3.
+	b. To change the packageType of the query, refer the PackageType table and update the id and the corresponding type name under the columns 8 and 9.
+	c. To add the query to any preset, refer the preset id from 'presets.csv' and add this id under the column 10.
 	
-	| PackageType | PackageTypeName |
-	|-------------|-----------------|
-	|	0 |	Cx	|
-	|	1 |	Corp|
-	|	2 |	Project	|
-	|	3 |	Team|
-	
-	
-Refer to the project [Wiki](insert-wiki-url) for additional information
+3. Once the desired query details are filled, change the value corresponding to this query row under the column 1, to '2' (which means this row has been modified).
 
-
-## Version History
-
+4. Open command prompt in the same location and run the following command:
+````
+py import_into_db.py
+````
 
 
 ## Contributing
@@ -75,13 +113,4 @@ We appreciate feedback and contribution to this repo! Before you get started, pl
 - [Checkmarx general contribution guidelines](https://github.com/checkmarx-ts/open-source-template/blob/master/GENERAL-CONTRIBUTING.md)
 - [Checkmarx code of conduct guidelines](https://github.com/checkmarx-ts/open-source-template/blob/master/CODE-OF-CONDUCT.md)
 
-## Support + Feedback
 
-Include information on how to get support. Consider adding:
-
-- Use [Issues](https://github.com/checkmarx-ts/open-source-template/issues) for code-level support
-
-
-## License
-
-Project Lisense can be found [here](LICENSE)
