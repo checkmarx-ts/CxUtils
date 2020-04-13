@@ -56,7 +56,7 @@ PackageType | PackageTypeName
 ##### Columns in 'query.csv' file
 
 No. | Name | Allowed to change | Allowed values | Comments
-|---|---|---|---|---|--|
+|---|---|---|---|---|
 1| UserDefined  | Yes | 1-No, 2-Yes    | To specify that the query details are modified. To be used in query.csv
 2| QueryId 		| No  | Not Applicable | QueryId from db.
 3| QueryName 	| No  | Not Applicable | QueryName from db.
