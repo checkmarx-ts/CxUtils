@@ -18,15 +18,15 @@ query_map = []
 # Add row that contains the column headers to the export
 query_def = so.create_option_row()
 query_def[so.USER_DEFINED_COL] = 'UserDefined (1 - No, 2 - Yes) [REQUIRED]'
-query_def[so.QUERY_ID_COL] = 'Query DB ID'
-query_def[so.QUERY_NAME_COL] = 'Query Name'
+query_def[so.QUERY_ID_COL] = 'QueryId'
+query_def[so.QUERY_NAME_COL] = 'QueryName'
 query_def[so.SEVERITY_COL] = 'Severity [REQUIRED]'
-query_def[so.PACKAGE_ID_COL] = 'Package DB ID (Group Name) [REQUIRED]'
+query_def[so.PACKAGE_ID_COL] = 'PackageId [REQUIRED]'
 query_def[so.LANGUAGE_NAME_COL] = 'Language Name' 
 query_def[so.GROUP_NAME_COL] = 'Group Name'
 query_def[so.PACKAGE_TYPE_COL] = 'PackageType'
 query_def[so.PACKAGE_TYPE_NAME_COL] = 'PackageType Name'
-query_def[so.PRESET_ID_COL] = 'Preset ID'
+query_def[so.PRESET_ID_COL] = 'PresetId'
 query_def[so.COMMENT_COL] = 'User comments [OPTIONAL]'
 query_map.append(query_def)
 
@@ -64,7 +64,7 @@ for opt_row in opts_map:
     for q_row_idx, q_row in enumerate(query_map):
         # Does this Query exist in the current site_options.csv file?
         if q_row_idx != 0 and int(opt_row[so.QUERY_ID_COL]) == int(q_row[so.QUERY_ID_COL]) and int(opt_row[so.USER_DEFINED_COL]) == so.USER_DEFINED:
-            print(f'Found user defined option for QuerId: {opt_row[so.QUERY_ID_COL]}, Query Name: {opt_row[so.QUERY_NAME_COL]}')
+            print(f'Found user defined option for QueryId: {opt_row[so.QUERY_ID_COL]}, Query Name: {opt_row[so.QUERY_NAME_COL]}')
             q_row[so.USER_DEFINED_COL] = opt_row[so.USER_DEFINED_COL]
             q_row[so.QUERY_NAME_COL] = opt_row[so.QUERY_NAME_COL]
             q_row[so.SEVERITY_COL] = opt_row[so.SEVERITY_COL]
