@@ -1,0 +1,44 @@
+
+stages:
+# Security stage after Build and Testing stages
+- stage: Security
+  jobs:
+  # Windows Agent using Powershell example
+  - job: CxFlow_Powershell
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+    - task: PowerShell@2
+      inputs:
+        filePath: 'entrypoint.ps1'
+      env:
+        AZURE_ACCESS_TOKEN: $(System.AccessToken)
+        CHECKMARX_PASSWORD: $(CHECKMARX_PASSWORD)
+
+  # Using Linux Agent
+  - job: CxFlow_Linux
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      # Make sure Docker is installed
+      - task: Bash@3
+        inputs:
+          filePath: 'entrypoint.sh'
+        env:
+          AZURE_ACCESS_TOKEN: $(System.AccessToken)
+          CHECKMARX_PASSWORD: $(CHECKMARX_PASSWORD)
+
+  # Using Docker on Linux example
+  - job: CxFlow_Docker
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    # Make sure Docker is installed
+    - task: DockerInstaller@0
+      inputs:
+        dockerVersion: '17.09.0-ce'
+    # Run bash command to run docker image
+    - bash: docker run -v `pwd`:/code --rm --env-file <(env) geekmasher/cxflow-azure:latest
+      env:
+        AZURE_ACCESS_TOKEN: $(System.AccessToken)
+        CHECKMARX_PASSWORD: $(CHECKMARX_PASSWORD)
