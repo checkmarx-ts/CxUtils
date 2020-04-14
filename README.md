@@ -14,3 +14,4 @@ Project | Description
 [CxSeverityOverride](CxSeverityOverride) | A python based utility that would allow the user to change the severity of the query, package type of the query and/or add the query to multiple presets at the same time.
 [cx-flow-ado](cx-flow-ado) | Sample CxFlow Docker image for Azure DevOps Pipelines
 [cx-sast-scans-analysis](cx-sast-scans-analysis) | Powershell utility to pull scan data / build metrics from a CxSAST instance
+[cx-sca-search](cx-sca-search) | Tool to search for a given open-source library name in the results of prior Checkmarx SCA scans. This search tool complements the search capability in the current SCA results User Interface, which limits searches to the current scan.

@@ -1,0 +1,12 @@
+{
+    "cx": {
+        "db": {
+            "instance": "localhost\\SQLExpress",
+            "username": "",
+            "password": ""
+        }
+    },
+    "log": {
+        "jsonDirectory": "json"
+    }
+}
