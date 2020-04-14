@@ -1,0 +1,2 @@
+WebGoat-7.1
+WebGoat-8.0
