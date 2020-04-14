@@ -1,7 +1,0 @@
-.env
-*.log
-*.zip
-*.jar
-
-scripts/
-bin/
