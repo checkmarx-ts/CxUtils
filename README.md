@@ -17,3 +17,4 @@ Project | Description
 [cx-sca-search](cx-sca-search) | Tool to search for a given open-source library name in the results of prior Checkmarx SCA scans. This search tool complements the search capability in the current SCA results User Interface, which limits searches to the current scan.
 [cx-jenkins-lib](cx-jenkins-lib) | Jenkins Pipeline shared library example
 [svn-cx-runner](svn-cx-runner) | Utility that iterates through SVN repo, downloads Maven dependencies and creates Checkmarx projects.
+[CxSOAP-API-Examples](CxSOAP-API-Examples) | Checkmarx SOAP API Examples (8.X versions)
