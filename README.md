@@ -12,3 +12,4 @@ Project | Description
 [TruffleHogCxQL](TruffleHogCxQL) | A port of the TruffleHog secrets detector.  It finds potential secrets through Regular Expression matches and High Entropy string detection.
 [WindowsNoRDP](WindowsNoRDP) | A script that will configured the ability to log into a server's desktop using VNC over HTTP.  Primarily made to facilitate access to Checkmarx training VMs, this is useful in situations where RDP port 3389 access to a training instance may be blocked by a corporate firewall.
 [CxSeverityOverride](CxSeverityOverride) | A python based utility that would allow the user to change the severity of the query, package type of the query and/or add the query to multiple presets at the same time.
+[cx-flow-ado](cx-flow-ado) | Sample CxFlow Docker image for Azure DevOps Pipelines

@@ -1,0 +1,61 @@
+logging:
+  file: cx-flow.log
+  pattern:
+    console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{15}){cyan}  [%clr(%X{cx}){blue}] %clr(:){faint} %m%n%wEx"
+    file: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{15}){cyan}  [%clr(%X{cx}){blue}] %clr(:){faint} %m%n%wEx"
+
+cx-flow:
+  # Current set issue tracker
+  bug-tracker: Azure
+  # These are the different implementations currently configured
+  bug-tracker-impl:
+    - Azure
+
+  # Filter the results based on your policy
+  filter-severity:
+    - High
+  filter-category:
+  filter-cwe:
+  filter-status:
+  mitre-url: https://cwe.mitre.org/data/definitions/%s.html
+
+checkmarx:
+  # ===== CxSAST 9.0 (AC) =====
+  # version: 9.0
+  # client-id: resource_owner_client
+  # client-secret: 014DF517-39D1-4453-B7B3-9930C563627C
+  # scope: access_control_api sast_rest_api
+  # ===== CxSAST 8.9 =====
+  # Not really a "secret"
+  client-secret: 014DF517-39D1-4453-B7B3-9930C563627C
+  # Checkmarx instance
+  base-url: ${CHECKMARX_URI}
+  multi-tenant: false
+  # Standard Preset and Configuration
+  scan-preset: ${CHECKMARX_PRESET:Checkmarx Default}
+  configuration: Default Configuration
+  # The base team in Checkmarx that all the team are under
+  team: ${CHECKMARX_TEAM:\CxServer\SP\Company}
+  # Leaving the XML in the workspace so that it could be used
+  # in the future for supporting Archer or other system.
+  preserve-xml: true
+  # CxSAST Incremental scan
+  incremental: false
+  url: ${checkmarx.base-url}/cxrestapi
+  # WSDL Config
+  portal-url: ${checkmarx.base-url}/cxwebinterface/Portal/CxWebService.asmx
+  sdk-url: ${checkmarx.base-url}/cxwebinterface/SDK/CxSDKWebService.asmx
+  portal-wsdl: ${checkmarx.base-url}/Portal/CxWebService.asmx?wsdl
+  sdk-wsdl: ${checkmarx.base-url}/SDK/CxSDKWebService.asmx?wsdl
+
+azure:
+  # Personal Access Token from Azure
+  token: ${AZURE_ACCESS_TOKEN}
+  # The Azure workspace the application is hosted in
+  url: https://dev.azure.com/
+  api-version: 5.0
+  issue-type: issue
+  closed-status: Closed
+  open-status: Active
+  false-positive-label: false-positive
+  block-merge: true
