@@ -25,6 +25,14 @@ For example, if it was neccessary to make a configuration named "mypoc", a copy 
 
 In the `application-general.yml` file, there are several configuration fields with `# TODO:` comments that must be configured prior to executing Cx-Flow. For a simple demonstration environment, the other configuration options can be left unmodified.
 
+### Workflow Configurations for the Included application-*.yml Examples
+
+* **application-general.yml** - This configuration uses GitHub as source control and Jira as the issue tracker.
+
+* **application-github+ado.yml** - This configuration uses GitHub as source control and Azure DevOps as the issue tracker.
+
+
+
 ## Step 2: Run the Cx-Flow and Jira Server Containers
 
 The powershell script `run_cxflow+jira_server.ps1` will start a Docker instance of Jira and a Cx-Flow webhook server.  The Jira data is persisted to a local disk so that the Jira contents survives across restarts.  Note that the Jira evaluation license is only for 30 days.  If the license expires, all that is required is to delete the local Jira data and restart the containers.
@@ -39,8 +47,20 @@ Dbg | false | Including `-Dbg` starts Cx-Flow with a debugger available for conn
 
 The Jira and Cx-Flow servers will execute and display log output in your powershell window.  Press CTRL-C at any time to shut down the containers.  It is possible to tail logs of each individual container.  See the [docker logs](https://docs.docker.com/engine/reference/commandline/logs/) and [docker ps](https://docs.docker.com/engine/reference/commandline/ps/) command documentation for more details.
 
+## [Alternate] Step 2: Run CxFlow as a Webhook Server without Jira
+
+The powershell script `run_cxflow_server.ps1` will start a Docker instance of a Cx-Flow webhook server.
+
+`run_cxflow_server.ps1` options:
+
+Option | Default | Description
+--- | --- | ---
+Config | general | The configuration option used to locate the `application-{config name}.yml` file for Cx-Flow startup.  Using `-Config mypoc` would cause Cx-Flow to start with the configuration file `application-mypoc.yml`.
+Dbg | false | Including `-Dbg` starts Cx-Flow with a debugger available for connecting via port 1040.
 
 ## Step 3: Configure Jira
+
+### *If you are not using Jira as the issue tracker, you can skip this step.*
 
 By default, Jira will answer at the URL [http://localhost:8000](http://localhost:8000).  Jira will give options for setup which includes configuring a license.  The Jira configuration will allow you to navigate to the Atlassian site and generate a Jira evaluation license that will then be imported into your Jira instance.
 
