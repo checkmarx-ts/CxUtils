@@ -14,6 +14,7 @@ The script is a wrapper to the CxConsolePlugin.
 If the optional -sastVersion and -cliPlugin values are not provided, the script defaults to the following:
 
 *sastVersion* = 8.9
+
 *cliPlugin* = CxConsolePlugin-8.90.2
 
 The script downloads the CxConsolePlugin from:
