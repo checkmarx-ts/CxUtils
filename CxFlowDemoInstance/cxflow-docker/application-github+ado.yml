@@ -15,27 +15,37 @@ logging:
   level:
     com:
       checkmarx:
-        flow: info
-         
+        flow: INFO
+        # sdk: TRACE
+    # org:
+    #   apache:
+    #     http:
+    #       wire: TRACE
+    #   springframework:
+    #     web:
+    #       client:
+    #         RestTemplate: TRACE         
+    
 cx-flow:
-  bug-tracker: Jira
+  contact: admin@test.com
+  bug-tracker: Azure
   bug-tracker-impl:
     - CxXml
     - Json
     - GitLab
     - GitHub
     - Csv
+    - Azure
   branches:
     - master
 
 github:
-  webhook-token: # TODO: put the value you provided to GitHub when creating the webhook
-  token: # TODO: put a GitHub personal access token here so cx-flow can write feedback into the pull request
-  url: https://github.com
-  api-url: https://api.github.com/repos/
-  false-positive-label: false-positive
-  block-merge: true
-  detailed: false
+    webhook-token: # put the value you provided to GitHub when creating the webhook
+    token: # put a GitHub personal access token here so cx-flow can write feedback into the pull request
+    url: https://github.com
+    api-url: https://api.github.com/repos/
+    block-merge: true
+
 
 checkmarx:
   username: # TODO: put the SAST account username here
@@ -61,49 +71,20 @@ checkmarx:
   jira-custom-field:
   jira-issuetype-field:
   jira-assignee-field:
-  
-  
-jira:
-  username: # TODO: put the JIRA account username here
-  token: # TODO: put the JIRA account password or token here
-  project: # TODO: put the name of the JIRA project where tickets will be created here
 
+# This is configured for the ADO "Basic" project.  You may need to modify "closed-status" and "open-status"
+# to match your project configuration.
+azure:
+  # webhook-token: this is omitted because webhooks are coming from github in this example
+  token: # TODO: provide an access token with access to create issues
+  url: # TODO: Provide the organization name for the URL: https://dev.azure.com/{organization}
+  issue-type: issue
+  api-version: 5.0
+  closed-status: Done
+  open-status: To Do
+  false-positive-label: false-positive
+  
 
-  url: http://jira-server:8080
-  issue-type: Bug
-  priorities:
-    High: High
-    Medium: Medium
-    Low: Low
-    Informational: Lowest
-  open-transition: In Review
-  close-transition: Done
-  open-status:
-    - To Do
-    - In Progress
-    - In Review
-  closed-status:
-    - Done
-  fields:
-    - type: result
-      name: application
-      jira-field-name: Application
-      jira-field-type: label
-    - type: result
-      name: cve
-      jira-field-name: CVEs
-      jira-field-type: label
-    - type: result
-      name: cwe
-      jira-field-name: CWEs
-      jira-field-type: label
-    - type: result
-      name: category
-      jira-field-name: Category
-      jira-field-type: label
-    - type: result
-      name: loc
-      jira-field-name: LOC
-      jira-field-type: label
+  
 
 
