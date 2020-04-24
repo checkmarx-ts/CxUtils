@@ -1,0 +1,16 @@
+version: "3.7"
+services:
+  cxflow-webhook:
+    build:
+      context: cxflow-docker
+    environment:
+      JAVA_OPTS: ${JAVA_OPTS}
+      CXFLOW_MODE: ${CXFLOW_MODE}
+      CX_CONFIG: ${CX_CONFIG}
+    ports:
+      - "8585:8585"
+      - "1040:1044"
+    dns:
+      - 8.8.8.8
+    restart: always
+
