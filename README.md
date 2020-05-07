@@ -18,3 +18,4 @@ Project | Description
 [cx-jenkins-lib](cx-jenkins-lib) | Jenkins Pipeline shared library example
 [svn-cx-runner](svn-cx-runner) | Utility that iterates through SVN repo, downloads Maven dependencies and creates Checkmarx projects.
 [CxSOAP-API-Examples](CxSOAP-API-Examples) | Checkmarx SOAP API Examples (8.X versions)
+[multi-repo-whitelist-scan](multi-repo-whitelist-scan) | Script to clone multiple git repos, remove unrecognized file types, and scan as one project using the CxCLI from a linux bash shell
