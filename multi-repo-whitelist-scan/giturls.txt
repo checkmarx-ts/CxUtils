@@ -1,0 +1,6 @@
+https://github.com/microservices-demo/front-end.git 
+https://github.com/microservices-demo/microservices-demo.github.io.git
+https://github.com/microservices-demo/orders.git
+https://github.com/microservices-demo/queue-master.git
+https://github.com/microservices-demo/shipping.git
+https://github.com/microservices-demo/carts.git
