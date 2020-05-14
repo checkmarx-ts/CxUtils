@@ -1,0 +1,52 @@
+//multi-repo CLI Scan with whitelist
+
+//install wget & unzip
+sudo install wget
+sudo install unzip
+sudo install openjdk-8-jdk
+
+// Create an appropriate working directory and cd to it
+mkdir -p /home/username/CxCLIScan
+cd /home/username/CxCLIScan
+
+//get Checkmarx CLI & unzip
+wget -O ./cli.zip https://download.checkmarx.com/8.9.0/Plugins/CxConsolePlugin-8.90.2.zip && unzip ./cli.zip && rm cli.zip
+
+//clone repos into 1 folder
+mkdir clonefolder && cd clonefolder
+git clone https://github.com/microservices-demo/front-end.git 
+git clone https://github.com/microservices-demo/microservices-demo.github.io.git
+git clone https://github.com/microservices-demo/orders.git
+git clone https://github.com/microservices-demo/queue-master.git
+git clone https://github.com/microservices-demo/shipping.git
+git clone https://github.com/microservices-demo/carts.git
+cd ..
+
+//create scan dirctory and copy only CxSAST recognized extensions
+mkdir ScanDir
+find ./clonefolder -type f -regex ".*\.\(sln\|csproj\|cs\|xaml\|cshtml\|javasln\|project\|java\|jsp\|jspf\|xhtml\|jsf\|tld\|tag\|mf\|js\|html\|htm\|apex\|apexp\|page\|component\|cls\|trigger\|tgr\|object\|report\|workflow\|\-meta\.xml\|cpp\|c\+\+\|cxx\|hpp\|hh\|h\+\+\|hxx\|c\|cc\|h\|vb\|vbs\|asp\|bas\|frm\|cls\|dsr\|ctl\|vb\|vbp\|php\|php3\|php4\|php5\|phtm\|phtml\|tpl\|ctp\|twig\|rb\|rhtml\|rxml\|rjs\|erb\|lock\|pl\|pm\|plx\|psgi\|m\|h\|xib\|pls\|sql\|pkh\|pks\|pkb\|pck\|py\|gtl\|groovy\|gsh\|gvy\|gy\|gsp\|properties\|aspx\|asax\|ascx\|master\|config\|xml\|cgi\|inc\)" -exec cp --parents \{\} ./ScanDir \;
+rm -rf clonefolder
+
+cd CxConsolePlugin-8.9.0.2
+//replace <> with your values
+sh runCxConsole.sh GenerateToken -v -CxUser <yourusername> -CxPassword <yourpassword> -CxServer http://<yourcxserver>
+
+//replace fully qualified project name & CxToken
+sh runCxConsole.sh Scan -v -Projectname CxServer\\SP\\Company\\Users\\<yourprojectname> -CxServer https://<yourcheckmarxserver> -CxToken <yourtoken> -LocationType folder -LocationPath ../ScanDir  -locationpathexclude '*test*,*lib*,*node_modules*,*swagger*'
+
+//Clean-Up
+rm -rf ../ScanDir
+
+//Adding Variables
+vi ~/.bashrc
+//press 'i' (to go into insert mode) & add the following at the end & before comments:
+ 
+CXSERVER=http://172.35.0.229
+CXTOKEN=5ee933c250fca59650db60a65a3b08b4
+PROJECT=CxServer\\SP\\Company\\Research\\microservices-demo
+export CXSERVER
+export CXTOKEN
+export PROJECT
+//press 'escape' and enter ':wq'
+source ~/.bashrc
+
