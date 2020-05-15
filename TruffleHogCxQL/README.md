@@ -2,6 +2,10 @@
 
 A port of the original [TruffleHog](https://github.com/dxa4481/truffleHog) code that executes in Checkmarx SAST as a CxQL customization.
 
+# Warning
+
+The queries here will have a tendency to generate many false positives.  Before implementing this, consider weighing the value of spending time marking several false positives as "Non-Exploitable" against perhaps finding a few true positives that reveal publicly exposed secrets. Some secrets will be benign; others will have the potential for granting administrative access to your production system.
+
 ## How to Install
 
 These queries are not specific to any language, therefore it can be used in scans
