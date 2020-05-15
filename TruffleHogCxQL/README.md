@@ -55,6 +55,7 @@ needed to support extensions for your language of choice.
 	exec AddFileExtToLanguage 'Java', 'yaml', 'JAVA_XML_EXTENSIONS'
 	exec AddFileExtToLanguage 'Java', 'yml', 'JAVA_XML_EXTENSIONS'
 	exec AddFileExtToLanguage 'Java', 'json', 'JAVA_XML_EXTENSIONS'
+	
 	exec AddFileExtToLanguage 'JavaScript', 'properties', 'JS_XML_EXTENSIONS'
 	exec AddFileExtToLanguage 'JavaScript', 'yaml', 'JS_XML_EXTENSIONS'
 	exec AddFileExtToLanguage 'JavaScript', 'yml', 'JS_XML_EXTENSIONS'
@@ -63,6 +64,22 @@ needed to support extensions for your language of choice.
 	exec AddFileExtToLanguage 'PHP', 'yaml', 'PHP_COMMON_EXTENSIONS'
 	exec AddFileExtToLanguage 'PHP', 'yml', 'PHP_COMMON_EXTENSIONS'
 	exec AddFileExtToLanguage 'PHP', 'json', 'PHP_COMMON_EXTENSIONS'
+		
+	exec AddFileExtToLanguage 'Ruby', 'yaml', 'RUBY_OTHERS_EXTENSIONS'
+	exec AddFileExtToLanguage 'Ruby', 'yml', 'RUBY_OTHERS_EXTENSIONS'
+	exec AddFileExtToLanguage 'Ruby', 'json', 'RUBY_OTHERS_EXTENSIONS'
+		
+	exec AddFileExtToLanguage 'Groovy', 'yaml', 'GROOVY_EXTENSIONS'
+	exec AddFileExtToLanguage 'Groovy', 'yml', 'GROOVY_EXTENSIONS'
+	exec AddFileExtToLanguage 'Groovy', 'json', 'GROOVY_EXTENSIONS'
+	
+	exec AddFileExtToLanguage 'Scala', 'yaml', 'SCALA_EXTENSIONS'
+	exec AddFileExtToLanguage 'Scala', 'yml', 'SCALA_EXTENSIONS'
+	exec AddFileExtToLanguage 'Scala', 'json', 'SCALA_EXTENSIONS'
+	
+	exec AddFileExtToLanguage 'Python', 'yaml', 'PYTHON_CORE_EXTENSIONS'
+	exec AddFileExtToLanguage 'Python', 'yml', 'PYTHON_CORE_EXTENSIONS'
+	exec AddFileExtToLanguage 'Python', 'json', 'PYTHON_CORE_EXTENSIONS'
 ```
 
 
