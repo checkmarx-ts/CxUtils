@@ -21,3 +21,4 @@ Project | Description
 [installAndRun-CxConsole](installAndRun-CxConsole) | Powershell script to auto-download and execute the Checkmarx CLI
 [multi-repo-whitelist-scan](multi-repo-whitelist-scan) | Script to clone multiple git repos, remove unrecognized file types, and scan as one project using the CxCLI from a linux bash shell
 [engineering-health-check](engineering-health-check) | Powershell scripts that run the odata query used for Engineering Health Checks
+[cxsast_engine_cleanup](cxsast_engine_cleanup) | Batch file designed to cleanup scans & logs from CxSAST engine servers 
