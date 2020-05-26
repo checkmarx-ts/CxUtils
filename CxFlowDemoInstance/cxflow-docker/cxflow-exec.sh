@@ -9,6 +9,21 @@ fi
 
 echo Using CxFlow Jar: $CXFLOW_JAR
 
+echo --- Jar Hashes: MD5 ---
+md5sum /app/*.jar
+
+echo --- Jar Hashes: SHA1 ---
+sha1sum /app/*.jar
+
+echo --- Jar Hashes: SHA256 ---
+sha256sum /app/*.jar
+
+echo --- Jar Hashes: SHA3 ---
+sha3sum /app/*.jar
+
+echo --- Jar Hashes: SHA512 ---
+sha512sum /app/*.jar
+
 java -Xms512m -Xmx2048m -Djava.security.egd=file:/dev/./urandom \
     -Dspring.profiles.active=web \
     $JAVA_OPTS \
