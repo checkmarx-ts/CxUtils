@@ -8,6 +8,8 @@ fi
 
 
 echo Using CxFlow Jar: $CXFLOW_JAR
+sha1sum /app/*.jar
+
 
 java -Xms512m -Xmx2048m -Djava.security.egd=file:/dev/./urandom \
     -Dspring.profiles.active=web \
