@@ -3,6 +3,9 @@ FROM checkmarxts/cxflow:latest
 
 COPY cxflow-exec.sh /cxflow-exec.sh
 
+# Groovy scripts (files ending in ".groovy") are copied into the /app directory.  
+# Reference groovy scripts as full path or relative to the cx-flow jar.
+
 # Drop any cxflow jar in and rebuild for development debugging purposes.
 # A jar stamped with a later version or no version will be used instead
 # of the jar published in "checkmarxts/cxflow:latest".
