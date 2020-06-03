@@ -1,0 +1,69 @@
+
+
+===============================================================================
+                                 Checkmarx
+               - - - - - - - - - - - - - - - - - - - - - - - - -
+               Sales Engineering Services Customizations License
+===============================================================================
+
+                     COPYRIGHT NOTICE AND LICENSE
+ 
+Copyright 2018-2019, Checkmarx Inc.  All rights reserved.
+
+Checkmarx Inc. (?Checkmarx?) hereby grants to the individual or legal entity
+exercising the license granted hereby (?You?) a perpetual, worldwide,
+non-exclusive, no-charge, royalty-free, irrevocable copyright license to
+reproduce, copy, modify, use, sublicense, and distribute the Software 
+source or object code form, for any purpose, with or without a fee, provided
+that the above copyright notice and this Copyright Notice and License
+Agreement appears in all copies.  
+
+Except for the licensed granted above, You are granted no title, ownership
+or intellectual property rights in or to the Software, in whole or part. 
+All such rights shall remain in Checkmarx.
+
+Checkmarx does not support this Software. 
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES AND CONDITIONS OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT OF 
+THIRD PARTY RIGHTS. IN NO EVENT SHALL CHECKMARX BE LIABLE FOR ANY CLAIM, 
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+USE OR OTHER DEALINGS IN THE SOFTWARE. 
+
+You are solely responsible for determining the appropriateness of using or
+redistributing the Software and assume any and all of the risks associated 
+with the exercise of the licensed rights granted hereunder.
+
+IN NO EVENT AND UNDER NO LEGAL THEORY, WHETHER IN TORT (INCLUDING NEGLIGENCE),
+CONTRACT (INCLUDING, WITHOUT LIMITATION, FROM A FUNDAMENTAL BREACH, OR BREACH 
+OF A CONDITION, FUNDAMENTAL TERM OR WARRANTY) OR OTHERWISE, UNLESS REQUIRED BY
+APPLICABLE LAW (SUCH AS DELIBERATE AND GROSSLY NEGLIGENT ACTS) OR AGREED TO IN
+WRITING, SHALL CHECKMARX BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY DIRECT, 
+INDIRECT,  SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES OF ANY CHARACTER 
+ARISING AS A RESULT OF THIS LICENSE OR OUT OF THE USE OR INABILITY TO USE THE
+SOFTWARE(INCLUDING BUT NOT LIMITED TO DAMAGES FOR LOSS OF GOODWILL, WORK 
+STOPPAGE, COMPUTER FAILURE OR MALFUNCTION, OR ANY AND ALL OTHER COMMERCIAL
+DAMAGES OR LOSSES), EVEN IF CHECKMARX HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES. 
+
+The foregoing limitations and exclusions of liability shall apply even if a 
+party had been advised of the possibility of any such costs, losses or 
+damages or knew or ought to have known of such costs, losses or damages. 
+The foregoing provisions limiting the liability of Checkmarx shall also apply
+to its officers, directors, employees, and agents as trust provisions for 
+the benefit of such officers, directors, employees, and agents and shall be
+enforceable by such persons as trust beneficiaries.
+
+The license granted hereby does not grant permission to use the trade names,
+trade-marks, service marks, or product names of Checkmarx, except as required 
+for reasonable and customary use in describing the origin of the Software
+and reproducing the content of the NOTICE file. Except as contained in this
+notice, Checkmarx?s name shall not be used in advertising or otherwise to 
+promote the sale, use or other dealings in this Software without prior 
+written authorization of Checkmarx. 
+
+===============================================================================
+
+

@@ -1,0 +1,21 @@
+# Xcode
+#
+# gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
+
+## User folders
+__pycache__/
+Elevate_background_files/
+images/
+JwsDev_Plists/
+JwsDev_Plists_GitLab/
+JwsDev_Plists_ProjectCreator/
+JwsDev_WorkDir/
+Older_Source/
+Older_Source_NOT-Used/
+Output_Tools_Logs/
+Postman_Git_files/
+Python2.7_source_archive/
+Sample_Source/
+Shell_Script_work/
+Verizon_background_files/
+Zip_Files_Archive/
