@@ -23,3 +23,4 @@ Project | Description
 [engineering-health-check](engineering-health-check) | Powershell scripts that run the odata query used for Engineering Health Checks
 [cxsast_engine_cleanup](cxsast_engine_cleanup) | Batch file designed to cleanup scans & logs from CxSAST engine servers 
 [CxPythonTools](CxPythonTools) | Checkmarx Python tools 
+[data-retention](data-retention) | Controls (Starts & Stops) data retention.  Given the URL of a specific Checkmarx web interface, starts a data retention by deleting either all scans within a specified date range or all but the last X scans for each project.
