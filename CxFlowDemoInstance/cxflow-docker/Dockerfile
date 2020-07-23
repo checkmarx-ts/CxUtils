@@ -1,4 +1,4 @@
-FROM checkmarxts/cxflow:latest
+FROM checkmarx/cx-flow:latest
 
 
 COPY cxflow-exec.sh /cxflow-exec.sh
