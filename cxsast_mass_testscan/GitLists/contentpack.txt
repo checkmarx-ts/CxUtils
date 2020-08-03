@@ -1,0 +1,13 @@
+https://github.com/hclproducts/AltoroJ.git
+https://github.com/CSPF-Founder/JavaVulnerableLab.git
+https://github.com/ForgeRock/openidm-community-edition.git
+https://github.com/spring-petclinic/spring-framework-petclinic.git
+https://github.com/psiinon/bodgeit.git
+https://github.com/WebGoat/WebGoat.git
+https://github.com/OWASP/Benchmark.git
+https://github.com/ScaleSec/vulnado.git
+https://github.com/pull-vert/demo-kotlin.git
+https://github.com/jerryhoff/WebGoat.NET.git
+https://github.com/dotnet-architecture/eShopOnWeb.git
+https://github.com/umbraco/Umbraco-CMS.git
+https://github.com/lukencode/FluentEmail.git

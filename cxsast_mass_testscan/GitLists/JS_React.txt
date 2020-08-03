@@ -1,0 +1,9 @@
+https://github.com/OWASP/NodeGoat.git
+https://github.com/bkimminich/juice-shop.git
+https://github.com/toolness/security-adventure.git
+https://github.com/gatsbyjs/gatsby.git
+https://github.com/15Dkatz/react-security.git
+https://github.com/r-park/soundcloud-redux.git
+https://github.com/vuejs/vue-hackernews-2.0.git
+https://github.com/vuejs/news.vuejs.org.git
+https://github.com/vuejs/vue-hackernews.git
