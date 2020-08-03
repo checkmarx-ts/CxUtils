@@ -1,0 +1,11 @@
+https://github.com/spring-petclinic/spring-framework-petclinic.git
+https://github.com/spring-petclinic/spring-petclinic-microservices.git
+https://github.com/spring-petclinic/spring-petclinic-data-jdbc.git
+https://github.com/spring-petclinic/spring-petclinic-angularjs.git
+https://github.com/spring-petclinic/spring-petclinic-rest.git
+https://github.com/spring-petclinic/spring-petclinic-kubernetes.git
+https://github.com/WebGoat/WebGoat.git
+https://github.com/microservices-demo/orders.git
+https://github.com/microservices-demo/queue-master.git
+https://github.com/microservices-demo/shipping.git
+https://github.com/microservices-demo/carts.git

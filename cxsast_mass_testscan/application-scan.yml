@@ -1,0 +1,28 @@
+server:
+  port: 8982
+logging:
+  file: flow.log
+  
+cxflow:
+  bug-tracker: NONE
+  filter-severity:
+  filter-category:
+  filter-cwe:
+  filter-status:
+    #mitre-url: https://cwe.mitre.org/data/definitions/%s.html
+    #wiki-url: https://custodela.atlassian.net/wiki/spaces/AS/pages/79462432/Remediation+Guidance 
+    #codebash-url: https://checkmarx-demo.codebashing.com/courses/
+  
+checkmarx:
+  username: admin
+  password: P@ssword1
+  client-secret: 014DF517-39D1-4453-B7B3-9930C563627C
+  base-url: http://172.35.0.207
+  team: \CxServer\SP\Company\Research
+  scan-preset: Checkmarx Default
+  url: ${checkmarx.base-url}/cxrestapi
+  #WSDL Config
+  portal-url: ${checkmarx.base-url}/cxwebinterface/Portal/CxWebService.asmx
+  sdk-url: ${checkmarx.base-url}/cxwebinterface/SDK/CxSDKWebService.asmx
+  portal-wsdl: ${checkmarx.base-url}/Portal/CxWebService.asmx?wsdl
+  sdk-wsdl: ${checkmarx.base-url}/SDK/CxSDKWebService.asmx?wsdl
