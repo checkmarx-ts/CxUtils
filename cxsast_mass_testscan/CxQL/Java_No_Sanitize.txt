@@ -1,0 +1,101 @@
+//High Vulns
+//Resource_Injection has reduce small flows
+//Stored_XSS has reduce big flows
+
+//Code_Injection_NS
+CxList inputs = Find_Interactive_Inputs();
+CxList code = Find_Code_Injection_Outputs();
+result = inputs.InfluencingOn(code);
+
+//Command_Injection_NS
+CxList inputs = Find_Interactive_Inputs(); 
+CxList exec = Find_Command_Injection_Outputs();
+result = exec.InfluencedBy(inputs);
+
+//Connection_String_Injection_NS
+CxList con = Find_Connection();
+CxList inputs = Find_Interactive_Inputs();
+result = con.InfluencedBy(inputs);
+
+//Deserializiation_of_Untrusted_Data_NS
+CxList inputs = Find_Deserialization_Inputs();
+inputs.Add(Find_Deserialization_Inputs_Language());
+CxList deserializers = Find_Unsafe_Deserializers();
+result = inputs.InfluencingOn(deserializers);
+
+//Deserializiation_of_Untrusted_Data_in_JMS_NS
+CxList outputs = All.FindByMemberAccess("Message.*");
+CxList inputs = Find_MethodDecls().FindByShortName("onMessage");
+inputs = inputs.GetByAncs(All.InheritsFrom("MessageListener"));
+inputs = Find_ParamDecl().GetByAncs(inputs);
+result = inputs.InfluencingOn(outputs);
+
+//Expression_Language_Injection_OGNL_NS
+CxList inputs = Find_Inputs();
+CxList outputs = Find_OGNL_Outputs();
+result = inputs.InfluencingOn(outputs);
+
+//Expression_Language_Injection_SPEL_NS
+CxList inputs = Find_Inputs();
+CxList outputs = Find_SPEL_Outputs();
+result = inputs.InfluencingOn(outputs);
+
+//LDAP_Injection_NS
+CxList inputs = Find_Interactive_Inputs();
+CxList outputs = Find_LDAP_Outputs();
+result = outputs.InfluencedBy(inputs);
+
+//Reflected_XSS_All_Clients_NS
+CxList inputs = Find_Interactive_Inputs();
+CxList outputs = Find_XSS_Outputs();
+result = inputs.InfluencingOn(outputs);
+
+//Resource_Injection_NS
+CxList socket = Find_Socket_Resource();
+CxList resource = All.GetByAncs(socket);
+CxList inputs = Find_Interactive_Inputs();
+CxList paths = inputs.DataInfluencingOn(resource);
+result = paths.ReduceFlow(CxList.ReduceFlowType.ReduceSmallFlow);
+
+//SQL_Injection_NS
+CxList db = Find_SQL_DB_In();
+CxList inputs = Find_Interactive_Inputs();
+result = inputs.InfluencingOn(db);
+
+//Second_Order_SQL_Injection_NS
+CxList dbOut = Find_DB_Out();
+CxList read = All.NewCxList();
+read.Add(Find_Read_NonDB());
+read.Add(Find_FileSystem_Read());
+CxList dbIn = Find_SQL_DB_In();
+CxList dbParams = All.GetParameters(dbIn);
+CxList dbWithParams = dbIn.FindByParameters(dbParams);
+CxList dbWithNoParams = dbIn - dbWithParams;
+CxList endDB = All.NewCxList();
+endDB.Add(dbParams);
+endDB.Add(dbWithNoParams);
+CxList dbOutRead = All.NewCxList();
+dbOutRead.Add(dbOut);
+dbOutRead.Add(read);
+result = dbOutRead.InfluencingOn(endDB);
+
+//Stored_XSS_NS
+CxList db = Find_DB_Out();
+CxList readNonDB = Find_Read_NonDB();
+//System.getProperties should not be considered as input
+CxList listSystemGetPropertiesInInputs = readNonDB.FindByMemberAccess("System.getProperty");
+listSystemGetPropertiesInInputs.Add(readNonDB.FindByMemberAccess("System.getProperties"));
+readNonDB -= listSystemGetPropertiesInInputs;
+CxList read = All.NewCxList();
+read.Add(readNonDB);
+read.Add(Find_FileSystem_Read());
+CxList inputs = All.NewCxList();
+inputs.Add(db);
+inputs.Add(read);
+CxList outputs = Find_XSS_Outputs();
+result = inputs.InfluencingOn(outputs);
+
+//XPath_Injection_NS
+CxList XPath = Find_XPath_Outputs();
+CxList inputs = Find_Interactive_Inputs();
+result = XPath.InfluencedBy(inputs);

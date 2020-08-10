@@ -16,6 +16,7 @@ Project | Description
 [cxgit](cxgit) | Powershell utility designed to help answer the question "I have XXX repositories, how many CxProjects do I need"?
 [CxPythonTools](CxPythonTools) | Checkmarx Python tools
 [cxsast_engine_cleanup](cxsast_engine_cleanup) | Batch file designed to cleanup scans & logs from CxSAST engine servers 
+[cxsast_mass_testscan](cxsast_mass_testscan) | This repository has scripts for scanning using CxFlow or CxCLI.  The scripts ingest a text file of public git repos. 
 [CxSASTRestApiExample](CxSASTRestApiExample) | This powershell template demonstrates how to use the Checkmarx SAST REST API endpoints using token authentication.
 [CxSeverityOverride](CxSeverityOverride) | A python based utility that would allow the user to change the severity of the query, package type of the query and/or add the query to multiple presets at the same time.
 [CxSOAP-API-Examples](CxSOAP-API-Examples) | Checkmarx SOAP API Examples (8.X versions)
