@@ -1,0 +1,8 @@
+https://github.com/angular/angular-cli.git
+https://github.com/rangle/angular-ssr.git
+https://github.com/epiqueras/getsy.git
+https://github.com/learnapollo/learnapollo.git
+https://github.com/taoziUncle/ng2-admin-master.git
+https://github.com/paulirish/pwmetrics.git
+https://github.com/typeorm/typeorm.git
+https://github.com/microsoft/TypeScriptSamples.git
