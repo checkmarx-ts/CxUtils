@@ -1,8 +1,10 @@
 # user-type-migration
 
-Checkmarx CxSAST supports application users (internal username and passwords), Active Directory, LDAP, and SAML user types. A user's type defines how the user can authenticate to their CxSAST account. Once a user has been added to its type cannot be changed through the application UI. However, it may be possible to migrate user types through the database as seen in this process.
+Checkmarx CxSAST supports application users (internal username and passwords), Active Directory, LDAP, and SAML user types. A user's type defines how the user can authenticate to their CxSAST account. Once a user has been added it's type cannot be changed through the application UI. However, it is possible to migrate user types on the backend in the database. This page explains how to do this.
 
-Please make sure to consult with Checkmarx Professional Services on user migration assitance and do not use this tool without consultation with Checkmarx. This tool is highly dependent on the database schema version and may need to be modified for your Checkmarx system. 
+Consult with Checkmarx Professional Services on user migration assitance before using this process. Do not use this process unless directed or referred to it by Checkmarx. This tool is highly dependent on the database schema version and may need to be modified for your Checkmarx system. 
+
+This process works for CxSAST v8.9 HF7. It will likely work or be able to work with some modification for other version of 8.9. 
 
 You should become familiar with this process and its limitations before you begin.
 
