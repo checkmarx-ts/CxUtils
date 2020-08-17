@@ -28,4 +28,5 @@ Project | Description
 [perfmon](perfmon) | This script makes it easy to get up and running with Perfmon to monitor your Checkmarx infrastructure
 [svn-cx-runner](svn-cx-runner) | Utility that iterates through SVN repo, downloads Maven dependencies and creates Checkmarx projects.
 [TruffleHogCxQL](TruffleHogCxQL) | A port of the TruffleHog secrets detector.  It finds potential secrets through Regular Expression matches and High Entropy string detection.
+[user-type-migration](user-type-migration) | A process to generate SQL Statements to migrate from one user type to another (e.g. LDAP to SAML)
 [WindowsNoRDP](WindowsNoRDP) | A script that will configured the ability to log into a server's desktop using VNC over HTTP.  Primarily made to facilitate access to Checkmarx training VMs, this is useful in situations where RDP port 3389 access to a training instance may be blocked by a corporate firewall.
