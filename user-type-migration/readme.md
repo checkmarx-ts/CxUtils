@@ -1,6 +1,6 @@
 # user-type-migration
 
-Checkmarx CxSAST supports application users (internal username and passwords), Active Directory, LDAP, and SAML user types. A user's type defines how the user can authenticate to their CxSAST account. Once a user has been added it's type cannot be changed through the application UI. However, it is possible to migrate user types on the backend in the database. This page explains how to do this.
+Checkmarx CxSAST supports application users (internal username and passwords), Active Directory, LDAP, and SAML user types. A user's type defines how the user will authenticate to their CxSAST account. Once a user has been added it's type cannot be changed through the application UI. However, it is possible to migrate user types on the backend in the database. This page explains how to do this.
 
 Consult with Checkmarx Professional Services on user migration assitance before using this process. Do not use this process unless directed or referred to it by Checkmarx. This tool is highly dependent on the database schema version and may need to be modified for your Checkmarx system. 
 
@@ -10,25 +10,25 @@ You should become familiar with this process and its limitations before you begi
 
 # How to migrate users from one type to another (e.g. LDAP to SAML).
 
-There is no way to change user type within Checkmarx natively. This approach changes a user type in the database. These are the steps to change a user type. 
+At a high level you will need to: 
 
 1. Prepare your authentication providers
 1. Map your users to their new type and create a CSV mapping file.
 1. Generate the SQL migration script
 1. Execute the SQL in a maintenance window
 
-Follow the detailed steps outlined below to begin.
+The most difficult part of this is mapping your users. Follow the detailed steps outlined below to begin.
 
 ## Prepare your authentication providers
 
-Configure your target authentication providers ahead of time wether you are migrating to SAML, LDAP, or Active Directory. 
+Configure your target authentication providers ahead of time whether you are migrating to SAML, LDAP, or Active Directory. 
 
 * [SAML](https://checkmarx.atlassian.net/wiki/spaces/KC/pages/1243415011/SAML+Integration)
 * [LDAP](https://checkmarx.atlassian.net/wiki/spaces/KC/pages/126917112/LDAP+Management)
 
 ## Map your users to their new type and create a CSV mapping file
 
-Use this SQL query to extract your current users and map them to their future state. Delete any rows for users who you do not want to change.
+Use this SQL query to extract your current users and map them to their future state. Delete any rows for users who you do not want to change. Use SQL Server Management Studio to run this and save the results for analysis in Excel.
 ```sql
 select  u.username as 'before_username', 
 ut.Type as 'before_usertype', 
@@ -46,10 +46,10 @@ Load the results into Excel and review it to create a CSV file with this sample 
 before_username, before_usertype, before_fname, before_lname, after_username, after_usertype
 
 # (Example) LDAP to SAML
-"corp2\nsekots", "5", "Neb", "Sekots", "SAML\nebsekots@checkmarx.com", "6" 
+"corp2\jdoe", "5", "John", "Doe", "SAML\jdoe@checkmarx.com", "6" 
 
 # (Example) SAML to LDAP
-"SAML\nebsekots@checkmarx.com", "6" , "Neb", "Sekots", "corp2\nsekots", "5"
+"SAML\jdoe@checkmarx.com", "6" , "Jane", "Doe", "corp2\jdoe", "5"
 ```
 
 Note: This example is annotated with `#` indicating a comment line. Your CSV file should not actually have comments.
@@ -62,8 +62,8 @@ before_username | The username as it currently is in the database. Obtain this f
 before_usertype | The user type ID as it currently is in the database. Obtain this from the SQL query and do not change it.
 before_fname | The user first name as it currently is in the database. Obtain this from the SQL query and do not change it.
 before_lname | The user last name as it currently is in the database. Obtain this from the SQL query and do not change it.
-after_username | The new user name that you want the user to have.
-after_usertype | The new user type id that you want the user to have.
+after_username | The new user name that you want the user to have. Chose this value based on the target user type (guidance below).
+after_usertype | The new user type id that you want the user to have. Chose this value based on the target user type (guidance below).
 
 ### Specifying after_username and after_usertype values
 The `after_username` field needs to be specially formatted when migrating users to SAML, LDAP, and Active Directory. `after_usertype` must be set to an ID corresonding to the type of user.
@@ -257,7 +257,7 @@ If anything goes wrong, restore the database backups
 
 # Limitations
 
-* Externalized team assignment is not supported in this process. If you need these features you should first migrate your users and then begin using whatever features of the users' new authentication type you require. 
+* Externalized team and role assignment is not supported in this process. If you need these features you should first migrate your users and then begin using whatever features of the users' new authentication type you require. 
 
 * This approach works with CxSAST 8.9 HF7. 
 
