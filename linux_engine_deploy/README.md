@@ -22,8 +22,8 @@ In order to retrieve its password, connect to CxSAST database, and execute the f
 
 TODO
 - Verify if it's possible 61616 port is inaccurate based on fresh installs.
--Add in error handling
--Check for docker
--Check if CxURL is responsive
--Add in engine registration and API calls 
--Add in kicking off a scan via API calls for smoke test to generate some results.
+- Add in error handling
+- Check for docker
+- Check if CxURL is responsive
+- Add in engine registration and API calls 
+- Add in kicking off a scan via API calls for smoke test to generate some results.
