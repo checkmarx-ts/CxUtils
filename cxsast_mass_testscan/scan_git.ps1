@@ -9,7 +9,7 @@ Test command to use before running script on large amount of repos
 #Replace variables with appropriate values
 $CLI = 'C:\Users\CxAdmin\CxConsole\runCxConsole.cmd'
 $Team = 'CxServer\SP\Company\Demo\'
-$CxServer = 'http://ec2amaz-3jbtk7r'
+$CxServer = 'http://localhost'
 $CxToken = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 
 #CxFlow
