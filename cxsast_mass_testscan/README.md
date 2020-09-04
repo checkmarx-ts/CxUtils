@@ -19,7 +19,7 @@ cd C:\Users\CxAdmin
 mkdir CxConsole && cd ./CxConsole
 
 #Latest public CxCLI
-wget -O cli.zip https://download.checkmarx.com/9.0.0/Plugins/CxConsolePlugin-2020.2.18.zip && unzip cli.zip && del cli.zip
+wget -O cli.zip https://download.checkmarx.com/9.0.0/Plugins/CxConsolePlugin-2020.3.1.zip && unzip cli.zip && del cli.zip
 
 ```
 * Update the .ps1 script values $CxServer, $CxTeam, $CLI  
@@ -51,7 +51,7 @@ wget -O cxflow.jar https://github.com/checkmarx-ltd/cx-flow/releases/download/1.
 * Update the .txt file of choice and run the following command to scan 
 
 ```
-. .\scan_git.ps1; FlowScan -gitListFilePath giturls.txt
+. .\scan_git.ps1; FlowScan -gitLis giturls.txt
 ```
 
 ## Scan_Git_CxFlow for Linux using CxFlow

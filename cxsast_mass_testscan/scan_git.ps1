@@ -9,8 +9,8 @@ Test command to use before running script on large amount of repos
 #Replace variables with appropriate values
 $CLI = 'C:\Users\CxAdmin\CxConsole\runCxConsole.cmd'
 $Team = 'CxServer\SP\Company\Demo\'
-$CxServer = 'http://localhost'
-$CxToken = 'e07ec4960b1d7214cce9997d0ad23ac8b110c17d26cb3ffd7399c493df395dcd'
+$CxServer = 'http://ec2amaz-3jbtk7r'
+$CxToken = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 
 #CxFlow
 $Flow = 'C:\Users\CxAdmin\CxFlow\cxflow.jar'
@@ -66,7 +66,8 @@ function FlowScan
     git clone $line $clonefolder
     $gitName = $line.Substring($line.LastIndexOf("/") + 1)
     $Project = [IO.Path]::GetFileNameWithoutExtension($gitName)
-  
+    # Added 'cd' command to satisfy $clonefolder relative path
+	  cd C:\Users\CxAdmin\CxFlow
     java -jar $Flow --spring.config.location="./application-scan.yml" --scan --f=$clonefolder --cx-project=$Project --app=$Project --forcescan  --exclude-folders=$flowexclusions
     Remove-Item $clonefolder -recurse -force
     Remove-Item * -Filter *.zip -force
