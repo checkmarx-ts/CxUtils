@@ -42,3 +42,7 @@ Sam Quakenbush, Sam Quakenbush - Readme
 
 # License
 This project is licensed under TBD
+
+# Updates
+Added some missing languages
+Changed GitHub REST API to use Org instead of User
