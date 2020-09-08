@@ -47,15 +47,14 @@ function scanGitHub
 {
 	$page = 1
 	$rec = 1
-	$user = Read-Host -Prompt 'Please enter your GitHub userid ---> '
+	$user = Read-Host -Prompt 'Please enter your GitHub Organisation name ---> '
 	$token = Read-Host -Prompt 'Please enter your personal token ---> '
 	# We need to loop through results as the API only returns max 100 results
 	# Increment page, to get next resutls. Set a linmit though ....
 	while($page -lt 6)
 	{
 	
-		# https://api.github.com/users/AndrewAtCheckmarx/repos?access_token=7ef44249319b1d2ffca9630aad5532f5f0794200
-		$URI = "https://api.github.com/users/" + $user + "/repos?access_token=" + $token 
+		$URI = "https://api.github.com/orgs/" + $user + "/repos?access_token=" + $token 
 		Write-Output $URI
 		$response = Invoke-WebRequest -Uri $URI -UseBasicParsing
 		$myjson = $response | ConvertFrom-Json
@@ -134,10 +133,6 @@ function scanADO
 	$rec = 0
 	$user = Read-Host -Prompt 'Please enter your ADO userid ---> '
 	$token = Read-Host -Prompt 'Please enter your personal token ---> '
-
-$user = "checkmarxUK"
-$token = "atxynbthwkf2kop65z2uj3u2hj33hckryniqjlakeavtyelqh6vq"
-	
 
 	$pair = ":$($token)"
 	$encodedCreds = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($pair))
@@ -321,7 +316,7 @@ while (($readeachrepo = $repoStreamreader.ReadLine()) -ne $null)
 		$file = get-item .\$name.log		
 		$clocStreamreader = New-Object -TypeName System.IO.StreamReader -ArgumentList $file
 		$eachlinenumber = 1
-		while (($readeachline = $clocStreamreader.ReadLine()) -ne $null)
+				while (($readeachline = $clocStreamreader.ReadLine()) -ne $null)
 		{
 			$line = -split $readeachline 
 			#Write-Output $line
@@ -331,8 +326,12 @@ while (($readeachrepo = $repoStreamreader.ReadLine()) -ne $null)
 				-Or $line[0].Equals("JavaScript") `
 				-Or $line[0].Equals("C#") `
 				-Or $line[0].Equals("Ruby") `
+				-Or $line[0].Equals("PHP") `
+				-Or $line[0].Equals("GO") `
+				-Or $line[0].Equals("HTML") `
 				-Or $line[0].Equals("Groovy") `
 				-Or $line[0].Equals("C++") `
+				-Or $line[0].Equals("C") `
 				-Or $line[0].Equals("C") `
 				-Or $line[0].Equals("Perl"))
 			{
@@ -340,10 +339,19 @@ while (($readeachrepo = $repoStreamreader.ReadLine()) -ne $null)
 				$Languages = $Languages + $line[0] + " "
 				$LOC = $LOC + $line[4]
 			}
+			elseif ($line[0].Equals("C/C++") `
+				-Or $line[0].Equals("Objective") `
+				)
+			{
+				# Collate the langages and LOC
+				$Languages = $Languages + $line[0] + " " + $line[1] + "; "
+				$LOC = $LOC + $line[5]
+			}
 			else 
 			{
-				$excludedLanguages = $excludedLanguages + $line[0] + " "
+				$excludedLanguages = $excludedLanguages + $line[0] + "; "
 			}
+		
 		}
 		
 		# Write the project, languages and LOC to a CSV file.
