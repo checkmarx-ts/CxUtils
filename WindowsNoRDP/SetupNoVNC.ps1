@@ -118,6 +118,9 @@ Set-WebConfigurationProperty -Filter "/system.webServer/rewrite/globalRules/rule
 Add-WebConfiguration -Filter "/system.webServer/rewrite/globalRules/rule[@name='NoVNC Websockify']/conditions" -PSPAth "IIS:\sites" -Value @{input = "{HTTP_HOST}"; pattern = ".*" }
 Set-WebConfiguration -Filter "/system.webServer/rewrite/globalRules/rule[@name='NoVNC Websockify']/action" -PSPAth "IIS:\sites" -Value @{type = "Rewrite"; url = "http://localhost:8000/websockify" }
 
+Output-Stage "Fixing Javascript MIME type for browsers that do strict content type validation"
+Set-ItemProperty -Path "Registry::HKEY_CLASSES_ROOT\\.js" -Name "Content Type" -Value "text/javascript"
+
 Output-Stage "Resetting IIS"
 iisreset
 
