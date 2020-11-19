@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 This is a Powershell script to retrieve your Checkmarx ScanData for Insight Analysis
 .DESCRIPTION
@@ -59,6 +59,10 @@ function getOAuth2Token() {
     catch {
         Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
         Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+		$Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$select=Id,ProjectName,OwningTeamId,TeamName,ProductVersion,EngineServerId,Origin,PresetName,ScanRequestedOn,QueuedOn,EngineStartedOn,EngineFinishedOn,ScanCompletedOn,ScanDuration,FileCount,LOC,FailedLOC,TotalVulnerabilities,High,Medium,Low,Info,IsIncremental,IsLocked,IsPublic&`$expand=ScannedLanguages(`$select=LanguageName)&`$filter=ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z"
+		Write-Host $Url
+		Read-Host -Prompt "An Error has prevented this script from being successful. Press paste the above Odata query in your browser..."
+		
         throw "Could not authenticate"
     }
     
@@ -79,6 +83,8 @@ function getOdata() {
     catch {
         Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
         Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+		Write-Host $Url
+		Read-Host -Prompt "An Error has prevented this script from being successful. Press paste the above Odata query in your browser..."
         throw "Cannot Get OData"
     }
 }
@@ -95,4 +101,3 @@ catch
     Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
     Read-Host -Prompt "The above error occurred. Press Enter to exit."
 }
-
