@@ -28,17 +28,20 @@ $timer = $(Get-Date)
 Write-Output "Fetching projects"
 $projects = &"support/rest/sast/projects.ps1" $session
 Write-Output "$($projects.Length) projects fetched - elapsed time $($(Get-Date).Subtract($timer))"
-$projects | %{Write-Debug $_} 
+$projects | % { Write-Debug $_ } 
 
+# refresh login, if needed
 $session = &"support/rest/sast/login.ps1" -existing_session $session -dbg:$dbg.IsPresent
+
 
 $timer = $(Get-Date)
 Write-Output "Fetching teams"
 $teams = &"support/rest/sast/teams.ps1" $session
 Write-Output "$($teams.Length) teams fetched - elapsed time $($(Get-Date).Subtract($timer))"
-$teams | %{Write-Debug $_} 
+$teams | % { Write-Debug $_ } 
 
-$projects | %{
+
+$projects | % {
     $prj = &"support/rest/sast/scans.ps1" $session $_.id
     Write-Output $prj
 }

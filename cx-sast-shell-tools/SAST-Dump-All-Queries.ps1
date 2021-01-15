@@ -16,16 +16,13 @@ $session = &"support\rest\sast\login.ps1" $sast_url $username $password -dbg:$db
 
 try {
     $response = &"support\soap\audit\getquerycollection.ps1" $session
-    
 }
 catch {
     throw $_
 }
-finally
-{
+finally {
     $logout = &"support\soap\audit\logout.ps1" $session
-    if ($true -ne $logout)
-    {
+    if ($true -ne $logout) {
         Write-Output WARNING - Logout failed.
     }
 }
