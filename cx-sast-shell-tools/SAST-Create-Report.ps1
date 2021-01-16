@@ -38,10 +38,17 @@ $timer = $(Get-Date)
 Write-Output "Fetching teams"
 $teams = &"support/rest/sast/teams.ps1" $session
 Write-Output "$($teams.Length) teams fetched - elapsed time $($(Get-Date).Subtract($timer))"
-$teams | % { Write-Debug $_ } 
+$team_index = New-Object 'System.Collections.Generic.Dictionary[int,string]'
+$teams | % { 
+    $team_index.Add($_.id, $_.fullName)
+    Write-Debug $_ 
+} 
 
 
 $projects | % {
-    $prj = &"support/rest/sast/scans.ps1" $session $_.id
-    Write-Output $prj
+    $scan = &"support/rest/sast/scans.ps1" $session $_.id
+    # TODO: response can be null for no scans.
+    # $_.name
+    # $_.teamId
+    Write-Output $scan
 }

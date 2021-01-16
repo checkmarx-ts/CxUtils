@@ -26,7 +26,7 @@ function GetQueryStringFromHashtable($table) {
 
 
     $table.Keys | % { 
-        [void]$query_builder.Append($sep).AppendFormat("{0}={1}", $_, [System.Web.HttpUtility]::HtmlEncode($table.Item($_)))
+        [void]$query_builder.Append($sep).AppendFormat("{0}={1}", $_, [System.Web.HttpUtility]::UrlEncode($table.Item($_)))
         $sep = "&"
     }
 

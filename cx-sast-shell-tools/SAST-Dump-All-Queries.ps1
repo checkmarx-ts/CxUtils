@@ -12,7 +12,7 @@ param(
 
 setupDebug($dbg.IsPresent)
 
-$session = &"support\rest\sast\login.ps1" $sast_url $username $password -dbg:$dbg.IsPresent
+$session = &"support\rest\sast\login.ps1" $sast_url $username $password -dbg:$dbg.IsPresent -soap_login_script "support/soap/audit/login.ps1"
 
 try {
     $response = &"support\soap\audit\getquerycollection.ps1" $session

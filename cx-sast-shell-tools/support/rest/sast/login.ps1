@@ -3,7 +3,8 @@ param(
     [String]$username,
     [String]$password,
     [Switch]$dbg,
-    [hashtable]$existing_session
+    [hashtable]$existing_session,
+    [string]$soap_login_script = "support/soap/webinterface/login.ps1"
 )
 
 . "support/rest_util.ps1"
@@ -18,7 +19,7 @@ if ($Null -ne $existing_session) {
     else {
         Write-Debug "Refreshing login"
         $session = $existing_session
-        $session.soap_session = & "support/soap/webinterface/login.ps1" $session.base_url $session.username $session.password
+        $session.soap_session = & $soap_login_script $session.base_url $session.username $session.password
     }
 }
 else {
@@ -31,7 +32,7 @@ else {
         client_secret = "014DF517-39D1-4453-B7B3-9930C563627C";
     }
     
-    $soap_session = & "support/soap/webinterface/login.ps1" $sast_url $username $password
+    $soap_session = & $soap_login_script $sast_url $username $password
     
     if ($true -eq $soap_session.v9) {
         $query_elems.scope = "sast_api"
