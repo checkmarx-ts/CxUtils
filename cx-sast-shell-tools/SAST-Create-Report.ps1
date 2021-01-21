@@ -38,7 +38,7 @@ $timer = $(Get-Date)
 Write-Output "Fetching teams"
 $teams = &"support/rest/sast/teams.ps1" $session
 Write-Output "$($teams.Length) teams fetched - elapsed time $($(Get-Date).Subtract($timer))"
-$team_index = New-Object 'System.Collections.Generic.Dictionary[int,string]'
+$team_index = New-Object 'System.Collections.Generic.Dictionary[string,string]'
 $teams | % { 
     $team_index.Add($_.id, $_.fullName)
     Write-Debug $_ 
