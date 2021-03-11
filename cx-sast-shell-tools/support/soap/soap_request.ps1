@@ -1,4 +1,4 @@
-param(
+ param(
     [Parameter(Mandatory = $true)]
     [hashtable]$session,
     [Parameter(Mandatory = $true)]
