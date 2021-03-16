@@ -1,6 +1,10 @@
+# **NOTE** *TruffleHog queries will be native to CxSast v9.4. If you are running v9.4, the CxQL queries found here are no longer required.*
+
 # TruffleHog CxQL
 
 A port of the original [TruffleHog](https://github.com/dxa4481/truffleHog) code that executes in Checkmarx SAST as a CxQL customization.
+
+
 
 # Warning
 
