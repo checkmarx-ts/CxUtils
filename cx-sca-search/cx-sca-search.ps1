@@ -7,13 +7,15 @@ This script searches for libraries (vulnerable or not) across scans (including h
 
 
 .PARAMETER dbUser
-    Database account that can read from the Checkmarx database. 
+    Database account that can read from the Checkmarx database.
     OPTIONAL: Skip if using Integrated Authentication on the Checkmarx database
 .PARAMETER dbPass
     Password for the database account that can read from the Checkmarx database
     OPTIONAL: Skip if using Integrated Authentication on the Checkmarx database
 .PARAMETER lib
     The library name to search for. Ex. log4j
+.PARAMETER daysBack
+    The number of days back to search from today. Ex. 1
 .PARAMETER group
     Grouping to use while displaying results on the console. Valid values are [Team | Project]. Ignored if used in conjunction with the -json flag.
 .PARAMETER json
@@ -28,31 +30,36 @@ This script searches for libraries (vulnerable or not) across scans (including h
 .\cx-sca-search.ps1 -lib log4j -group Project
 .\cx-sca-search.ps1 -lib log4j -json
 .\cx-sca-search.ps1 -dbUser dbaccount -dbPass sec$@t123 -lib log4j
-
+.\cx-sca-search.ps1 -lib log4j -lib log4j -daysBack 30
 
 .NOTES
 Version 1.0, Gem Immauel (gem.immanuel@checkmarx.com), Checkmarx Professional Services
 
-The command line parameters will override the values read from the 
+The command line parameters will override the values read from the
 configuration file (cx_sca_search_config.json)
 
 #>
-[CmdletBinding(DefaultParametersetName = 'None')] 
+[CmdletBinding(DefaultParametersetName = 'None')]
 Param(
     [Parameter(ParameterSetName = 'SQLServerAuth', Mandatory = $False, HelpMessage = "Database account to connect to the Checkmarx database (SQLServer Auth)")]
     [ValidateNotNullOrEmpty()]
     [String]
     $dbUser = "",
-    
+
     [Parameter(ParameterSetName = 'SQLServerAuth', Mandatory = $True, HelpMessage = "Database account password (SQLServer Auth)")]
     [ValidateNotNullOrEmpty()]
     [String]
-    $dbPass = "",  
-    
+    $dbPass = "",
+
     [Parameter(Mandatory = $True, HelpMessage = "Library name to search for.")]
     [ValidateNotNullOrEmpty()]
     [String]
     $lib = "",
+
+    [Parameter(Mandatory = $False, HelpMessage = "Number of days to go back for the search.")]
+    [ValidateNotNullOrEmpty()]
+    [String]
+    $daysBack = "1",
 
     [Parameter(Mandatory = $False, HelpMessage = "Groups search results for display either by Team or Project.")]
     [ValidateSet('Project', 'Team')]
@@ -60,17 +67,20 @@ Param(
     $group = "",
 
     [Parameter(Mandatory = $False, HelpMessage = "Render search results as JSON and write to file on disk.")]
-    [switch] 
+    [switch]
     $json,
 
     [Parameter(Mandatory = $False, HelpMessage = "Render search results in a Powershell Grid View")]
-    [switch] 
+    [switch]
     $grid
 )
 
 # This assumes that the SqlServer powershell module is already installed.
 # If not, run "Install-Module -Name Invoke-SqlCmd2" as an administrator prior to running this script.
-Import-Module "Invoke-SqlCmd2" -DisableNameChecking 
+Import-Module "Invoke-SqlCmd2" -DisableNameChecking
+
+# UPDATE THIS IF USING CxSAST v9.x
+[bool] $is9x = $False
 
 # -----------------------------------------------------------------
 # DateTime Utility
@@ -91,7 +101,7 @@ Class DateTimeUtil {
     [String] ToUTCAndFormat([DateTime] $dateTime) {
         return $this.Format($dateTime.ToUniversalTime())
     }
-    
+
     # Formats time based on configured format
     [String] Format([DateTime] $dateTime) {
         return $dateTime.ToString($script:config.cx.timeFormat)
@@ -102,18 +112,18 @@ Class DateTimeUtil {
 # Input/Output Utility
 # -----------------------------------------------------------------
 Class IO {
-    
+
     # General logging
     static [String] $LOG_FILE = "cx_sca_search.log"
     hidden [DateTimeUtil] $dateUtil = [DateTimeUtil]::new()
 
-    # Files for JSON output 
+    # Files for JSON output
     static [String] $FILE_SUFFIX_TIMESTAMP_FORMAT = "yyyyMMdd_hhmmssfff"
 
     # Logs given message to configured log file
     Log ([String] $message) {
         # Write to log file
-        $this.WriteToFile($message, [IO]::LOG_FILE) 
+        $this.WriteToFile($message, [IO]::LOG_FILE)
         # Also write to console
         $this.Console($message)
     }
@@ -137,7 +147,7 @@ Class IO {
 
         $this.Console("-----------------------------------------")
     }
-    
+
     # Utility that writes to given file
     hidden WriteToFile([String] $message, [String] $file) {
         Add-content $file -Value $this.AddTimestamp($message)
@@ -149,7 +159,7 @@ Class IO {
 
     # Write to JSON file
     WriteJSON([PSCustomObject] $object) {
-        
+
         # Ensure folder exists
         [String] $jsonOutDir = $script:config.log.jsonDirectory
         If (!(Test-Path $jsonOutDir)) {
@@ -157,7 +167,7 @@ Class IO {
         }
         $jsonOutDir = (Get-Item -Path $jsonOutDir).FullName
 
-        # Create timestamp 
+        # Create timestamp
         [DateTime] $timestamp = $this.dateUtil.NowUTC()
         [String] $fileSuffix = $timestamp.ToString([IO]::FILE_SUFFIX_TIMESTAMP_FORMAT)
 
@@ -167,7 +177,7 @@ Class IO {
 
         # Write to file
         Add-content $jsonFilePath -Value ($object | ConvertTo-Json)
-    }    
+    }
 }
 
 # -----------------------------------------------------------------
@@ -194,7 +204,7 @@ Class Config {
             $this.config = Get-Content -Path $configFilePath -Raw | ConvertFrom-Json
         }
         catch {
-            $this.io.Log("Provided configuration file at [" + [Config]::CONFIG_FILE + "] is missing / corrupt.")        
+            $this.io.Log("Provided configuration file at [" + [Config]::CONFIG_FILE + "] is missing / corrupt.")
         }
     }
 
@@ -241,7 +251,7 @@ Class DBClient {
             }
             else {
                 return Invoke-Sqlcmd2 -ServerInstance $this.serverInstance -Query $sql -SqlParameters $parameters -ErrorAction stop
-            }    
+            }
         }
         catch {
             $this.io.Log("Database execution error. $($_.Exception.GetType().FullName), $($_.Exception.Message)")
@@ -268,16 +278,16 @@ Class TeamsUtil {
         if ($teams) {
             foreach ($team in $teams) {
                 $this.teamPaths.Add($team["TeamId"], $team["TeamPath"])
-                $this.teamNames.Add($team["TeamId"], $team["TeamName"])
+      					$this.teamNames.Add($team["TeamId"], $team["TeamName"])
             }
         }
     }
 
     # Generates the full team name from given team ID
-    [String] GetFullTeamName ([String] $teamId) {
+    [String] GetFullTeamName ($teamId) {
 
         [String] $teamPath = $this.teamPaths[$teamId] + $teamId
-        
+
         if ($this.teamPaths -and $this.teamNames) {
 
             [System.StringSplitOptions] $option = [System.StringSplitOptions]::RemoveEmptyEntries
@@ -288,7 +298,7 @@ Class TeamsUtil {
                 $teamPath = $teamPath.Replace($teamPathId, $teamName)
             }
         }
-        
+
         return $teamPath
     }
 }
@@ -309,36 +319,59 @@ Class SCASearch {
     # Failed = 3
     hidden [int32] $scanState = 2
 
-    hidden [String] $searchSql = 
-    "SELECT distinct 
-        projects.Owning_Team as 'Team',
-        projects.Name as 'Project',
-        libs.Name as 'Library', libs.Version as 'Version',
-        scans.StartAnalyzeTime as 'Found In Scan'
-    FROM
-        cxdb.dbo.Scans 
-		INNER JOIN cxdb.dbo.Projects ON projects.id = scans.projectId 
-        INNER JOIN cxdb.dbo.ScannedLibraries scannedlibs ON scans.ScanId = scannedlibs.ScanId 
-        INNER JOIN cxdb.dbo.Libraries libs ON libs.Id = scannedlibs.LibraryId 
-    WHERE        
-        scans.scanState=$($this.scanState) and
-        libs.Name like @lib"
+	  hidden [String] $searchSql
 
     SCASearch ([DBClient] $dbClient) {
         $this.io = [IO]::new()
         $this.dbClient = $dbClient
+        if ($script:is9x) {
+          $this.searchSql = "SELECT distinct
+            teams.fullname as 'Team',
+            projects.Name as 'Project',
+            libs.Name as 'Library', libs.Version as 'Version',
+            scans.StartAnalyzeTime as 'Found In Scan'
+          FROM
+            cxdb.dbo.Scans
+            INNER JOIN cxdb.dbo.Projects ON projects.id = scans.projectId
+            INNER JOIN cxdb.dbo.ScannedLibraries scannedlibs ON scans.ScanId = scannedlibs.ScanId
+            INNER JOIN cxdb.dbo.Libraries libs ON libs.Id = scannedlibs.LibraryId
+            INNER JOIN cxdb.dbo.Teams ON projects.Owning_Team = teams.TeamId
+          WHERE
+            scans.scanState=$($this.scanState) and
+            libs.Name like @lib and
+            scans.StartAnalyzeTime >= DATEADD(day, @daysBack, convert(date, GETDATE()))"
+        }
+        else {
+          $this.searchSql = "SELECT distinct
+            projects.Owning_Team as 'Team',
+            projects.Name as 'Project',
+            libs.Name as 'Library', libs.Version as 'Version',
+            scans.StartAnalyzeTime as 'Found In Scan'
+          FROM
+            cxdb.dbo.Scans
+            INNER JOIN cxdb.dbo.Projects ON projects.id = scans.projectId
+            INNER JOIN cxdb.dbo.ScannedLibraries scannedlibs ON scans.ScanId = scannedlibs.ScanId
+            INNER JOIN cxdb.dbo.Libraries libs ON libs.Id = scannedlibs.LibraryId
+          WHERE
+            scans.scanState=$($this.scanState) and
+            libs.Name like @lib and
+            scans.StartAnalyzeTime >= DATEADD(day, @daysBack, convert(date, GETDATE()))"
+        }
         $this.teamsUtil = [TeamsUtil]::new($dbClient)
     }
 
     # Searches for given library name in the Checkmarx SCA results
-    Search([String] $lib) {
+    Search([String] $lib, [int] $daysBack) {
 
         # Only supported wildcard is zero-or-more characters.
-        [Hashtable] $parameters = @{ "lib" = $lib.Replace("*", "%") }
+        [Hashtable] $parameters = @{
+          "lib" = $lib.Replace("*", "%")
+          "daysBack" = -$daysBack
+        }
 
         [PSObject] $results = $this.dbClient.ExecSQL($this.searchSql, $parameters)
-        if ($results) {  
-            $this.io.Log("Found [$($results.Count)] results for library '$lib'.")  
+        if ($results) {
+            $this.io.Log("Found [$($results.Count)] results for library '$lib'.")
 
             [Array] $nTeams = $results | Select-Object -Unique Team
             [Array] $nProjects = $results | Select-Object -Unique Project
@@ -346,23 +379,25 @@ Class SCASearch {
             $this.io.Log("Number of Teams that use library : [" + $nTeams.Count + "]")
             $this.io.Log("Number of Projects that use library : [" + $nProjects.Count + "]")
             $this.io.Log("Number of Libraries that matched : [" + $nLibs.Count + "]")
-    
+
             [System.Collections.ArrayList] $resultTable = @()
 
-            foreach ($result in $results) {   
+            foreach ($result in $results) {
 
                 [String] $scanTime = $result["Found In Scan"]
-                [String] $teamName = $this.teamsUtil.GetFullTeamName($result["Team"])
-                $result["Team"] = $teamName
+                if (!$script:is9x) {
+                  [String] $teamName = $this.teamsUtil.GetFullTeamName($result["Team"])
+                  $result["Team"] = $teamName
+                }
 
                 # Create a JSON structure for results
                 [PSCustomObject] $resultJSON = [ordered] @{
-                    "Team"          = $teamName
+                    "Team"          = $result["Team"]
                     "Project"       = $result["Project"]
                     "Library"       = $result["Library"]
                     "Version"       = $result["Version"]
                     "Found In Scan" = $scanTime
-                }  
+                }
                 $notUsed = $resultTable.Add($resultJSON)
             }
 
@@ -379,7 +414,7 @@ Class SCASearch {
                 }
                 else {
                     if ($script:grid) {
-                        $data | Out-GridView -Title "Checkmarx SCA Search Results - [$lib]"            
+                        $data | Out-GridView -Title "Checkmarx SCA Search Results - [$lib]"
                     }
                     else {
                         $data | Format-Table -AutoSize | Out-Host
@@ -388,7 +423,7 @@ Class SCASearch {
             }
         }
         else {
-            $this.io.Console("No libraries matched '$lib'.")      
+            $this.io.Console("No libraries matched '$lib'.")
         }
     }
 }
@@ -414,7 +449,6 @@ if ($psv -and $psv -lt 5) {
 if ($dbUser) { $config.cx.db.username = $dbUser }
 if ($dbPass) { $config.cx.db.password = $dbPass }
 
-
 # Create an IO utility object
 [IO] $io = [IO]::new()
 
@@ -430,4 +464,4 @@ $io.WriteHeader()
 # SCASearch
 [SCASearch] $scaSearch = [SCASearch]::new($dbClient)
 
-$scaSearch.Search($lib)
+$scaSearch.Search($lib, $daysBack)
