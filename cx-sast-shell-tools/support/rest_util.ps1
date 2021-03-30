@@ -12,8 +12,15 @@ function GetRestHeadersForRequest($session_token, $accept_type) {
     }
 }
 
-function GetRestHeadersForJsonRequest($session_token) {
-    GetRestHeadersForRequest $session_token 'application/json'
+function GetRestHeadersForJsonRequest($session_token, $version) {
+    $accept_type = 'application/json'
+    
+    if ([String]::IsNullOrEmpty($version) -ne $true)
+    {
+        $accept_type += ";v=$version"
+    }
+
+    GetRestHeadersForRequest $session_token $accept_type
 }
 
 
