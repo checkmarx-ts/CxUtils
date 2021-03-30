@@ -10,6 +10,7 @@
         * Location data is not migrated (migrated projects default to "Local" source location)
         * Scheduling configurations are not migrated (it is not possible to schedule scans for "Local" source location)
         * Issue tracking settings are not migrated
+        * Post scan actions are not migrated
         * OSA settings are not migrated
         * Policy settings are not migrated
         * Data retention settings are not migrated
