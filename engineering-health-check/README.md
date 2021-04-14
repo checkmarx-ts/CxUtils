@@ -16,3 +16,11 @@ Open powershell and enter the following replacing XX with the correct version
 * Enter administrator credentials for CxSAST
 
 
+## Credential Prompt via Command Line
+
+The script prompts for a CxSAST username and password. If your environment does not have GUI support then you should first enable console prompting. 
+
+```powershell
+$key = "HKLM:\SOFTWARE\Microsoft\PowerShell\1\ShellIds"
+Set-ItemProperty $key ConsolePrompting True
+```
