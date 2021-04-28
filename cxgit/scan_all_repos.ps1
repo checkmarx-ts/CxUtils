@@ -54,7 +54,7 @@ function scanGitHub
 	while($page -lt 6)
 	{
 	
-		$URI = "https://api.github.com/orgs/" + $user + "/repos?access_token=" + $token 
+		$URI = "https://api.github.com/orgs/" + $user + "/repos?access_token=" + $token + "&per_page=100&page=" + $page
 		Write-Output $URI
 		$response = Invoke-WebRequest -Uri $URI -UseBasicParsing
 		$myjson = $response | ConvertFrom-Json
@@ -401,6 +401,3 @@ $WorkBook = $objExcel.Workbooks.Open($FilePath)
 				
 
 exit(0)
-
-
-
