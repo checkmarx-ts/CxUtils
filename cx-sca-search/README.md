@@ -13,6 +13,7 @@ The search tool searches results that are:
   - Group results by Project or Team
   - Outputs search results to the console or as JSON to disk
   - Optional gridview to further filter results (see -grid in usage)
+  - Optional number of days to search going back from today
 
 # Execution
 
@@ -47,6 +48,8 @@ cx-sca-search.ps1 -lib <libraryName> [-dbUser <dbAccount>] [-dbPass <dbPassword>
 | group | No | Grouping to use while displaying results on the console. Valid values are [Team or Project]. Ignored if used in conjunction with the -json flag. |
 | json | No | If this flag is specified, search results will be written to a JSON file on disk. |
 | grid | No | If this flag is specified, search results will be rendered in a Powershell Grid View, where further filtering by results can be performed. |
+| daysBack | No | Number of days to search going back from today. Defaults to 1 day. |
+
 
 ### Examples
 
