@@ -23,6 +23,11 @@ This command can also be used for stopping a currently running data retention pr
 |rollingDate|	A mandatory integer that is used to define the end date of the data retention by subtracting it from the current date.|
 |retentionDurationLimit	|An optional parameter that allows to limit the duration of the data retention process. Specified only in round hours (integers), and applies to all scans performed after this parameter was set.|
 
+### Configuration File
+The powershell script is driven by a configuration file "data_retention_config.json".
+- The "log" section defines the logging timestamp format and the logging folder.
+- The "cx" section defines the Checkmarx host and credentials to use for data retention. They can be overridden by parameters on the command line. If the "serviceUrl", "username" and "pass" parameters are provided on the command line, they will take precedence over values configured in the json config file.
+- The "dataRetention" section defines the default value for the duration limit for the data retention process. This can also be overridden in the command line by the "retentionDurationLimit" parameter.
 
 ### Examples
 #### By Number of Scans
