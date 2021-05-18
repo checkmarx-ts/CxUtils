@@ -254,10 +254,7 @@ Class RESTClient {
             $response = Invoke-RestMethod -uri $loginUrl -method POST -body $body -contenttype 'application/x-www-form-urlencoded'
         }
         catch {
-            if ($script:v) {
-              $this.io.Log("$_")
-            }
-            $this.io.Log("Could not authenticate against Checkmarx REST API. Reason: HTTP [$($_.Exception.Response.StatusCode.value__)] - $($_.Exception.Response.StatusDescription).")
+            $this.io.Log("Could not authenticate against Checkmarx REST API. $_")
         }
 
         if ($response -and $response.access_token) {
