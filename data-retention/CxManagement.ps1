@@ -6,6 +6,11 @@ Param(
     $v,
 
     [Parameter(Mandatory = $False)]
+    [ValidateNotNullOrEmpty()]
+    [String]
+    $configFile = "",
+
+    [Parameter(Mandatory = $False)]
     [String]
     $serviceUrl,
 
@@ -94,7 +99,7 @@ Class Config {
             $this.config = Get-Content -Path $configFilePath -Raw | ConvertFrom-Json
         }
         catch {
-            $this.io.Log("Provided configuration file at [" + $this.configconfigFile + "] is missing / corrupt.")
+            $this.io.Log("Provided configuration file at [" + $this.configFile + "] is missing / corrupt.")
             exit -1
         }
     }
@@ -412,7 +417,20 @@ Class DataRetention {
 # ============ Execution Entry ============= #
 # ========================================== #
 
-[PSCustomObject] $config = [Config]::new(".\data_retention_config.json").GetConfig()
+# Load configuration
+[String] $config = ".\data_retention_config.json"
+
+If ($configFile) {
+    if(!(Test-Path $configFile)) {
+        Write-Host "Could not read from given config path [$configFile]"
+        Exit
+    }
+    else {
+        $config = $configFile
+    }
+}
+
+[PSCustomObject] $config = [Config]::new($config).GetConfig()
 
 # Initialize log folder
 [String] $logFolder = "."
