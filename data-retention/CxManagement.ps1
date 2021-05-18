@@ -337,9 +337,9 @@ Class DataRetention {
             # - KEEP X number of scans for each project
             # - DELETE scans that match given date range
             #     - Explicit date range
-            #         - If start date is missing, go back sufficient number of years (Ex.2000 is a safe starting point)
-            #     - Rolling : going back number of days from given start date
-            #         - If start date is missing, start date will be TODAY
+            #         - If start date is missing, go back sufficient number of years (Ex.1900 is a safe starting point)
+            #     - Rolling : delete scans that occurred prior to given number of days
+            #         - Start date is set back a sufficient number of years (Ex.1900 is a safe starting point)
             if ($script:ByNumOfScans) {
                 $this.io.Log("Running data retention by number of scans.")
                 $this.ExecByNumOfScans($script:numOfScansToKeep, $this.config.dataRetention.durationLimitHours)
