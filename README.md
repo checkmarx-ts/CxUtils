@@ -1,6 +1,6 @@
 # Checkmarx Professional Services Utilities
 
-This is a curated set of utilities maintained by Checkmarx Professional Services and made available for public consumption.  This is a collection of scripts, tutorials, source code, and anything else that may be useful for use in the field by Checkmarx employees or customers.
+This is Joe Zanchi's curated set of utilities maintained by Checkmarx Professional Services and made available for public consumption.  This is a collection of scripts, tutorials, source code, and anything else that may be useful for use in the field by Checkmarx employees or customers.
 
 ## The List
 
