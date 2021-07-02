@@ -21,6 +21,7 @@ Project | Description
 [CxSeverityOverride](CxSeverityOverride) | A python based utility that would allow the user to change the severity of the query, package type of the query and/or add the query to multiple presets at the same time.
 [CxSOAP-API-Examples](CxSOAP-API-Examples) | Checkmarx SOAP API Examples (8.X versions)
 [data-retention](data-retention) | Controls (Starts & Stops) data retention.  Given the URL of a specific Checkmarx web interface, starts a data retention by deleting either all scans within a specified date range or all but the last X scans for each project.
+[data-retention-clean-orphaned-src](data-retention-clean-orphaned-src) | Cleans up orphaned source folders in CxSrc
 [engineering-health-check](engineering-health-check) | Powershell scripts that run the odata query used for Engineering Health Checks
 [installAndRun-CxConsole](installAndRun-CxConsole) | Powershell script to auto-download and execute the Checkmarx CLI
 [JenkinsDemoInstance](JenkinsDemoInstance) | Using Docker desktop, create an instance of Jenkins running under selected versions of the JDK.  Standalone and master/agent configurations are supported.  Settings are persisted in a local directory so that configurations are not lost when the Docker container is stopped.
