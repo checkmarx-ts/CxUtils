@@ -13,15 +13,6 @@ param(
 setupDebug($dbg.IsPresent)
 
 
-# login
-# use rest api to
-# - Get projects
-# - Get the last finished scan for each project
-# Use soap api to create a report with the template
-# Use rest api to
-# - probe for report complete
-# - download report
-
 $session = &"support/rest/sast/login.ps1" $sast_url $username $password -dbg:$dbg.IsPresent
 
 $timer = $(Get-Date)
