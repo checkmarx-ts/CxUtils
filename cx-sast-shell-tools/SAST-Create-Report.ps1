@@ -1,3 +1,31 @@
+<#
+
+    .SYNOPSIS
+        This script iterates projects in the SAST system and generates PDF reports for each scan using a user-defined template.
+
+    .DESCRIPTION
+        The functionality is the same as manually generating a scan report using the scan report generation button 
+        in the UI for each individual scan.  
+
+        When generating a scan report, an option UI appears allowing the selection of items to include in 
+        the report.  Some of these items can be saved as a template so that they do not need to be selected for every
+        report.  There are several options, however, that can not be persisted as a template and must be selected each time.
+
+        The file support/soap/CxReportTemplate.psd1 can be edited to create a template that is used to generate each PDF report.
+
+    .PARAMETER sast_url
+        The URL to the CxSAST instance.
+
+    .PARAMETER username
+        The name of the user in the CxSAST system.
+
+    .PARAMETER password
+        The password for the user in the CxSAST system.
+
+    .PARAMETER dbg
+        (Optional Flag) Runs in debug mode and prints verbose information to the screen while processing. 
+
+#>
 param(
     [Parameter(Mandatory = $true)]
     [System.Uri]$sast_url,

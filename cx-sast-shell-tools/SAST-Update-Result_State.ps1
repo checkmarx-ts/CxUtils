@@ -1,3 +1,27 @@
+<#
+
+    .SYNOPSIS
+        Changes result state for multiple results when given an input CSV file.
+
+    .DESCRIPTION
+        This script is experimental.
+
+    .PARAMETER sast_url
+        The URL to the CxSAST instance.
+
+    .PARAMETER username
+        The name of the user in the CxSAST system.
+
+    .PARAMETER password
+        The password for the user in the CxSAST system.
+
+    .PARAMETER csv_path
+        Path to the CSV file containing the fields with desired result states.
+
+    .PARAMETER dbg
+        (Optional Flag) Runs in debug mode and prints verbose information to the screen while processing. 
+
+#>
 param(
     [Parameter(Mandatory = $true)]
     [System.Uri]$sast_url,

@@ -1,3 +1,28 @@
+<#
+
+    .SYNOPSIS
+        Dumps all CxQL queries currently in the system.
+
+    .DESCRIPTION
+        This script is experimental.
+
+        It is currently intended primarily to allow a validation of current CxQL script contents. It produces a file
+        "CxQL_queries.xml" containing all of the query CxQL.
+
+
+    .PARAMETER sast_url
+        The URL to the CxSAST instance.
+
+    .PARAMETER username
+        The name of the user in the CxSAST system.
+
+    .PARAMETER password
+        The password for the user in the CxSAST system.
+
+    .PARAMETER dbg
+        (Optional Flag) Runs in debug mode and prints verbose information to the screen while processing. 
+
+#>
 param(
     [Parameter(Mandatory = $true)]
     [System.Uri]$sast_url,
