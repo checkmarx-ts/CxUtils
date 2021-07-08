@@ -54,7 +54,7 @@ function scanGitHub
 	while($page -lt 6)
 	{
 	
-		$URI = "https://api.github.com/orgs/" + $user + "/repos?access_token=" + $token 
+		$URI = "https://api.github.com/orgs/" + $user + "/repos?access_token=" + $token + "&per_page=100&page=" + $page
 		Write-Output $URI
 		$response = Invoke-WebRequest -Uri $URI -UseBasicParsing
 		$myjson = $response | ConvertFrom-Json
@@ -133,6 +133,7 @@ function scanADO
 	$rec = 0
 	$user = Read-Host -Prompt 'Please enter your ADO userid ---> '
 	$token = Read-Host -Prompt 'Please enter your personal token ---> '
+	$adoOrg = Read-Host -Prompt 'Please enter your ADO Organization ---> '
 
 	$pair = ":$($token)"
 	$encodedCreds = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($pair))
@@ -147,7 +148,7 @@ function scanADO
 	while($page -lt 6)
 	{
 	
-		$URI = "https://dev.azure.com/CheckmarxUK/_apis/git/repositories?api-version=5.1&includeAllUrls=true&includeHidden=true"
+		$URI = "https://dev.azure.com/" + $adoOrg + "/_apis/git/repositories?api-version=5.1&includeAllUrls=true&includeHidden=true"
 		Write-Output $URI
 		$response = Invoke-WebRequest -Uri $URI -UseBasicParsing -Headers $Headers
 		
@@ -401,6 +402,3 @@ $WorkBook = $objExcel.Workbooks.Open($FilePath)
 				
 
 exit(0)
-
-
-

@@ -9,7 +9,7 @@ The script can be automated through windows task scheduler using the following i
 * Under Create Basic Task, type in "CxEngine-Cleanup" and click Next
 * From the Trigger select "Weekly", click Next, select Saturday, and click Next
 * Then click on Start a Program and click Next
-* Now click on Browse and select Desktop then cxcleanup-engine.bat file
+* Now click on Browse and select Desktop then cxcleanup-engine.bat file or cxcleanup-windows-engine-9.3-and-up.bat in case you are using 9.3 or higher
 * Finally, click on Finish to create the Task
 
 Now that we have created a Task, we have to make sure it runs with the highest privilege. Since we have UAC settings we have to make sure that when you run the file it should not fail if it does not bypass the UAC settings.
