@@ -1,0 +1,14 @@
+{
+    "log": {
+        "timeFormat" : "R",
+        "folder" : "c:\\cx_data_retention"
+    },
+    "cx": {
+        "host" : "http(s)://<YOUR_CHECKMARX_SERVER>",
+        "username" : "xxxxx",
+        "password" : "yyyyy"
+    },
+    "dataRetention": {
+        "durationLimitHours" : 4
+    }
+}
