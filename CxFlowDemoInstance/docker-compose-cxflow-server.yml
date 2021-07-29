@@ -12,5 +12,5 @@ services:
       - "1040:1044"
     dns:
       - 8.8.8.8
-    restart: always
+    restart: "no"
 
