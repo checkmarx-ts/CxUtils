@@ -54,6 +54,9 @@ checkmarx:
   team: # TODO: put the SAST team here
   scan-preset: # TODO: Put your desired scan preset here
 
+  version: 9.0
+  client-id: resource_owner_client
+  scope: access_control_api sast_rest_api  
   client-secret: 014DF517-39D1-4453-B7B3-9930C563627C
   url: ${checkmarx.base-url}/cxrestapi
   multi-tenant: false
