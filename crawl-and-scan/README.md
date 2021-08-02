@@ -10,7 +10,7 @@ It currently executes a scan in a Docker image with Maven, NPM, .Net Core SDK 3.
 
 `docker build -t repocrawl .`
 
-The image builds from the (CxCLI-Docker)[https://github.com/checkmarx-ts/CxCLI-Docker] base image.
+The image builds from the [CxCLI-Docker](https://github.com/checkmarx-ts/CxCLI-Docker) base image.
 
 ## Run the Docker Image
 
