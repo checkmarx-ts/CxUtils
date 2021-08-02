@@ -42,7 +42,7 @@ The image execution is controlled by the environment variables listed below.
 |`CX_SERVER`|Y|None|The CxSAST server URL.|
 |`CX_USER`|Y|None|The CxSAST user account.|
 |`GIT_URL`|Y|None|The Git clone URL.|
-|`HASH_STEP`||N|10|The number of commits to skip between each commit.|
+|`HASH_STEP`|N|10|The number of commits to skip between each commit.|
 |`START_HASH`|N|None|The hash value of the commit to start the crawl.  Set to the last hash scanned and it will start scanning at the next commit hash.|
 |`TARGET_BRANCH`|N|master|The name of the branch to crawl in the repository specified by GIT_URL.|
 
