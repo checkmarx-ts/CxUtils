@@ -60,7 +60,7 @@ do
     git checkout -- /code
     git checkout $TARGET_BRANCH 
 
-    export $HASH=""
+    export HASH=""
 
 done
 
