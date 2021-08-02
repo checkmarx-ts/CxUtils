@@ -7,6 +7,7 @@ This is a curated set of utilities maintained by Checkmarx Professional Services
 Project | Description
 --------|------------
 [CheckPotentialFoldersFilesExclusions](CheckPotentialFoldersFilesExclusions) | For purposes of Project configuration tuning at large scale for all projects scanned, it was created this Powershell script that goes over the CxSrc folder and find potential Folders/Files exclusions in order to: Reduce LOC, Reduce Time Scanning and Reduce FPs rate.
+[crawl-and-scan](crawl-and-scan) | Crawl a Git repo's commits, scanning each from oldest to latest.
 [custom-engine-configs](custom-engine-configs) | SQL stored procedure to create/modify engine configurations
 [cx-batch-scan](cx-batch-scan) | PowerShell script that uses CxFlow to scan a comma-separated list of GitHub repositories in a batch mode.
 [cx-flow-ado](cx-flow-ado) | Sample CxFlow Docker image for Azure DevOps Pipelines
