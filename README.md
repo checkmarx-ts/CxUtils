@@ -27,11 +27,13 @@ Project | Description
 [data-retention](data-retention) | Controls (Starts & Stops) data retention.  Given the URL of a specific Checkmarx web interface, starts a data retention by deleting either all scans within a specified date range or all but the last X scans for each project.
 [data-retention-clean-orphaned-src](data-retention-clean-orphaned-src) | Cleans up orphaned source folders in CxSrc
 [engineering-health-check](engineering-health-check) | Powershell scripts that run the odata query used for Engineering Health Checks
+[force-scans](force-scans) | Powershell script that submits forced scans from a list of projects mapped to source code in CxSrc via a CSV file
 [installAndRun-CxConsole](installAndRun-CxConsole) | Powershell script to auto-download and execute the Checkmarx CLI
 [JenkinsDemoInstance](JenkinsDemoInstance) | Using Docker desktop, create an instance of Jenkins running under selected versions of the JDK.  Standalone and master/agent configurations are supported.  Settings are persisted in a local directory so that configurations are not lost when the Docker container is stopped.
 [LinuxEngineInstall](LinuxEngineInstall) | A script that will download the linux engine(currently from 9.3 installer) update the server.env with values provided by user, start docker and run the engine on Amazon Linux.
 [multi-repo-whitelist-scan](multi-repo-whitelist-scan) | Script to clone multiple git repos, remove unrecognized file types, and scan as one project using the CxCLI from a linux bash shell
 [perfmon](perfmon) | This script makes it easy to get up and running with Perfmon to monitor your Checkmarx infrastructure
+[post-scan-email-any-report](post-scan-email-any-report) | Scripts for a post-scan action that allows email distribution lists to be defined in the post-scan action configuration rather than embedded in a script.
 [svn-cx-runner](svn-cx-runner) | Utility that iterates through SVN repo, downloads Maven dependencies and creates Checkmarx projects.
 [TruffleHogCxQL](TruffleHogCxQL) | A port of the TruffleHog secrets detector.  It finds potential secrets through Regular Expression matches and High Entropy string detection.
 [user-type-migration](user-type-migration) | A process to generate SQL Statements to migrate from one user type to another (e.g. LDAP to SAML)
