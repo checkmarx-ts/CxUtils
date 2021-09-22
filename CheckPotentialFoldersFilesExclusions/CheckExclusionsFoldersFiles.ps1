@@ -60,6 +60,8 @@ $exclusionFolderList = @(
     "e2e", #Tests
     "androidTest", # Tests (Android)
     "build", # Build Folders
+    "bundle", # webpack bundles
+    "bundles", # webpack bundles
     "dist", # Build Folders
     "deploy", # Build Folders
     "venv", # Build Folders (Python)
