@@ -81,67 +81,65 @@ CxManagement.ps1 -StopRetention -serviceUrl "http://domain.mysite.com/" -usernam
 - The duration limit is not an immediate limit, scans are deleted in bulks of X (configured in the database with a default value of 3) and the data retention will only stop at the end of a bulk.
 #>
 [CmdletBinding()]
-Param(
-                
-                [Parameter(Mandatory = $True, ParameterSetName = "stop")]
-                [switch]
-                $StopRetention,
-                
-                [Parameter(Mandatory = $True, ParameterSetName = "DatesRange")]
-                [Parameter(Mandatory = $True, ParameterSetName = "RollingDate")]
-                [Parameter(Mandatory = $True, ParameterSetName = "NumOfScans")]
-                [switch]
-                $StartRetention,
-                
-                [Parameter(Mandatory = $True)]
-                [String]
-                $serviceUrl,
-                
-                [Parameter(Mandatory = $True)]
-                [String]
-                $username,
-                
-                [Parameter(Mandatory = $True)]
-                [String]
-                $pass,
-                
-                [Parameter(Mandatory = $True, ParameterSetName = "NumOfScans")]
-                [switch]
-                $ByNumOfScans,
-                
-                [Parameter(Mandatory = $True, ParameterSetName = "NumOfScans")]
-                [Int]
-                $numOfScansToKeep,
-                
-                [Parameter(Mandatory = $True, ParameterSetName = "DatesRange")]
-                [switch]
-                $ByDateRange,
-                
-                [Parameter(Mandatory = $False, ParameterSetName = "DatesRange")]
-                [Datetime]
-                $startDate,
-                
-                [Parameter(Mandatory = $True, ParameterSetName = "DatesRange")]
-                [Datetime]
-                $endDate,
+Param( 
+    [Parameter(Mandatory = $True, ParameterSetName = "stop")]
+    [switch]
+    $StopRetention,
+    
+    [Parameter(Mandatory = $True, ParameterSetName = "DatesRange")]
+    [Parameter(Mandatory = $True, ParameterSetName = "RollingDate")]
+    [Parameter(Mandatory = $True, ParameterSetName = "NumOfScans")]
+    [switch]
+    $StartRetention,
+    
+    [Parameter(Mandatory = $True)]
+    [String]
+    $serviceUrl,
+    
+    [Parameter(Mandatory = $True)]
+    [String]
+    $username,
+    
+    [Parameter(Mandatory = $True)]
+    [String]
+    $pass,
+    
+    [Parameter(Mandatory = $True, ParameterSetName = "NumOfScans")]
+    [switch]
+    $ByNumOfScans,
+    
+    [Parameter(Mandatory = $True, ParameterSetName = "NumOfScans")]
+    [Int]
+    $numOfScansToKeep,
+    
+    [Parameter(Mandatory = $True, ParameterSetName = "DatesRange")]
+    [switch]
+    $ByDateRange,
+    
+    [Parameter(Mandatory = $False, ParameterSetName = "DatesRange")]
+    [Datetime]
+    $startDate,
+    
+    [Parameter(Mandatory = $True, ParameterSetName = "DatesRange")]
+    [Datetime]
+    $endDate,
 
-                [Parameter(Mandatory = $True, ParameterSetName = "RollingDate")]
-                [switch]
-                $ByRollingDate,
+    [Parameter(Mandatory = $True, ParameterSetName = "RollingDate")]
+    [switch]
+    $ByRollingDate,
 
-                [Parameter(Mandatory = $True, ParameterSetName = "RollingDate")]
-                [int]
-                $rollingDateRange,
-                
-                [Parameter(Mandatory = $False, ParameterSetName = "DatesRange")]
-                [Parameter(Mandatory = $False, ParameterSetName = "NumOfScans")]
-                [int]
-                $retentionDurationLimit
+    [Parameter(Mandatory = $True, ParameterSetName = "RollingDate")]
+    [int]
+    $rollingDateRange,
+    
+    [Parameter(Mandatory = $False, ParameterSetName = "DatesRange")]
+    [Parameter(Mandatory = $False, ParameterSetName = "NumOfScans")]
+    [int]
+    $retentionDurationLimit
 )
 
 $serviceUrl = $serviceUrl.TrimStart().TrimEnd()
-if (-Not $serviceUrl.EndsWith('/'))
-{
+if (-Not $serviceUrl.EndsWith('/')){
     $serviceUrl = $serviceUrl + '/'
 }
 
@@ -149,23 +147,18 @@ $resolverUrlExtention = 'Cxwebinterface/CxWSResolver.asmx?wsdl'
 $resolverUrl = $serviceUrl + $resolverUrlExtention
 $resolver = New-WebServiceProxy -Uri $resolverUrl -UseDefaultCredential
 
-if (!$resolver)
-{
-    "Could not resolve service URL."
-    "Service might be down or a wrong URL was supplied."
-    Exit
+if (!$resolver){
+    Write-Host "Could not resolve service URL."
+    Write-Host "Service might be down or a wrong URL was supplied."
+    Exit(1)
 }
-
 
 $webServiceAddressObject = $resolver.GetWebServiceUrl('SDK' ,1)
 
-
-
 $proxy = New-WebServiceProxy -Uri $webServiceAddressObject.ServiceURL -UseDefaultCredential
-if (!$proxy)
-{
-    "Could not find Checkmarx SDK service URL"
-    Exit
+if (!$proxy){
+    Write-Host "Could not find Checkmarx SDK service URL"
+    Exit(2)
 }
 
 $namespace = $proxy.GetType().Namespace
@@ -176,84 +169,55 @@ $credentials.User = $username
 $credentials.Pass = $pass
 
 $loginResponse = $proxy.Login($credentials, 1033)
-If(-Not $loginResponse.IsSuccesfull)
-{
-                "An Error occurred while logging in:"
-                $loginResponse.ErrorMessage
-}
-Else
-{
-                $sessionId = $loginResponse.SessionId
-                $retentionConfigurationType = ($namespace + '.CxDataRetentionConfiguration')
-                $retentionConfiguration = New-Object ($retentionConfigurationType)
-                
-                If ($StartRetention.IsPresent)
-                {
-                
-                    If($ByNumOfScans.IsPresent)
-                    {
-                                    $retentionConfiguration.DataRetentionType = "NumOfScansToPreserve"
-                                    $retentionConfiguration.NumOfScansToPreserve = $numOfScansToKeep
-                    }
-                    Else
-                    {
-                        If($ByDateRange.IsPresent -OR $ByRollingDate.IsPresent)
-                        { 
-                                        $retentionConfiguration.DataRetentionType = "DatesRange"
-
-                                        If($rollingDateRange)
-                                        {
-                                                        $startDate = Get-Date "2010-01-02"
-                                                        $endDate = (Get-Date).AddDays(-$rollingDateRange)
-                                                        
-                                        }
-                                        Else{
-                                        
-                                                        If(!($startDate.IsPresent)){
-                                                                       
-                                                                        $startDate = Get-Date "2010-01-01"
-                                                        }
-                                                       
-                                                        $startDate = ($startDate).AddDays(1)
-                                                        $endDate = ($endDate).AddDays(1)
-                                        }                                               
-                                        $retentionConfiguration.StartDate = $startDate.ticks
-                                        $retentionConfiguration.EndDate = $endDate.ticks
-                        }
-                    }
-                    If($retentionDurationLimit)
-                    {
-                                    $retentionConfiguration.DurationLimitInHours = $retentionDurationLimit
+if(-Not $loginResponse.IsSuccesfull){
+    Write-Host "An Error occurred while logging in:"
+    Write-Host $loginResponse.ErrorMessage
+} else {
+    $sessionId = $loginResponse.SessionId
+    $retentionConfigurationType = ($namespace + '.CxDataRetentionConfiguration')
+    $retentionConfiguration = New-Object ($retentionConfigurationType)
+    
+    if($StartRetention.IsPresent){
+        if($ByNumOfScans.IsPresent){
+            $retentionConfiguration.DataRetentionType = "NumOfScansToPreserve"
+            $retentionConfiguration.NumOfScansToPreserve = $numOfScansToKeep
+        } else {
+            if($ByDateRange.IsPresent -OR $ByRollingDate.IsPresent) { 
+                $retentionConfiguration.DataRetentionType = "DatesRange"
+                if($rollingDateRange) {
+                    $startDate = Get-Date "2010-01-02"
+                    $endDate = (Get-Date).AddDays(-$rollingDateRange)        
+                } else {
+                    If(!($startDate.IsPresent)){         
+                        $startDate = Get-Date "2010-01-01"
                     }
                     
-                    
-                    $retentionResponse = $proxy.ExecuteDataRetention($sessionId, $retentionConfiguration)
-                    If($retentionResponse.IsSuccesfull)
-                    {
-                                    "Data retention ran successfully"
-                    }
-                    else
-                    {
-                                    "An error occurred while trying to start data retention:"
-                                    $retentionResponse.ErrorMessage
-                    }
-                }
-                else 
-                {
-                    $retentionResponse = $proxy.StopDataRetention($sessionId)
-                    
-                    If($retentionResponse.IsSuccesfull)
-                    {
-                                    "Data retention stopped"
-                    }
-                    else
-                    {
-                                    "An error occurred while trying to stop data retention:"
-                                    $retentionResponse.ErrorMessage
-                    }
-                }
-                   
-                
-                
-                $loginResponse = $proxy.Logout($sessionId)
+                    $startDate = ($startDate).AddDays(1)
+                    $endDate = ($endDate).AddDays(1)
+                }                                               
+                $retentionConfiguration.StartDate = $startDate.ticks
+                $retentionConfiguration.EndDate = $endDate.ticks
+            }
+        }
+        if($retentionDurationLimit){
+            $retentionConfiguration.DurationLimitInHours = $retentionDurationLimit
+        }
+        
+        $retentionResponse = $proxy.ExecuteDataRetention($sessionId, $retentionConfiguration)
+        if($retentionResponse.IsSuccesfull){
+            Write-Host "Data retention ran successfully"
+        } else {
+            Write-Host "An error occurred while trying to start data retention:"
+            $retentionResponse.ErrorMessage
+        }
+    } else {
+        $retentionResponse = $proxy.StopDataRetention($sessionId)
+        if($retentionResponse.IsSuccesfull){
+            Write-Host "Data retention stopped"
+        } else {
+            Write-Host "An error occurred while trying to stop data retention:"
+            Write-Host $retentionResponse.ErrorMessage
+        }
+    }
+    $loginResponse = $proxy.Logout($sessionId)
 }
