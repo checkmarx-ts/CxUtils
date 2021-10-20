@@ -5,8 +5,7 @@
     },
     "cx": {
         "host" : "http(s)://<YOUR_CHECKMARX_SERVER>",
-        "username" : "xxxxx",
-        "password" : "yyyyy"
+        "serviceName" : "yyyyy"
     },
     "dataRetention": {
         "durationLimitHours" : 4

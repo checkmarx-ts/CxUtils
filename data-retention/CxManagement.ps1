@@ -1,7 +1,7 @@
 [CmdletBinding()]
 Param(
 
-    [Parameter(Mandatory=$False)]
+    [Parameter(Mandatory = $False)]
     [switch]
     $v,
 
@@ -20,7 +20,11 @@ Param(
 
     [Parameter(Mandatory = $False)]
     [String]
-    $pass,
+    $pass,    
+    
+    [Parameter(Mandatory = $False)]
+    [String]
+    $serviceName,
 
     [Parameter(Mandatory = $True, ParameterSetName = "DatesRange")]
     [Parameter(Mandatory = $True, ParameterSetName = "RollingDate")]
@@ -249,7 +253,7 @@ Class RESTClient {
         try {
             $loginUrl = $this.baseUrl + "/auth/identity/connect/token"
             if ($script:v) {
-              $this.io.Log("Logging into Checkmarx CxSAST...")
+                $this.io.Log("Logging into Checkmarx CxSAST...")
             }
             $response = Invoke-RestMethod -uri $loginUrl -method POST -body $body -contenttype 'application/x-www-form-urlencoded'
         }
@@ -321,11 +325,11 @@ Class DataRetention {
 
     # Executes data retention
     Execute() {
-
+        $server = $this.config.cx.host
         # Create a RESTBody specific to CxSAST REST API calls
         $cxSastRestBody = [RESTBody]::new($script:CX_REST_GRANT_TYPE, $script:CX_REST_SCOPE, $script:CX_REST_CLIENT_ID, $script:CX_REST_CLIENT_SECRET)
         # Create a REST Client for CxSAST REST API
-        $this.cxSastRestClient = [RESTClient]::new($this.config.cx.host, $cxSastRestBody)
+        $this.cxSastRestClient = [RESTClient]::new($server, $cxSastRestBody)
 
         # Login to the CxSAST server
         [bool] $isLoginOk = $this.cxSastRestClient.login($this.config.cx.username, $this.config.cx.password)
@@ -370,7 +374,7 @@ Class DataRetention {
             } 
             else {
                 $this.io.Log("Initiated data retention. The process will run in the background and may take a while, depending on criteria used.")
-                $this.io.Log("Please check the Last Executed Data Retention status at http(s)://<checkmarx_host>/cxwebclient/DataRetention.aspx")
+                $this.io.Log("Please check the Last Executed Data Retention status at ${server}/cxwebclient/DataRetention.aspx")
             }
         }
 
@@ -381,8 +385,8 @@ Class DataRetention {
         $this.io.Log("ExecByNumOfScans: Number of scans to keep: [$numOfScansToKeep]")
 
         $dataRetentionParams = @{
-          NumOfSuccessfulScansToPreserve = $numOfScansToKeep
-          durationLimitInHours = $dataRetentionDurationLimitHrs
+            NumOfSuccessfulScansToPreserve = $numOfScansToKeep
+            durationLimitInHours           = $dataRetentionDurationLimitHrs
         }
         [String] $apiUrl = "/sast/dataRetention/byNumberOfScans"
         return $this.cxSastRestClient.invokeAPI($apiUrl, 'POST', $dataRetentionParams, 0)
@@ -393,8 +397,8 @@ Class DataRetention {
         $this.io.Log("ExecByDateRange: Start Date: [$startDate], End Date: [$endDate]")
 
         $dataRetentionParams = @{
-            startDate = $startDate
-            endDate = $endDate
+            startDate            = $startDate
+            endDate              = $endDate
             durationLimitInHours = $dataRetentionDurationLimitHrs
         }
         [String] $apiUrl = "/sast/dataRetention/byDateRange"
@@ -415,10 +419,10 @@ Class DataRetention {
 # ========================================== #
 
 # Load configuration
-[String] $config = ".\data_retention_config.json"
+[String] $config = "${PSScriptRoot}\data_retention_config.json"
 
 If ($configFile) {
-    if(!(Test-Path $configFile)) {
+    if (!(Test-Path $configFile)) {
         Write-Host "Could not read from given config path [$configFile]"
         Exit
     }
@@ -440,8 +444,33 @@ if ($config) {
 $logFolder = (Get-Item -Path $logFolder).FullName
 
 # Override config from command line params, if provided
-if ($username) { $config.cx.username = $username }
-if ($pass) { $config.cx.password = $pass }
+
+if ($serviceName){
+    $module = "CredentialManager"
+    $isCmPresent = Get-Module -ListAvailable -Name $module
+    if ($isCmPresent) {
+        Write-Host "${module} Module exists"
+        $credentials = Get-StoredCredential -Target $serviceName -AsCredentialObject
+        $config.cx.serviceName = $serviceName
+        $config.cx | Add-Member -NotePropertyName username -NotePropertyValue $credentials.UserName
+        $config.cx | Add-Member -NotePropertyName password -NotePropertyValue $credentials.Password
+    }
+    else {
+        Write-Host "${module} Module does not exist"
+        Write-Host "Please install ${module} module if you want to use -serviceName option"
+        Write-Host "To install it you need to run with admin privileges the following command"
+        Write-Host "Install-Module -Name `"${module}`""
+        Exit(1)
+    }
+} else {
+    if ($username){ 
+        $config.cx | Add-Member -NotePropertyName username -NotePropertyValue $username
+    }
+    if ($pass){ 
+        $config.cx | Add-Member -NotePropertyName password -NotePropertyValue $pass
+    }
+}
+
 if ($serviceUrl) { $config.cx.host = $serviceUrl }
 if ($retentionDurationLimit) { $config.dataRetention.durationLimitHours = $retentionDurationLimit }
 
