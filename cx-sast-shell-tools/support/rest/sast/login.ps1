@@ -4,10 +4,10 @@ param(
     [String]$password,
     [Switch]$dbg,
     [hashtable]$existing_session,
-    [string]$soap_login_script = "support/soap/webinterface/login.ps1"
+    [string]$soap_login_script = "$PSScriptRoot/../../soap/webinterface/login.ps1"
 )
 
-. "support/rest_util.ps1"
+. "$PSScriptRoot/../../rest_util.ps1"
 
 $session = @{}
 

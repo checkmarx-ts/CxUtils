@@ -3,7 +3,7 @@ param(
     [hashtable]$session
 )
 
-. "support/rest_util.ps1"
+. "$PSScriptRoot/../../rest_util.ps1"
 
 $request_url = New-Object System.Uri $session.base_url, "/cxrestapi/auth/teams"
 

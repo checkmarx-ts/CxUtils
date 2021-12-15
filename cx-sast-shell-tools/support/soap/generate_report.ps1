@@ -156,7 +156,7 @@ $body = [String]::Format($xml_template,
                         $ReportTemplate.resultsDisplayOption.snippetsMode)
 
 
-$response = &"support/soap/soap_request.ps1" $session $body $soap_url $soap_action
+$response = &"$PSScriptRoot/soap_request.ps1" $session $body $soap_url $soap_action
 
    $content = New-Object System.Xml.XmlDocument
    $content.LoadXml($response.Content)

@@ -5,7 +5,7 @@ param(
     [string]$scan_settings_uri
 )
 
-. "support/rest_util.ps1"
+. "$PSScriptRoot/../../rest_util.ps1"
 
 $request_url = New-Object System.UriBuilder($session.base_url)
 $request_url.Path = "cxrestapi$scan_settings_uri"

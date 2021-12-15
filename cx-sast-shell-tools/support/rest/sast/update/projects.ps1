@@ -7,7 +7,7 @@ param(
     [hashtable]$body
 )
 
-. "support/rest_util.ps1"
+. "$PSScriptRoot/../../../rest_util.ps1"
 
 $path = "/cxrestapi/projects/$project_id"
 

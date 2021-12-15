@@ -33,20 +33,20 @@ param(
     [Switch]$dbg
 )
 
-. "support/debug.ps1"
+. "$PSScriptRoot/support/debug.ps1"
 
 setupDebug($dbg.IsPresent)
 
-$session = &"support\rest\sast\login.ps1" $sast_url $username $password -dbg:$dbg.IsPresent -soap_login_script "support/soap/audit/login.ps1"
+$session = &"$PSScriptRoot/support\rest\sast\login.ps1" $sast_url $username $password -dbg:$dbg.IsPresent -soap_login_script "$PSScriptRoot/support/soap/audit/login.ps1"
 
 try {
-    $response = &"support\soap\audit\getquerycollection.ps1" $session
+    $response = &"$PSScriptRoot/support\soap\audit\getquerycollection.ps1" $session
 }
 catch {
     throw $_
 }
 finally {
-    $logout = &"support\soap\audit\logout.ps1" $session
+    $logout = &"$PSScriptRoot/support\soap\audit\logout.ps1" $session
     if ($true -ne $logout) {
         Write-Output WARNING - Logout failed.
     }

@@ -18,6 +18,6 @@ if ($true -ne $session.soap_session.v9) {
 
    $body = [String]::Format($xml_template, $session.soap_session.SessionID)
 
-   &"support\soap\soap_request.ps1" $session $body "/cxwebinterface/Audit/CxAuditWebService.asmx" "http://Checkmarx.com/v7/Logout"
+   &"$PSScriptRoot\..\soap_request.ps1" $session $body "/cxwebinterface/Audit/CxAuditWebService.asmx" "http://Checkmarx.com/v7/Logout"
 }
 $true

@@ -122,7 +122,7 @@ param(
     [Switch]$dbg
 )
 
-. "support/debug.ps1"
+. "$PSScriptRoot/support/debug.ps1"
 
 setupDebug($dbg.IsPresent)
 
@@ -147,15 +147,15 @@ function GetTeamId
 
 
 Write-Output "Logging in as $old_sast_username to $old_sast_url"
-$old_session = &"support/rest/sast/login.ps1" $old_sast_url $old_sast_username $old_sast_password -dbg:$dbg.IsPresent
+$old_session = &"$PSScriptRoot/support/rest/sast/login.ps1" $old_sast_url $old_sast_username $old_sast_password -dbg:$dbg.IsPresent
 
 Write-Output "Logging in as $new_sast_username to $new_sast_url"
-$new_session = &"support/rest/sast/login.ps1" $new_sast_url $new_sast_username $new_sast_password -dbg:$dbg.IsPresent
+$new_session = &"$PSScriptRoot/support/rest/sast/login.ps1" $new_sast_url $new_sast_username $new_sast_password -dbg:$dbg.IsPresent
 
 
 $timer = $(Get-Date)
 Write-Output "Fetching teams from $old_sast_url"
-$teams = &"support/rest/sast/teams.ps1" $old_session
+$teams = &"$PSScriptRoot/support/rest/sast/teams.ps1" $old_session
 Write-Output "$($teams.Length) teams fetched - elapsed time $($(Get-Date).Subtract($timer))"
 $old_team_id = GetTeamId $old_sast_team_path $teams
 
@@ -168,7 +168,7 @@ else {
 
 $timer = $(Get-Date)
 Write-Output "Fetching teams from $new_sast_url"
-$teams = &"support/rest/sast/teams.ps1" $new_session
+$teams = &"$PSScriptRoot/support/rest/sast/teams.ps1" $new_session
 Write-Output "$($teams.Length) teams fetched - elapsed time $($(Get-Date).Subtract($timer))"
 $new_team_id = GetTeamId $new_sast_team_path $teams
 
@@ -182,7 +182,7 @@ else {
 
 $timer = $(Get-Date)
 Write-Output "Fetching projects from $old_sast_url"
-$project_list = &"support/rest/sast/projects.ps1" $old_session
+$project_list = &"$PSScriptRoot/support/rest/sast/projects.ps1" $old_session
 Write-Output "$($project_list.Length) projects fetched - elapsed time $($(Get-Date).Subtract($timer))"
 $old_project = $null
 
@@ -206,7 +206,7 @@ $old_project.links | %{
 
     if ($_.rel.CompareTo("scansettings") -eq 0)
     {
-        $old_scan_settings = &"support/rest/sast/scanSettings" $old_session $_.uri
+        $old_scan_settings = &"$PSScriptRoot/support/rest/sast/scanSettings" $old_session $_.uri
 
     }
 }
@@ -288,12 +288,12 @@ function GetConfigIdFromList{
     }    
 }
 
-$new_preset = GetConfigIdFromList "support/rest/sast/presets.ps1" "preset" $new_preset_name $old_scan_settings.preset.id
-$new_engine_config = GetConfigIdFromList "support/rest/sast/engineConfigurations.ps1" "engine config" $new_engine_config_name `
+$new_preset = GetConfigIdFromList "$PSScriptRoot/support/rest/sast/presets.ps1" "preset" $new_preset_name $old_scan_settings.preset.id
+$new_engine_config = GetConfigIdFromList "$PSScriptRoot/support/rest/sast/engineConfigurations.ps1" "engine config" $new_engine_config_name `
     $old_scan_settings.engineConfiguration.id
 
 # Validate custom fields
-$old_project_config = &"support/rest/sast/projects.ps1" $old_session $old_scan_settings.project.id
+$old_project_config = &"$PSScriptRoot/support/rest/sast/projects.ps1" $old_session $old_scan_settings.project.id
 
 $custom_fields_to_update = New-Object 'System.Collections.Generic.List[PSCustomObject]'
 
@@ -306,7 +306,7 @@ if ($old_project_config.customFields.length -ne 0) {
         $old_fields_dict.Add($_.name, $_)
     }
 
-    $new_system_fields = &"support/rest/sast/customFields.ps1" $new_session
+    $new_system_fields = &"$PSScriptRoot/support/rest/sast/customFields.ps1" $new_session
 
     $new_system_fields_map = New-Object 'System.Collections.Generic.Dictionary[String, PSCustomObject]'
 
@@ -332,7 +332,7 @@ if ($old_project_config.customFields.length -ne 0) {
 
 $timer = $(Get-Date)
 Write-Output "Fetching projects from $new_sast_url"
-$project_list = &"support/rest/sast/projects.ps1" $new_session
+$project_list = &"$PSScriptRoot/support/rest/sast/projects.ps1" $new_session
 Write-Output "$($project_list.Length) projects fetched - elapsed time $($(Get-Date).Subtract($timer))"
 $new_project = $null
 
@@ -349,12 +349,12 @@ $project_list | %{
 if ($null -eq $new_project) {
     # Create the new project with default settings
     Write-Output "$project_name does not exist in team $new_sast_team_path on $new_sast_url, creating."
-    $new_project = &"support/rest/sast/create/projects.ps1" $new_session $project_name $new_team_id
+    $new_project = &"$PSScriptRoot/support/rest/sast/create/projects.ps1" $new_session $project_name $new_team_id
 }
 
 Write-Output "New project id: $($new_project.id)"
 
-&"support/rest/sast/update/scanSettings.ps1" $new_session $new_project.id $new_preset $new_engine_config `
+&"$PSScriptRoot/support/rest/sast/update/scanSettings.ps1" $new_session $new_project.id $new_preset $new_engine_config `
     $old_scan_settings.emailNotifications.failedScan `
     $old_scan_settings.emailNotifications.beforeScan `
     $old_scan_settings.emailNotifications.afterScan | Out-Null
@@ -367,12 +367,12 @@ if ($custom_fields_to_update.Count -ne 0) {
         customFields = $custom_fields_to_update
     }
 
-    &"support/rest/sast/update/projects.ps1" $new_session $new_project.id $update_payload
+    &"$PSScriptRoot/support/rest/sast/update/projects.ps1" $new_session $new_project.id $update_payload
 }
 
-$old_exclude_settings = &"support/rest/sast/excludeSettings.ps1" $old_session $old_scan_settings.project.id
+$old_exclude_settings = &"$PSScriptRoot/support/rest/sast/excludeSettings.ps1" $old_session $old_scan_settings.project.id
 
-&"support/rest/sast/update/excludeSettings.ps1" $new_session $new_project.id `
+&"$PSScriptRoot/support/rest/sast/update/excludeSettings.ps1" $new_session $new_project.id `
     @{
         excludeFoldersPattern = $old_exclude_settings.excludeFoldersPattern
         excludeFilesPattern = $old_exclude_settings.excludeFilesPattern

@@ -5,7 +5,7 @@ param(
     [string]$reportID
 )
 
-. "support/rest_util.ps1"
+. "$PSScriptRoot/../../rest_util.ps1"
 
 $rest_url = [String]::Format("/cxrestapi/reports/sastScan/{0}/status", $reportID)
 $request_url = New-Object System.Uri $session.base_url, $rest_url
