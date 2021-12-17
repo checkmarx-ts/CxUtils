@@ -36,26 +36,26 @@ param(
     [Switch]$dbg
 )
 
-. "support/debug.ps1"
+. "$PSScriptRoot/support/debug.ps1"
 
 setupDebug($dbg.IsPresent)
 
 
-$session = &"support/rest/sast/login.ps1" $sast_url $username $password -dbg:$dbg.IsPresent
+$session = &"$PSScriptRoot/support/rest/sast/login.ps1" $sast_url $username $password -dbg:$dbg.IsPresent
 
 $timer = $(Get-Date)
 Write-Output "Fetching projects"
-$projects = &"support/rest/sast/projects.ps1" $session
+$projects = &"$PSScriptRoot/support/rest/sast/projects.ps1" $session
 Write-Output "$($projects.Length) projects fetched - elapsed time $($(Get-Date).Subtract($timer))"
 $projects | % { Write-Debug $_ } 
 
 # refresh login, if needed
-$session = &"support/rest/sast/login.ps1" -existing_session $session -dbg:$dbg.IsPresent
+$session = &"$PSScriptRoot/support/rest/sast/login.ps1" -existing_session $session -dbg:$dbg.IsPresent
 
 
 $timer = $(Get-Date)
 Write-Output "Fetching teams"
-$teams = &"support/rest/sast/teams.ps1" $session
+$teams = &"$PSScriptRoot/support/rest/sast/teams.ps1" $session
 Write-Output "$($teams.Length) teams fetched - elapsed time $($(Get-Date).Subtract($timer))"
 $team_index = New-Object 'System.Collections.Generic.Dictionary[string,string]'
 $teams | % { 
@@ -71,14 +71,14 @@ $prj_index = New-Object 'System.Collections.Generic.Dictionary[string,string]'
 
 $projects | % {
     
-    $scans = &"support/rest/sast/scans.ps1" $session $_.id
+    $scans = &"$PSScriptRoot/support/rest/sast/scans.ps1" $session $_.id
     $scan_index.Add($scans.id, $scans.owningTeamId)
     $prj_index.Add($scans.id, $scans.project.name)
     
     Write-Output $scans
 
     #generate the report
-    $report = &"support/soap/generate_report.ps1" $session $scans.id
+    $report = &"$PSScriptRoot/support/soap/generate_report.ps1" $session $scans.id
     $report_index.Add($scans.id, $report)
 
 }
@@ -87,10 +87,10 @@ $projects | % {
 Write-Output "Checking status of all reports"
 $report_index.Keys |%{
     $reportId = $report_index.Item($_)
-    $reportstatus = &"support/rest/sast/reportStatus.ps1" $session $reportId
+    $reportstatus = &"$PSScriptRoot/support/rest/sast/reportStatus.ps1" $session $reportId
     
     while ($reportstatus.status.value -ne "Created" -and $reportstatus.status.value -ne "Failed") {
-        $reportstatus = &"support/rest/sast/reportStatus.ps1" $session $reportId
+        $reportstatus = &"$PSScriptRoot/support/rest/sast/reportStatus.ps1" $session $reportId
         Write-Debug $reportstatus.status.value
     }
     if($reportstatus.status.value -eq "Created"){
@@ -118,6 +118,6 @@ $report_index.Keys | %{
     Write-Output "Downloading report for $teamName\$projectName"
 
 
-    &"support/rest/sast/getreport.ps1" $session $reportid $teamName $projectName $outputPath
+    &"$PSScriptRoot/support/rest/sast/getreport.ps1" $session $reportid $teamName $projectName $outputPath
 
 }

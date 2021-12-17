@@ -1,3 +1,4 @@
+Add-Type -AssemblyName System.Web
 
 function GetAuthHeaders ($session_token) {
     @{

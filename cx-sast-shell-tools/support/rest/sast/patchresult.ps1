@@ -11,7 +11,7 @@ param(
     [String]$Comment
 )
 
-. "support/rest_util.ps1"
+. "$PSScriptRoot/../../rest_util.ps1"
 
 $rest_url = [String]::Format("/cxrestapi/sast/scans/{0}/results/{1}", $scanId, $resultId)
 $request_url = New-Object System.Uri $session.base_url, $rest_url

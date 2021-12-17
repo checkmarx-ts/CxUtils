@@ -5,7 +5,7 @@ param(
     [string]$project_id
 )
 
-. "support/rest_util.ps1"
+. "$PSScriptRoot/../../rest_util.ps1"
 
 $request_url = New-Object System.Uri $session.base_url, "/cxrestapi/projects/$project_id/sourceCode/excludeSettings"
 

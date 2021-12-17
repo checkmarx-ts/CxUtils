@@ -34,7 +34,7 @@ param(
     [Switch]$dbg
 )
 
-. "support/debug.ps1"
+. "$PSScriptRoot/support/debug.ps1"
 
 setupDebug($dbg.IsPresent)
 
@@ -78,13 +78,13 @@ Import-Csv $csv_path | ForEach-Object {
 Write-Output "CSV file was validated. Ready to start the update for $validationLine records"
 
 #get token to start updating records
-$session = &"support/rest/sast/login.ps1" $sast_url $username $password -dbg:$dbg.IsPresent
+$session = &"$PSScriptRoot/support/rest/sast/login.ps1" $sast_url $username $password -dbg:$dbg.IsPresent
 $updatecomment = "Reverting result state to previous state"
 
 $timer = $(Get-Date)
 
 Import-Csv $csv_path | ForEach-Object {
-    &"support/rest/sast/patchResult.ps1" $session $_.scanID $_.resultID $_.previous_state_id $updatecomment
+    &"$PSScriptRoot/support/rest/sast/patchResult.ps1" $session $_.scanID $_.resultID $_.previous_state_id $updatecomment
     
     $output = [String]::Format("Result state of scan: {0} resultID: {1} has been updated to {2}", $_.scanID, $_.resultID, $_.previous_result_state)
     Write-Output $output

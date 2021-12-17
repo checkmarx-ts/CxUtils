@@ -4,7 +4,7 @@ param(
     [string]$project_id
 )
 
-. "support/rest_util.ps1"
+. "$PSScriptRoot/../../rest_util.ps1"
 
 $path = "/cxrestapi/projects"
 

@@ -28,7 +28,7 @@ $xml_template = @"
 
 $body = [String]::Format($xml_template, $session.soap_session.SessionID)
 
-$response = &"support\soap\soap_request.ps1" $session $body "/cxwebinterface/Audit/CxAuditWebService.asmx" "http://Checkmarx.com/v7/GetQueryCollection"
+$response = &"$PSScriptRoot\..\soap_request.ps1" $session $body "/cxwebinterface/Audit/CxAuditWebService.asmx" "http://Checkmarx.com/v7/GetQueryCollection"
 
 $response.Content
 
