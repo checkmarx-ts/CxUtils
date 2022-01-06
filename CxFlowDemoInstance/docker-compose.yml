@@ -6,12 +6,14 @@ services:
     depends_on: 
       - jira-server
     environment:
-      JAVA_OPTS: ${JAVA_OPTS}
-      CXFLOW_MODE: ${CXFLOW_MODE}
-      CX_CONFIG: ${CX_CONFIG}
+      JAVA_OPTS: ${JAVA_OPTS:-}
+      CXFLOW_MODE: ${CXFLOW_MODE:-web}
+      CX_CONFIG: ${CX_CONFIG:-general}
+      CXFLOW_PORT: ${CXFLOW_PORT:-8585}
+      CXFLOW_DEBUG_PORT: ${CXFLOW_DEBUG_PORT:-1044}
     ports:
-      - "8585:8585"
-      - "1040:1044"
+      - "${CXFLOW_PORT:-8585}:${CXFLOW_PORT:-8585}"
+      - "${CXFLOW_DEBUG_PORT:-1044}:${CXFLOW_DEBUG_PORT:-1044}"
     dns:
       - 8.8.8.8
     restart: "no"
@@ -20,12 +22,14 @@ services:
   jira-server:
     image: atlassian/jira-software:latest
     volumes:
-      - type: bind
-        source: ${STORAGE_LOC}
-        target: /var/atlassian/application-data/jira
+      - jira_data:/var/atlassian/application-data/jira
     dns:
       - 8.8.8.8
     ports:
-      - "8000:8080"
+      - "${JIRA_PORT:-8000}:8080"
     restart: "no"
+
+volumes:
+  jira_data:
+
 
