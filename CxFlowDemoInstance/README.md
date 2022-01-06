@@ -142,3 +142,15 @@ Src | N/A | The directory with the source code to submit for scanning
 Dbg | false | If included, invokes Cx-Flow with a debugger open on port 1039.
 
 
+# Development Environment
+
+It is possible to use these container orchestrations to debug CxFlow during development.  If you are building CxFlow locally, the resulting jar can be executed inside the CxFlow container defined here.
+
+## Executing a local build of CxFlow
+
+A local build of the CxFlow jar can be placed in the `cxflow-docker` directory prior to starting CxFlow via `docker-compose`.  The local jar will be incorporated into the CxFlow container.  The jar with the latest version stamp will be used when the container executes CxFlow.
+
+## Debugging
+
+Using the `JAVA_OPTS` and `CXFLOW_DEBUG_PORT` environment variables, JVM remote debugging can be enabled.  This will allow developers to attach to the CxFlow instance running in the container with a development IDE such as VSCode or Eclipse.  Configuring JVM remote debugging is beyond the scope of this document.
+
