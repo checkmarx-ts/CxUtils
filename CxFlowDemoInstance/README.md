@@ -7,12 +7,9 @@ This repository will allow you to create a demonstration system with the followi
 * Easy setup for multiple different instance configurations
 
 # Prerequisites
-* You must have Docker Desktop installed
-* Docker will need access to write to your local disk
-* The Docker memory setting should be bumped to 8GB rather than the default 2GB to make the demo system more performant
+* You must have Docker and Docker Compose installed
 * The Cx-Flow webhook endpoint must be available via a public Internet URL to receive webhook calls
     * It is possible to use a tool such as [ngrok](https://ngrok.com/) to allow Cx-Flow to receive webhook calls
-* The current configuration is designed to work with GitHub webhooks, but it is possible to customize it to consume webhook data from other SCM providers
 
 # Cx-Flow Invocation via Webhook Setup Instructions
 
@@ -32,33 +29,49 @@ In the `application-general.yml` file, there are several configuration fields wi
 * **application-github+ado.yml** - This configuration uses GitHub as source control and Azure DevOps as the issue tracker.
 
 
+## Step 2: Configure your environment
 
-## Step 2: Run the Cx-Flow and Jira Server Containers
+The following table is a list of environment variables and their default values.  Modify environment variables as needed.
 
-The powershell script `run_cxflow+jira_server.ps1` will start a Docker instance of Jira and a Cx-Flow webhook server.  The Jira data is persisted to a local disk so that the Jira contents survives across restarts.  Note that the Jira evaluation license is only for 30 days.  If the license expires, all that is required is to delete the local Jira data and restart the containers.
+|Variable Name|Default Value|Description|
+|-|-|-|
+|`JAVA_OPTS`|empty|Java options that are passed to the JVM on startup.|
+|`CXFLOW_MODE`|web|The [execution mode](https://github.com/checkmarx-ltd/cx-flow/wiki/Execution) of CxFlow.|
+|`CX_CONFIG`|general|The name of the configuration yaml to use (e.g. `application-general.yml` is used by default.)|
+|`CXFLOW_PORT`|8585|The CxFlow listening port.|
+|`CXFLOW_DEBUG_PORT`|1044|The debug port if `JAVA_OPTS` is set to enable JVM debugging.|
+|`JIRA_PORT`|8000|The Jira listening port.|
 
-`run_cxflow+jira_server.ps1` has a few options:
+## Step 3: Run the Cx-Flow and Jira Server Containers
 
-Option | Default | Description
---- | --- | ---
-StorageLoc | ./jira_data | The folder where Jira data will be stored.  By default, it creates the folder `jira-data` in the working directory.  An absolute or relative path can be provided to store the data in an alternate location.
-Config | general | The configuration option used to locate the `application-{config name}.yml` file for Cx-Flow startup.  Using `-Config mypoc` would cause Cx-Flow to start with the configuration file `application-mypoc.yml`.
-Dbg | false | Including `-Dbg` starts Cx-Flow with a debugger available for connecting via port 1040.
+The `docker-compose.yml` file starts CxFlow and Jira by default.  The following command can be used to start CxFlow and Jira:
 
-The Jira and Cx-Flow servers will execute and display log output in your powershell window.  Press CTRL-C at any time to shut down the containers.  It is possible to tail logs of each individual container.  See the [docker logs](https://docs.docker.com/engine/reference/commandline/logs/) and [docker ps](https://docs.docker.com/engine/reference/commandline/ps/) command documentation for more details.
+`docker-compose up --build -d`
 
-## [Alternate] Step 2: Run CxFlow as a Webhook Server without Jira
+The containers will execute in the background.
 
-The powershell script `run_cxflow_server.ps1` will start a Docker instance of a Cx-Flow webhook server.
+It is possible to tail logs of each individual container.  See the [docker logs](https://docs.docker.com/engine/reference/commandline/logs/) and [docker ps](https://docs.docker.com/engine/reference/commandline/ps/) command documentation for more details.
 
-`run_cxflow_server.ps1` options:
+To test that CxFlow is running, you can either view the startup logs or navigate to [http://localhost:8585/actuator/info](http://localhost:8585/actuator/info).  The Actuator endpoint will respond with some JSON data if CxFlow is running.
 
-Option | Default | Description
---- | --- | ---
-Config | general | The configuration option used to locate the `application-{config name}.yml` file for Cx-Flow startup.  Using `-Config mypoc` would cause Cx-Flow to start with the configuration file `application-mypoc.yml`.
-Dbg | false | Including `-Dbg` starts Cx-Flow with a debugger available for connecting via port 1040.
+You can test that Jira is running by navigating to [http://localhost:8000/](http://localhost:8000/).
 
-## Step 3: Configure Jira
+To stop the services, execute the following command:
+
+`docker-compose down`
+
+## [Alternate] Step 3: Run CxFlow as a Webhook Server without Jira
+
+The `docker-compose-cxflow-server.yml` file configures the CxFlow server without Jira.  To start CxFlow without Jira, execute the following command:
+
+`docker-compose -f docker-compose-cxflow-server.yml up --build -d`
+
+To stop CxFlow, execute the following command:
+
+`docker-compose -f docker-compose-cxflow-server.yml down`
+
+
+## Step 4: Configure Jira
 
 ### *If you are not using Jira as the issue tracker, you can skip this step.*
 
@@ -66,7 +79,9 @@ By default, Jira will answer at the URL [http://localhost:8000](http://localhost
 
 When Jira has finished initializing, create an initial scrum software project with the name you provided in `application-{config name}.yml` under the `jira.project` configuration setting.  The `application-general.yml` configuration options have been configured to work with the default Jira project settings.  Configuring more advanced options is possible by customizing `application-{config name}.yml`, but this subject is beyond the scope of this document.
 
-## Step 4: Configure the Webhook
+If you are using Config as Code with CxFlow, create Jira projects corresponding to keys used in Config as Code files.
+
+## Step 5: Configure the Webhook
 
 ### Testing Cx-Flow Configuration
 
@@ -98,7 +113,7 @@ The URL given by ngrok can be used as the webhook endpoint when configuring the 
 5. Set the "Secret" to the value supplied for `github.webhook-token` in `application-{config name}.yml`.
 6. The events that trigger the webhook can be set to "Just push the event" or tuned for more specific events as needed.
 
-## Step 5: Demonstrate
+## Step 6: Demonstrate
 
 If everything has been configured correctly, pushing a change to the repository should deliver a webhook call to the Cx-Flow endpoint.  A scan should be invoked in the CxSAST server, and the results will be published as issues in Jira.
 
@@ -127,39 +142,3 @@ Src | N/A | The directory with the source code to submit for scanning
 Dbg | false | If included, invokes Cx-Flow with a debugger open on port 1039.
 
 
-## Invoke Cx-Flow from Jenkins
-
-The [JenkinsDemoInstance](../JenkinsDemoInstance) has added support to invoke Cx-Flow from a Jenkins build definition.  This example is one of many ways it can be performed.  In this example, most of the configuration options are defined on the command line rather than using the `application-{config name}.yml` file. While it is possible to utilize a YAML configuration file or even the Cx-Flow config-as-code capabilities to better manage configuration options, these concepts are beyond the scope of this document.
-
-The [JenkinsDemoInstance](../JenkinsDemoInstance) build agents have the Cx-Flow jar as part of the build agent container image.  It is therefore necessary to limit the build execution to one of the build agent machines.  In the example below, the "Restrict where this project can be run" is set to the expression `jdk8 || jdk11` to allow the Cx-Flow build to execute on either of the example agents.
-
-![execution node selection](images/node_select.png)
-
-
-As part of the build, the "Execute shell" build step is configured to execute Cx-Flow with several of the options overridden via the command line.
-
-![the cxflow shell command](images/command.png)
-
-The build script below can be customized to execute Cx-Flow when running on a build agent in a [JenkinsDemoInstance](../JenkinsDemoInstance):
-
-```
-java -Xms512m -Xmx2048m -Djava.security.egd=file:/dev/./urandom \
--jar `ls /cx*.jar` \
---scan \
---f=$WORKSPACE \
---app={PUT YOUR IDENTIFIER HERE} \
---cx-project={PUT YOUR CXSAST PROJECT NAME HERE} \
---checkmarx.base-url={PUT YOUR CXSAST URL HERE} \
---checkmarx.username={PUT YOUR CXSAST USERNAME HERE} \
---checkmarx.password={PUT YOUR CXSAST PASSWORD HERE} \
---checkmarx.team=\\CxServer\\SP\\Company\\Users \
---checkmarx.scan-preset="XSS and SQLi only" \
---jira.url={PUT YOUR JIRA URL HERE} \
---jira.username={PUT YOUR JIRA USERNAME HERE} \
---jira.token={PUT YOUR JIRA PASSWORD HERE} \
---jira.project={PUT YOUR JIRA PROJECT NAME HERE} \
---jira.issue-type=Bug
-
-```
-
-It is possible to use the Jenkins Credential Binding plugin to avoid placing credentials in the script, but this concept is beyond the scope of this document.
