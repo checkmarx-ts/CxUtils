@@ -19,7 +19,7 @@ function scanGitlab
 	while($page -lt 101)
 	{
 		Write-Output ("Page: " + [string]$page)
-		$URI = "https://gitlab.com/api/v4/projects?private_token=" + $token + "&simple=true&per_page=100&page=" + $page
+		$URI = "https://gitlab.com/api/v4/projects?private_token=" + $token + "&archived=false&simple=true&per_page=100&page=" + $page
 		Write-Output $URI
 		$response = Invoke-WebRequest -Uri $URI -UseBasicParsing
 		$myjson = $response | ConvertFrom-Json
