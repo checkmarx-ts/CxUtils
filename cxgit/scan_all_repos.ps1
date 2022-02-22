@@ -12,34 +12,29 @@ $deleteReport = "true"
 function scanGitlab
 {
 	$page = 1
-	$rec = 1
 
 	$token = Read-Host -Prompt 'Please enter your Gitlab personal token ---> '
 	# We need to loop through results as the API only returns max 100 results
 	# Increment page, to get next resutls. Set a limit though ....
 	while($page -lt 101)
 	{
-		$URI = "https://gitlab.com/api/v4/projects?private_token=" + $token + "&visibility=private&simple=true&per_page=100&page=" + $page 
+		Write-Output ("Page: " + [string]$page)
+		$URI = "https://gitlab.com/api/v4/projects?private_token=" + $token + "&archived=false&simple=true&per_page=100&page=" + $page
 		Write-Output $URI
 		$response = Invoke-WebRequest -Uri $URI -UseBasicParsing
 		$myjson = $response | ConvertFrom-Json
 		
+		if (!$myjson)
+		{
+		    break
+	    }
 		#Write the repo details to file for resilience in processing large numbers of them
 		foreach ($repo in $myjson) {
 			$out = $repo.name + "," + $repo.http_url_to_repo
-			Write-Output $out | Out-File -FilePath .\initialRepoList.txt -Append
-			Write-Output $out 
-			$rec = $rec + 1
+			Write-Output $out | Out-File -FilePath .\initialRepoList.txt -Append		
+			Write-Output $out
 		}
-		if ($rec -eq 101) # Only increment page if rec has not reached limit of 100
-		{
-			$page = $page + 1
-		}
-		else{
-			break
-		}
-		# Reset counter
-		$rec = 0
+		$page = $page + 1
 	}
 }
 
