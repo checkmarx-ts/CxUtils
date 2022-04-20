@@ -2,7 +2,7 @@
 .SYNOPSIS
 This is a Powershell script to retrieve your Checkmarx ScanData for Insight Analysis
 .DESCRIPTION
-This script will collect Scan Information that includes data about: Projects, Presets, Teams, Engines, and Result Metrics 
+This script will collect Scan Information that includes data about: Projects, Presets, Teams, Engines, and Result Metrics
 .PARAMETER cx_sast_server
     URL of the Checkmarx Server (i.e. https://companyname.checkmarx.net or http://localhost).
 .PARAMETER day_span
@@ -54,7 +54,7 @@ function getOAuth2Token() {
         client_id     = $clientId
         client_secret = $clientSecret
     }
-    
+
     try {
         if ($bypassProxy) {
             $response = Invoke-RestMethod -noProxy -uri "${serverRestEndpoint}auth/identity/connect/token" -method post -body $body -contenttype 'application/x-www-form-urlencoded'
@@ -70,11 +70,11 @@ function getOAuth2Token() {
 		Write-Host "Unable to retrieve Checkmarx AC Token"
         exit(-1)
     }
-    
+
     return $response.token_type + " " + $response.access_token
 }
 
-Write-Host "Running Script on Version " (get-host).Version 
+Write-Host "Running Script on Version " (get-host).Version
 $token = getOAuth2Token
 
 function getOdata() {
@@ -110,7 +110,7 @@ catch
 {
     Write-Host "Exception:" $_
     Write-Error $_.Exception.ToString()
-    Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+    Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
     Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
     Read-Host -Prompt "The above error occurred. Press Enter to exit."
 }
