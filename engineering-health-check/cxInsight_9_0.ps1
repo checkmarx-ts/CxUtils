@@ -77,19 +77,82 @@ function getOAuth2Token() {
 Write-Host "Running Script on Version " (get-host).Version
 $token = getOAuth2Token
 
-function getScanOdata() {
+function getScanOdata {
+    param (
+        $outputFile
+    )
     $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$select=Id,ProjectName,OwningTeamId,TeamName,ProductVersion,EngineServerId,Origin,PresetName,ScanRequestedOn,QueuedOn,EngineStartedOn,EngineFinishedOn,ScanCompletedOn,ScanDuration,FileCount,LOC,FailedLOC,TotalVulnerabilities,High,Medium,Low,Info,IsIncremental,IsLocked,IsPublic&`$expand=ScannedLanguages(`$select=LanguageName)&`$filter=ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z"
     $headers = @{
         Authorization = $token
     }
     try {
         if ($bypassProxy) {
-            $response = Invoke-RestMethod -noProxy -uri "$Url" -method get -headers $headers -OutFile "data.txt"
+            $response = Invoke-RestMethod -noProxy -uri "$Url" -method get -headers $headers -OutFile $outputFile
         }
         else {
-            $response = Invoke-RestMethod -uri "$Url" -method get -headers $headers -OutFile "data.txt"
+            $response = Invoke-RestMethod -uri "$Url" -method get -headers $headers -OutFile $outputFile
         }
-        return $response
+    }
+    catch {
+        Write-Host "Exception:" $_
+        Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
+        Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+		Write-Host $Url
+		Write-Host "An Error has prevented this script from collecting Odata."
+        exit(-1)
+    }
+}
+
+function getResultOData {
+    param (
+        $outputFile
+    )
+
+    $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Projects?`$select=Id&`$expand=LastScan(`$select=Id;`$expand=Results(`$select=Id,ResultId,StateId))"
+    $headers = @{
+        Authorization = $token
+    }
+    try {
+        if ($bypassProxy) {
+            $response = Invoke-RestMethod -noProxy -uri "$Url" -method get -headers $headers
+        }
+        else {
+            $response = Invoke-RestMethod -uri "$Url" -method get -headers $headers
+        }
+
+        $states = @{
+            "0" = "To Verify"
+            "1" = "Not Explotable"
+            "2" = "Confirmed"
+            "3" = "Urgent"
+            "4" = "Proposed Not Exploitable"
+        }
+        $projects = @{}
+        $totals = @{}
+        $response | Select-Object -ExpandProperty Value | ForEach-Object {
+            $projectId = "$($_.Id)"
+            if ( -not $projects.ContainsKey($projectId) ) {
+                $projects[$projectId] = @{}
+            }
+
+            $projects[$projectId]["LastScanId"] = $_.LastScan.Id
+            Foreach ( $result in $_.LastScan.Results ) {
+                $stateId = "$($result.StateId)"
+                if ( -not $states.ContainsKey($stateId) ) {
+                    $states[$stateId] = "Custom State $($result.StateId)"
+                }
+                $stateName = $states[$stateId]
+                $projects[$projectId][$stateName] = $projects[$projectId][$stateName] + 1
+                $totals[$stateName] = $totals[$stateName] + 1
+            }
+        }
+
+        $response = @{
+            "Projects" = $projects
+            "Totals" = $totals
+        }
+
+        $response | ConvertTo-Json -Compress | Out-File -FilePath $outputFile
     }
     catch {
         Write-Host "Exception:" $_
@@ -103,8 +166,12 @@ function getScanOdata() {
 
 try
 {
-    $data = getScanOdata('')
-    Read-Host -Prompt "The script was successful. Please send the 'data.txt' file in this directory to your Checkmarx Engineer. Press Enter to exit"
+    $files = @(".\scan-data.json", ".\result-data.json")
+    getScanOdata($files[0])
+    getResultOdata($files[1])
+    Compress-Archive -Path $files -DestinationPath ".\data.zip" -Force
+    Remove-Item -Path $files
+    Read-Host -Prompt "The script was successful. Please send the 'data.zip' file in this directory to your Checkmarx Engineer. Press Enter to exit"
 }
 catch
 {
