@@ -147,8 +147,19 @@ function getResultOData {
             }
         }
 
+        # Convert projects hashmap to an array
+        $newProjects = @()
+        Foreach ( $projectId in $projects.Keys ) {
+            $project = @{
+                ProjectId = $projectId
+                LastScanId = $projects.$projectId.LastScanId
+                Results = $projects.$projectId.Results
+            }
+            $newProjects += $project
+        }
+
         $response = @{
-            "Projects" = $projects
+            "Projects" = $newProjects
         }
 
         $response | ConvertTo-Json -Compress -Depth 3 | Out-File -FilePath $outputFile
