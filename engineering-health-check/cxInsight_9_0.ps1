@@ -132,17 +132,19 @@ function getResultOData {
         $response | Select-Object -ExpandProperty Value | ForEach-Object {
             $projectId = "$($_.Id)"
             if ( -not $projects.ContainsKey($projectId) ) {
-                $projects[$projectId] = @{}
+                $projects[$projectId] = @{
+                    LastScanId = $_.LastScan.Id
+                    Results = @{}
+                }
             }
 
-            $projects[$projectId]["LastScanId"] = $_.LastScan.Id
             Foreach ( $result in $_.LastScan.Results ) {
                 $stateId = "$($result.StateId)"
                 if ( -not $states.ContainsKey($stateId) ) {
                     $states[$stateId] = "Custom State $($result.StateId)"
                 }
                 $stateName = $states[$stateId]
-                $projects[$projectId][$stateName] = $projects[$projectId][$stateName] + 1
+                $projects[$projectId]['Results'][$stateName] = $projects[$projectId]['Results'][$stateName] + 1
                 $totals[$stateName] = $totals[$stateName] + 1
             }
         }
@@ -152,7 +154,7 @@ function getResultOData {
             "Totals" = $totals
         }
 
-        $response | ConvertTo-Json -Compress | Out-File -FilePath $outputFile
+        $response | ConvertTo-Json -Compress -Depth 3 | Out-File -FilePath $outputFile
     }
     catch {
         Write-Host "Exception:" $_
