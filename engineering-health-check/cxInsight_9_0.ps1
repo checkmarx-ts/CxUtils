@@ -128,7 +128,6 @@ function getResultOData {
             "4" = "Proposed Not Exploitable"
         }
         $projects = @{}
-        $totals = @{}
         $response | Select-Object -ExpandProperty Value | ForEach-Object {
             $projectId = "$($_.Id)"
             if ( -not $projects.ContainsKey($projectId) ) {
@@ -145,13 +144,11 @@ function getResultOData {
                 }
                 $stateName = $states[$stateId]
                 $projects[$projectId]['Results'][$stateName] = $projects[$projectId]['Results'][$stateName] + 1
-                $totals[$stateName] = $totals[$stateName] + 1
             }
         }
 
         $response = @{
             "Projects" = $projects
-            "Totals" = $totals
         }
 
         $response | ConvertTo-Json -Compress -Depth 3 | Out-File -FilePath $outputFile
