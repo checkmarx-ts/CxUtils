@@ -98,7 +98,7 @@ function getScanOdata {
         Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
         Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
 		Write-Host $Url
-		Write-Host "An Error has prevented this script from collecting Odata."
+		Write-Host "An error has prevented this script from collecting scan Odata."
         exit(-1)
     }
 }
@@ -159,7 +159,7 @@ function getResultOData {
         Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
         Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
 		Write-Host $Url
-		Write-Host "An Error has prevented this script from collecting Odata."
+		Write-Host "An error has prevented this script from collecting result Odata."
         exit(-1)
     }
 }
