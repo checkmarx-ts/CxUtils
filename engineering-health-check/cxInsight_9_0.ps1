@@ -155,7 +155,14 @@ function getResultOData {
             $project = @{
                 ProjectId = $projectId
                 LastScanId = $projects.$projectId.LastScanId
-                Results = $projects.$projectId.Results
+                Results = @()
+            }
+            Foreach ( $stateName in $projects.$projectId.Results.Keys ) {
+                $result = @{
+                    StateName = $stateName
+                    Count = $projects.$projectId.Results.$stateName
+                }
+                $project.Results += $result
             }
             $newProjects += $project
         }
@@ -164,7 +171,7 @@ function getResultOData {
             "Projects" = $newProjects
         }
 
-        $response | ConvertTo-Json -Compress -Depth 3 | Out-File -FilePath $outputFile
+        $response | ConvertTo-Json -Compress -Depth 4 | Out-File -FilePath $outputFile -Encoding utf8
     }
     catch {
         Write-Host "Exception:" $_
