@@ -164,12 +164,6 @@ function getResultOData {
                 }
                 $project.Results += $result
             }
-            # Add special results entry if there are no results
-            if ( $project.Results.Count -eq 0 ) {
-                $project.Results += @{
-                    StateName = $null
-                }
-            }
             $newProjects += $project
         }
 
