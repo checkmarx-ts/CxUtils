@@ -13,6 +13,8 @@ This script will collect Scan Information that includes data about: Projects, Pr
     The end date of the date range you would like to collect data (Format: yyyy-mm-DD)
 .PARAMETER bypassProxy
     If provided, the script will attempt to bypass any proxy when invoking the CxSAST API
+.PARAMETER results
+If provided, the script will retrieve and summarize result data as well as san data
 .EXAMPLE
     C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server https://customerurl.checkmarx.net
 .EXAMPLE
@@ -33,7 +35,10 @@ param(
     [String]$end_date = (Get-Date -format "yyyy-MM-dd"),
     [Parameter(Mandatory=$False)]
     [switch]
-    $bypassProxy
+    $bypassProxy,
+    [Parameter(Mandatory=$False)]
+    [switch]
+    $results
     )
 
 ###### Do Not Change The Following Configs ######
@@ -185,9 +190,12 @@ function getResultOData {
 
 try
 {
-    $files = @(".\scan-data.json", ".\result-data.json")
+    $files = @(".\scan-data.json")
     getScanOdata($files[0])
-    getResultOdata($files[1])
+    if ( $results) {
+        $files += ".\result-data.json"
+        getResultOdata($files[1])
+    }
     Compress-Archive -Path $files -DestinationPath ".\data.zip" -Force
     Remove-Item -Path $files
     Read-Host -Prompt "The script was successful. Please send the 'data.zip' file in this directory to your Checkmarx Engineer. Press Enter to exit"
