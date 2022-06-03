@@ -115,7 +115,7 @@ function getResultOData {
         $outputFile
     )
 
-    $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Projects?`$select=Id&`$expand=LastScan(`$select=Id;`$expand=Results(`$select=Id,ResultId,StateId))"
+    $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Projects?`$select=Id"
     $headers = @{
         Authorization = $token
     }
@@ -137,20 +137,31 @@ function getResultOData {
         $projects = @{}
         $response | Select-Object -ExpandProperty Value | ForEach-Object {
             $projectId = "$($_.Id)"
-            if ( -not $projects.ContainsKey($projectId) ) {
-                $projects[$projectId] = @{
-                    LastScanId = $_.LastScan.Id
-                    Results = @{}
-                }
+            $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Projects(${projectId})?`$select=Id&`$expand=LastScan(`$select=Id;`$expand=Results(`$select=Id,ResultId,StateId))"
+            if ($bypassProxy) {
+                $response = Invoke-RestMethod -noProxy -uri "$Url" -method get -headers $headers
+            }
+            else {
+                $response = Invoke-RestMethod -uri "$Url" -method get -headers $headers
             }
 
-            Foreach ( $result in $_.LastScan.Results ) {
-                $stateId = "$($result.StateId)"
-                if ( -not $states.ContainsKey($stateId) ) {
-                    $states[$stateId] = "Custom State $($result.StateId)"
+            $response | Select-Object -ExpandProperty Value | ForEach-Object {
+                $projectId = "$($_.Id)"
+                if ( -not $projects.ContainsKey($projectId) ) {
+                    $projects[$projectId] = @{
+                        LastScanId = $_.LastScan.Id
+                        Results = @{}
+                    }
                 }
-                $stateName = $states[$stateId]
-                $projects[$projectId]['Results'][$stateName] = $projects[$projectId]['Results'][$stateName] + 1
+
+                Foreach ( $result in $_.LastScan.Results ) {
+                    $stateId = "$($result.StateId)"
+                    if ( -not $states.ContainsKey($stateId) ) {
+                        $states[$stateId] = "Custom State $($result.StateId)"
+                    }
+                    $stateName = $states[$stateId]
+                    $projects[$projectId]['Results'][$stateName] = $projects[$projectId]['Results'][$stateName] + 1
+                }
             }
         }
 
