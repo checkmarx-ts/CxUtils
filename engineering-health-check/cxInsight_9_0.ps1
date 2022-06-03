@@ -15,6 +15,8 @@ This script will collect Scan Information that includes data about: Projects, Pr
     If provided, the script will attempt to bypass any proxy when invoking the CxSAST API
 .PARAMETER results
 If provided, the script will retrieve and summarize result data as well as san data
+.PARAMETER verbose
+If provided, the script will retrieve print activity messages
 .EXAMPLE
     C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server https://customerurl.checkmarx.net
 .EXAMPLE
@@ -62,6 +64,7 @@ function getOAuth2Token() {
         client_secret = $clientSecret
     }
 
+    Write-Verbose "Retrieving OAuth2 token"
     try {
         if ($bypassProxy) {
             $response = Invoke-RestMethod -noProxy -uri "${serverRestEndpoint}auth/identity/connect/token" -method post -body $body -contenttype 'application/x-www-form-urlencoded'
@@ -88,6 +91,8 @@ function getScanOdata {
     param (
         $outputFile
     )
+    Write-Verbose "Retrieving scan data"
+
     $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$select=Id,ProjectId,OwningTeamId,TeamName,ProductVersion,EngineServerId,Origin,PresetName,ScanRequestedOn,QueuedOn,EngineStartedOn,EngineFinishedOn,ScanCompletedOn,ScanDuration,FileCount,LOC,FailedLOC,TotalVulnerabilities,High,Medium,Low,Info,IsIncremental,IsLocked,IsPublic&`$expand=ScannedLanguages(`$select=LanguageName)&`$filter=ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z"
     $headers = @{
         Authorization = $token
@@ -114,6 +119,7 @@ function getResultOData {
     param (
         $outputFile
     )
+    Write-Verbose "Retrieving result data"
 
     $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Projects?`$select=Id"
     $headers = @{
@@ -137,6 +143,8 @@ function getResultOData {
         $projects = @{}
         $response | Select-Object -ExpandProperty Value | ForEach-Object {
             $projectId = "$($_.Id)"
+            Write-Verbose "Retrieving result data for project ${projectId}"
+
             $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Projects(${projectId})?`$select=Id&`$expand=LastScan(`$select=Id;`$expand=Results(`$select=Id,ResultId,StateId))"
             if ($bypassProxy) {
                 $response = Invoke-RestMethod -noProxy -uri "$Url" -method get -headers $headers
