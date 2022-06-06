@@ -34,6 +34,7 @@ Project | Description
 [multi-repo-whitelist-scan](multi-repo-whitelist-scan) | Script to clone multiple git repos, remove unrecognized file types, and scan as one project using the CxCLI from a linux bash shell
 [perfmon](perfmon) | This script makes it easy to get up and running with Perfmon to monitor your Checkmarx infrastructure
 [post-scan-email-any-report](post-scan-email-any-report) | Scripts for a post-scan action that allows email distribution lists to be defined in the post-scan action configuration rather than embedded in a script.
+[sast-update-git-credentials](sast-update-git-credentials) | Enables setting Git credentials on all or selected SAST projects.
 [svn-cx-runner](svn-cx-runner) | Utility that iterates through SVN repo, downloads Maven dependencies and creates Checkmarx projects.
 [TruffleHogCxQL](TruffleHogCxQL) | A port of the TruffleHog secrets detector.  It finds potential secrets through Regular Expression matches and High Entropy string detection.
 [user-type-migration](user-type-migration) | A process to generate SQL Statements to migrate from one user type to another (e.g. LDAP to SAML)
