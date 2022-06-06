@@ -2,6 +2,9 @@
 
 This is a curated set of utilities maintained by Checkmarx Professional Services and made available for public consumption.  This is a collection of scripts, tutorials, source code, and anything else that may be useful for use in the field by Checkmarx employees or customers.
 
+**To report issues or obtain help with any of the utilties in this repository, please engage Checkmarx Professional Services.**
+
+
 ## The List
 
 Project | Description
