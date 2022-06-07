@@ -143,6 +143,7 @@ function getResultOData {
         $projects = @{}
         $response | Select-Object -ExpandProperty Value | ForEach-Object {
             $projectId = "$($_.Id)"
+            Write-Progress -Activity "Retrieving Results"
             Write-Verbose "Retrieving result data for project ${projectId}"
 
             $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Projects(${projectId})?`$select=Id&`$expand=LastScan(`$select=Id;`$expand=Results(`$select=Id,ResultId,StateId))"
