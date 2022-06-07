@@ -2,7 +2,7 @@
 .SYNOPSIS
 This is a Powershell script to retrieve your Checkmarx ScanData for Insight Analysis
 .DESCRIPTION
-This script will collect Scan Information that includes data about: Projects, Presets, Teams, Engines, and Result Metrics. It also retrieves scan results and generates a summary of them.
+This script will collect Scan Information that includes data about: Projects, Presets, Teams, Engines, and Result Metrics. It also optionally retrieves scan results and generates a summary of them.
 .PARAMETER cx_sast_server
     URL of the Checkmarx Server (i.e. https://companyname.checkmarx.net or http://localhost).
 .PARAMETER day_span
@@ -14,7 +14,7 @@ This script will collect Scan Information that includes data about: Projects, Pr
 .PARAMETER bypassProxy
     If provided, the script will attempt to bypass any proxy when invoking the CxSAST API
 .PARAMETER results
-If provided, the script will retrieve and summarize result data as well as san data
+If provided, the script will retrieve and summarize result data as well as scan data
 .PARAMETER verbose
 If provided, the script will retrieve print activity messages
 .EXAMPLE
@@ -23,10 +23,12 @@ If provided, the script will retrieve print activity messages
     C:\PS> .\cxInsight_9_0.ps1 -start_date 2019-04-01
 .EXAMPLE
     C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server http://localhost -day_span 180
+.EXAMPLE
+C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server http://localhost -results
 .NOTES
     Author: Checkmarx
     Date:   April 13, 2020
-    Updated: May 9, 2022
+    Updated: June 8, 2022
 #>
 
 param(
