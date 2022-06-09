@@ -21,6 +21,8 @@ Projects that do not have Git settings will not be updated.  Projects that have 
 
 By default, the configuration settings are not changed unless the -write flag is included as a command line parameter.
 
+If the 'gitpassword' parameter is not provided, a server-to-PAT mapping can be defined in the 'HostToPATMap.ps1' script.  See the documentation for HostToPATMap.ps1
+
 .PARAMETER server
 The URL to the SAST server.
 
@@ -31,8 +33,7 @@ The SAST account username.
 The SAST account password.
 
 .PARAMETER gitusername
-The Git repo username to use for the Git credentials.  Use "Git" if using a PAT
-as the Git password.
+The Git repo username to use for the Git credentials. Defaults to 'git'
 
 .PARAMETER gitpassword
 The password or PAT for accessing the Git repository.
@@ -52,25 +53,30 @@ An array of SAST project names.  These project names should be the full project 
 .OUTPUTS
 None
 
+
 .EXAMPLE
-.\UpdateGitSettings.ps1 -server "http://localhost" -username "admin" -gitusername git -gitpassword "P@$$w0rd!123"
+.\UpdateGitSettings.ps1 -server "http://localhost" -username "admin" -password "sast_password" -gitusername git -gitpassword "P@$$w0rd!123"
 
 Outputs a log file showing what changes will be made to all projects without changing any settings.
 
+.EXAMPLE
+.\UpdateGitSettings.ps1 -server "http://localhost" -username "admin" -password "sast_password"
+
+Outputs a log file showing what changes will be made to all projects without changing any settings.
 
 .EXAMPLE
-.\UpdateGitSettings.ps1 -server "http://localhost" -username "admin" -gitusername git -gitpassword "P@$$w0rd!123" -projectids "1,2,3" -write
+.\UpdateGitSettings.ps1 -server "http://localhost" -username "admin" -password "sast_password" -gitusername git -gitpassword "P@$$w0rd!123" -projectids "1,2,3" -write
 
 Updates the git credentials for SAST projects with ids 1, 2, and 3.
 
 .EXAMPLE
-.\UpdateGitSettings.ps1 -server "http://localhost" -username "admin" -gitusername git -gitpassword "P@$$w0rd!123" -write
+.\UpdateGitSettings.ps1 -server "http://localhost" -username "admin" -password "sast_password" -gitusername git -gitpassword "P@$$w0rd!123" -write
 
 Updates the git credentials for all SAST projects that have previously been configured with Git settings.
 
 
 .EXAMPLE
-Get-Content project-list.txt | .\UpdateGitSettings.ps1 -server "http://localhost" -username "admin" -gitusername git -gitpassword "P@$$w0rd!123" -write
+Get-Content project-list.txt | .\UpdateGitSettings.ps1 -server "http://localhost" -username "admin" -password "sast_password" -gitusername git -gitpassword "P@$$w0rd!123" -write
 
 Updates the git credentials for projects with paths specified in the project-list.txt file. The contents of project-list.txt could have a list of
 project paths, e.g.:
@@ -80,14 +86,19 @@ project paths, e.g.:
 /CxServer/TeamB/Project1
 /CxServer/TeamC/Project1
 
+.EXAMPLE
+"/CxServer/Team/Project" | .\UpdateGitSettings.ps1 -server "http://localhost" -username "admin" -password "sast_password" -gitusername git -gitpassword "P@$$w0rd!123" -write
+
+Updates credentials for a single project selected by full project name.
+
 #>
 
 param (
     [string]$server = "http://localhost",
     [Parameter(Mandatory = $true)][string]$username,
     [Parameter(Mandatory = $true)][string] $password,
-    [Parameter(Mandatory = $true)][string] $gitusername,
-    [Parameter(Mandatory = $true)][string] $gitpassword,
+    [string] $gitusername = "git",
+    [string] $gitpassword,
     [string]$projectids = "",
     [Parameter(ValueFromPipeline = $true)][string]$projectnames,
     [switch]$write,
@@ -95,6 +106,55 @@ param (
 )
 
 begin {
+
+    if ($gitpassword -eq "") {
+
+        if ( (Test-Path "HostToPATMap.ps1" -PathType Leaf) ) {
+            . ((Get-Location).Path + "\HostToPATMap.ps1")
+            if ($null -eq $patMap) {
+                Write-Host "A mapping file named 'HostToPATMap.ps1' must define a hash named '`$patMap'."
+                Write-Host "Execution will not continue."
+                exit 1
+            }
+
+            # URL format function when using a host to PAT mapping
+            $gitUrlFunc = {
+                param([string]$url)
+
+                foreach ($regex in $patMap.Keys) {
+
+                    $r = [System.Text.RegularExpressions.Regex]::new($regex)
+                    if ($r.IsMatch($url) ) {
+
+                        $gitUrl = [System.UriBuilder]::new($url)
+    
+                        # Url decode is done in case the PAT is URL encoded
+                        $gitUrl.UserName = "git"
+                        $gitUrl.Password = [System.Web.HttpUtility]::UrlEncode([System.Web.HttpUtility]::UrlDecode($patMap[$regex]))
+            
+                        return $gitUrl.Uri
+                    }
+                }
+                throw "No token map match for $url"
+            }
+        }
+
+    }
+    else {
+        # URL format function when using a single Git username/password (or token)
+        $gitUrlFunc = {
+            param([string]$url)
+
+            $gitUrl = [System.UriBuilder]::new($url)
+    
+            # Url decode is done in case the username/pass is given to the script already encoded
+            $gitUrl.UserName = [System.Web.HttpUtility]::UrlEncode([System.Web.HttpUtility]::UrlDecode($gitusername))
+            $gitUrl.Password = [System.Web.HttpUtility]::UrlEncode([System.Web.HttpUtility]::UrlDecode($gitpassword))
+
+            return $gitUrl.Uri
+        }
+    }
+
     function WriteToLogFile($message) {
         Write-Host $message
         $message >> $logFilePath
@@ -142,11 +202,9 @@ begin {
 
 
 
-    #Variables
     $cxSastServer = [System.UriBuilder]::new($server)
     $cxUsername = $username
     $cxPassword = $password
-
     $noGitSettings = 0
 
     function makeUri ([System.UriBuilder] $baseUri, [string] $path) {
@@ -271,13 +329,13 @@ begin {
 
 
 process {
-    if ($projectnames.Count -gt 0) {
+    if ( -not $null -eq $projectnames) {
         foreach ($name in $projectnames) {
             if ($projByName.keys -contains $name) {
                 $targetProjects += $projByName[$name]
             }
             else {
-                WriteToLogFile "Project with id ${name} does not exist."
+                WriteToLogFile "Project with name ${name} does not exist."
             }
         }
     }
@@ -305,25 +363,25 @@ end {
 
         WriteToLogFile "${projectName} [${projectId}] Current URL: $($projectGitSettings.url) BRANCH: $($projectGitSettings.branch)"
 
-        #variables
-        $gitUrl = [System.UriBuilder]::new($projectGitSettings.url)
-        $gitRepoBranch = $projectGitSettings.branch
+        try { 
+            $gitUrl = &$gitUrlFunc $projectGitSettings.url
+            $gitRepoBranch = $projectGitSettings.branch
 
-        # Url decode is done in case the username/pass is given to the script already encoded
-        $gitUrl.UserName = [System.Web.HttpUtility]::UrlEncode([System.Web.HttpUtility]::UrlDecode($gitusername))
-        $gitUrl.Password = [System.Web.HttpUtility]::UrlEncode([System.Web.HttpUtility]::UrlDecode($gitpassword))
+            if ($true -eq $write) {
+                setProjectGitSettings $token $projectId $gitUrl $gitRepoBranch
+            }
 
-
-        if ($true -eq $write) {
-            setProjectGitSettings $token $projectId $gitUrl.Uri $gitRepoBranch
+            WriteToLogFile "${projectName} [${projectId}] updated: $($gitUrl)"
         }
-
-        WriteToLogFile "${projectName} [${projectId}] updated: $($gitUrl.Uri)"
+        catch {
+            WriteToLogFile $_
+            $noGitSettings += 1
+        }
     }
 
     WriteToLogFile ""
     WriteToLogFile "$($targetProjects.Count) projects targetted."
     WriteToLogFile ""
-    WriteToLogFile "There were $noGitSettings projects found with no Git settings; these have not been updated."
+    WriteToLogFile "There were $noGitSettings projects found with no matching Git settings; these have not been updated."
     WriteToLogFile "Complete"
 }
