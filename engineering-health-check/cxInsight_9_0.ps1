@@ -123,7 +123,7 @@ function getResultOData {
     )
     Write-Verbose "Retrieving result data"
 
-    $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Projects?`$select=Id"
+    $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Projects?`$select=Id,LastScanId"
     $headers = @{
         Authorization = $token
     }
@@ -135,20 +135,22 @@ function getResultOData {
             $response = Invoke-RestMethod -uri "$Url" -method get -headers $headers
         }
 
-        $states = @{
-            "0" = "To Verify"
-            "1" = "Not Explotable"
-            "2" = "Confirmed"
-            "3" = "Urgent"
-            "4" = "Proposed Not Exploitable"
-        }
         $projects = @{}
         $response | Select-Object -ExpandProperty Value | ForEach-Object {
             $projectId = "$($_.Id)"
-            Write-Progress -Activity "Retrieving Results"
-            Write-Verbose "Retrieving result data for project ${projectId}"
+            $lastScanId = "$($_.LastScanId)"
 
-            $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Projects(${projectId})?`$select=Id&`$expand=LastScan(`$select=Id;`$expand=Results(`$select=Id,ResultId,StateId))"
+            if (-Not $lastScanId) {
+                Write-Verbose "Project ${projectId} has no last scan"
+                return
+            }
+
+            Write-Progress -Activity "Retrieving Results"
+            Write-Verbose "Retrieving result data for scan ${lastScanId} (project ${projectId})"
+
+            $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$filter=Id%20eq%20${lastScanId}%20and%20ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z&`$select=Id&`$expand=Results(`$select=Id,ScanId,ResultId,StateId;`$expand=State)"
+            Write-Verbose "URL is ${Url}"
+
             if ($bypassProxy) {
                 $response = Invoke-RestMethod -noProxy -uri "$Url" -method get -headers $headers
             }
@@ -156,21 +158,22 @@ function getResultOData {
                 $response = Invoke-RestMethod -uri "$Url" -method get -headers $headers
             }
 
+            if (-Not $Response.Value) {
+                Write-Verbose "No matching scan found in the specified date range for project ${projectId}"
+                return
+            }
+
             $response | Select-Object -ExpandProperty Value | ForEach-Object {
-                $projectId = "$($_.Id)"
                 if ( -not $projects.ContainsKey($projectId) ) {
                     $projects[$projectId] = @{
-                        LastScanId = $_.LastScan.Id
+                        LastScanId = ${lastScanId}
                         Results = @{}
                     }
                 }
 
-                Foreach ( $result in $_.LastScan.Results ) {
+                Foreach ( $result in $_.Results ) {
                     $stateId = "$($result.StateId)"
-                    if ( -not $states.ContainsKey($stateId) ) {
-                        $states[$stateId] = "Custom State $($result.StateId)"
-                    }
-                    $stateName = $states[$stateId]
+                    $stateName = "$($result.State.Name)"
                     $projects[$projectId]['Results'][$stateName] = $projects[$projectId]['Results'][$stateName] + 1
                 }
             }
