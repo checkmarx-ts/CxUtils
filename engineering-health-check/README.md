@@ -8,7 +8,7 @@ The 9.x version of the script also optionally collects and generates a summary o
 * Ensure admin privileges before running the scripts
 
 
-cxInsight_XX.ps1 usage
+## cxInsight_XX.ps1 usage
 Open powershell and enter the following replacing XX with the correct version
 ```
 ./cxInsight_XX.ps1
@@ -16,6 +16,10 @@ Open powershell and enter the following replacing XX with the correct version
 * Enter the CxServer Url - ex: https://acme.checkmarx.net
 * Enter administrator credentials for CxSAST
 
+To get more information about the usage, use the `Get-Help` command:
+```
+Get-Help ./cxInsight_XX.ps1
+```
 
 ## Credential Prompt via Command Line
 
