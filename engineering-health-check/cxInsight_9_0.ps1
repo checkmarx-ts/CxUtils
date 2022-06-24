@@ -28,7 +28,7 @@ C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server http://localhost -results
 .NOTES
     Author: Checkmarx
     Date:   April 13, 2020
-    Updated: June 8, 2022
+    Updated: June 24, 2022
 #>
 
 param(
