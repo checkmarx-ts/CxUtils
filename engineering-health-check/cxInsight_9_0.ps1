@@ -138,7 +138,7 @@ function getResultOData {
         $projects = @{}
         $response | Select-Object -ExpandProperty Value | ForEach-Object {
             $projectId = "$($_.Id)"
-            $lastScanId = "$($_.LastScanId)"
+            $lastScanId = $_.LastScanId
 
             if (-Not $lastScanId) {
                 Write-Verbose "Project ${projectId} has no last scan"
