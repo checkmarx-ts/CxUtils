@@ -8,7 +8,7 @@ The 9.x version of the script also optionally collects and generates a summary o
 * Ensure admin privileges before running the scripts
 
 
-cxInsight_XX.ps1 usage
+## cxInsight_XX.ps1 usage
 Open powershell and enter the following replacing XX with the correct version
 ```
 ./cxInsight_XX.ps1
@@ -16,6 +16,10 @@ Open powershell and enter the following replacing XX with the correct version
 * Enter the CxServer Url - ex: https://acme.checkmarx.net
 * Enter administrator credentials for CxSAST
 
+To get more information about the usage, use the `Get-Help` command:
+```
+Get-Help ./cxInsight_XX.ps1
+```
 
 ## Credential Prompt via Command Line
 
@@ -24,4 +28,11 @@ The script prompts for a CxSAST username and password. If your environment does 
 ```powershell
 $key = "HKLM:\SOFTWARE\Microsoft\PowerShell\1\ShellIds"
 Set-ItemProperty $key ConsolePrompting True
+```
+
+## Triage Results
+
+By default, the cxInsight_9.0.ps1 script retrieves only scan data. To also retrieve result triage data, use the `-Results` command line switch:
+```
+./cxInsight_9_0.ps1 -Results
 ```
