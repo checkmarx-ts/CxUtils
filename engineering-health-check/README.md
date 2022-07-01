@@ -8,17 +8,17 @@ The script also optionally collects and generates a summary of the result data f
 * Ensure admin privileges before running the scripts
 
 
-## cxInsight_XX.ps1 usage
+## cxInsight_X_X.ps1 usage
 Open powershell and enter the following replacing XX with the correct version
 ```
-./cxInsight_XX.ps1
+./cxInsight_X_X.ps1
 ```
 * Enter the CxServer Url - ex: https://acme.checkmarx.net
 * Enter administrator credentials for CxSAST
 
 To get more information about the usage, use the `Get-Help` command:
 ```
-Get-Help ./cxInsight_XX.ps1
+Get-Help ./cxInsight_X_X.ps1
 ```
 
 ## Credential Prompt via Command Line
@@ -32,7 +32,7 @@ Set-ItemProperty $key ConsolePrompting True
 
 ## Triage Results
 
-By default, the cxInsight_9.0.ps1 script retrieves only scan data. To also retrieve result triage data, use the `-Results` command line switch:
+By default, the cxInsight_X_X.ps1 script retrieves only scan data. To also retrieve result triage data, use the `-Results` command line switch:
 ```
-./cxInsight_9_0.ps1 -Results
+./cxInsight_X_X.ps1 -Results
 ```
