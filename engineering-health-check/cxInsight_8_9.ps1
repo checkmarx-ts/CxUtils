@@ -76,7 +76,7 @@ function odata() {
     if ($bypassProxy) {
         $cxargs.NoProxy = $true
     }
-    if ($OutputFile) {
+    if ($OutFile) {
         $cxargs.OutFile = $OutFile
     }
 
