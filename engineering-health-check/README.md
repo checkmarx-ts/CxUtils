@@ -9,7 +9,7 @@ The script also optionally collects and generates a summary of the result data f
 
 
 ## cxInsight_X_X.ps1 usage
-Open powershell and enter the following replacing XX with the correct version
+Open powershell and enter the following replacing X_X with the correct version
 ```
 ./cxInsight_X_X.ps1
 ```
