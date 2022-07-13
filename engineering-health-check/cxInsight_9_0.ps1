@@ -231,9 +231,14 @@ try
         $files += ".\result-data.json"
         getResultOdata($files[1])
     }
-    Compress-Archive -Path $files -DestinationPath ".\data.zip" -Force
-    Remove-Item -Path $files
-    Read-Host -Prompt "The script was successful. Please send the 'data.zip' file in this directory to your Checkmarx Engineer. Press Enter to exit"
+    if ($PSVersionTable.PSVersion.Major -gt 4) {
+        Compress-Archive -Path $files -DestinationPath ".\data.zip" -Force
+        Remove-Item -Path $files
+        Read-Host -Prompt "The script was successful. Please send the 'data.zip' file in this directory to your Checkmarx Engineer. Press Enter to exit"
+    }
+    else {
+        Read-Host -Prompt "The script was successful. Please send the ${files} file(s) in this directory to your Checkmarx Engineer. Press Enter to exit"
+    }
 }
 catch
 {
