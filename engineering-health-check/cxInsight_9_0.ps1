@@ -66,14 +66,19 @@ function getOAuth2Token() {
         client_secret = $clientSecret
     }
 
+    $cxargs = @{
+        Uri = "${serverRestEndpoint}auth/identity/connect/token"
+        Method = "Post"
+        Body = $body
+        ContentType =  "application/x-www-form-urlencoded"
+    }
+    if ($bypassProxy) {
+        $cxargs.NoProxy = $true
+    }
+
     Write-Verbose "Retrieving OAuth2 token"
     try {
-        if ($bypassProxy) {
-            $response = Invoke-RestMethod -noProxy -uri "${serverRestEndpoint}auth/identity/connect/token" -method post -body $body -contenttype 'application/x-www-form-urlencoded'
-        }
-        else {
-            $response = Invoke-RestMethod -uri "${serverRestEndpoint}auth/identity/connect/token" -method post -body $body -contenttype 'application/x-www-form-urlencoded'
-        }
+        $response = Invoke-RestMethod @cxargs
     }
     catch {
         Write-Host "Exception:" $_
@@ -89,6 +94,33 @@ function getOAuth2Token() {
 Write-Host "Running Script on Version " (get-host).Version
 $token = getOAuth2Token
 
+function odata() {
+    param (
+        $Uri,
+        $OutFile
+    )
+
+    $headers = @{
+        Authorization = $token
+    }
+    $cxargs = @{
+        Uri = $Uri
+        Headers = $headers
+        Method = "Get"
+    }
+    if ($AllowUnencryptedAuthenticationresults) {
+        $cxargs.AllowUnencryptedAuthentication = $true
+    }
+    if ($bypassProxy) {
+        $cxargs.NoProxy = $true
+    }
+    if ($OutFile) {
+        $cxargs.OutFile = $OutFile
+    }
+
+    return Invoke-RestMethod @cxargs
+}
+
 function getScanOdata {
     param (
         $outputFile
@@ -96,16 +128,8 @@ function getScanOdata {
     Write-Verbose "Retrieving scan data"
 
     $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$select=Id,ProjectId,ProjectName,OwningTeamId,TeamName,ProductVersion,EngineServerId,Origin,PresetName,ScanRequestedOn,QueuedOn,EngineStartedOn,EngineFinishedOn,ScanCompletedOn,ScanDuration,FileCount,LOC,FailedLOC,TotalVulnerabilities,High,Medium,Low,Info,IsIncremental,IsLocked,IsPublic&`$expand=ScannedLanguages(`$select=LanguageName)&`$filter=ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z"
-    $headers = @{
-        Authorization = $token
-    }
     try {
-        if ($bypassProxy) {
-            $response = Invoke-RestMethod -noProxy -uri "$Url" -method get -headers $headers -OutFile $outputFile
-        }
-        else {
-            $response = Invoke-RestMethod -uri "$Url" -method get -headers $headers -OutFile $outputFile
-        }
+        $response = odata -Uri $Url -OutFile $outputFile
     }
     catch {
         Write-Host "Exception:" $_
@@ -124,16 +148,8 @@ function getResultOData {
     Write-Verbose "Retrieving result data"
 
     $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Projects?`$select=Id,LastScanId"
-    $headers = @{
-        Authorization = $token
-    }
     try {
-        if ($bypassProxy) {
-            $response = Invoke-RestMethod -noProxy -uri "$Url" -method get -headers $headers
-        }
-        else {
-            $response = Invoke-RestMethod -uri "$Url" -method get -headers $headers
-        }
+        $response = odata -Uri $url
 
         $projects = @{}
         $response | Select-Object -ExpandProperty Value | ForEach-Object {
@@ -151,13 +167,7 @@ function getResultOData {
             $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$filter=Id%20eq%20${lastScanId}%20and%20ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z&`$select=Id&`$expand=Results(`$select=Id,ScanId,ResultId,StateId;`$expand=State)"
             Write-Verbose "URL is ${Url}"
 
-            if ($bypassProxy) {
-                $response = Invoke-RestMethod -noProxy -uri "$Url" -method get -headers $headers
-            }
-            else {
-                $response = Invoke-RestMethod -uri "$Url" -method get -headers $headers
-            }
-
+            $response = odata -Uri $Url
             if (-Not $Response.Value) {
                 Write-Verbose "No matching scan found in the specified date range for project ${projectId}"
                 return
@@ -221,9 +231,14 @@ try
         $files += ".\result-data.json"
         getResultOdata($files[1])
     }
-    Compress-Archive -Path $files -DestinationPath ".\data.zip" -Force
-    Remove-Item -Path $files
-    Read-Host -Prompt "The script was successful. Please send the 'data.zip' file in this directory to your Checkmarx Engineer. Press Enter to exit"
+    if ($PSVersionTable.PSVersion.Major -gt 4) {
+        Compress-Archive -Path $files -DestinationPath ".\data.zip" -Force
+        Remove-Item -Path $files
+        Read-Host -Prompt "The script was successful. Please send the 'data.zip' file in this directory to your Checkmarx Engineer. Press Enter to exit"
+    }
+    else {
+        Read-Host -Prompt "The script was successful. Please send the ${files} file(s) in this directory to your Checkmarx Engineer. Press Enter to exit"
+    }
 }
 catch
 {
