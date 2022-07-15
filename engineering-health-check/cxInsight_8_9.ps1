@@ -108,7 +108,8 @@ function getResultOData {
     param (
         $outputFile
     )
-    Write-Verbose "Retrieving result data"
+    Write-Progress -Activity "Retrieving result data" -Status "Retrieving result data for scan ${lastScanId} (project ${projectId})"
+    Write-Verbose "Retrieving result data for scan ${lastScanId} (project ${projectId})"
 
     $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Projects?`$select=Id,LastScanId"
     try {

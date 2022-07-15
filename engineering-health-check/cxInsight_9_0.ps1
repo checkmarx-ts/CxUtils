@@ -161,7 +161,7 @@ function getResultOData {
                 return
             }
 
-            Write-Progress -Activity "Retrieving Results"
+            Write-Progress -Activity "Retrieving Results" -Status "Retrieving result data for scan ${lastScanId} (project ${projectId})"
             Write-Verbose "Retrieving result data for scan ${lastScanId} (project ${projectId})"
 
             $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$filter=Id%20eq%20${lastScanId}%20and%20ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z&`$select=Id&`$expand=Results(`$select=Id,ScanId,ResultId,StateId;`$expand=State)"
