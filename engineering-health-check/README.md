@@ -32,7 +32,14 @@ Set-ItemProperty $key ConsolePrompting True
 
 ## Triage Results
 
-By default, the cxInsight_X_X.ps1 script retrieves only scan data. To also retrieve result triage data, use the `-Results` command line switch:
+When running the cxInsight_X_X.ps1 script, you must explicitly decide whether to retrieve triage results. To retrieve triage results, pass the `-Results` command line switch:
+
 ```
-./cxInsight_X_X.ps1 -Results
+.\cxInsight_X_X.ps1 -Results
+```
+
+To exclude the triage results, use the `-ExclResults` command line switch:
+
+```
+.\cxInsight_X_X.ps1 -ExclResults
 ```

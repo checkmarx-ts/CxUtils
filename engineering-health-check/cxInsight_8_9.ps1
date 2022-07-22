@@ -13,8 +13,10 @@ This script will collect Scan Information that includes data about: Projects, Pr
     The end date of the date range you would like to collect data (Format: yyyy-mm-DD)
 .PARAMETER bypassProxy
     If provided, the script will attempt to bypass any proxy when invoking the CxSAST API
-.PARAMETER results
-    If provided, the script will retrieve and summarize result data as well as scan data
+.PARAMETER Results
+    If provided, the script will retrieve and summarize result data as well as scan data. Either this option or the -ExclResults option must be provided.
+.PARAMETER ExclResults
+    If provided, the script will not retrieve result data. Either this option or the -Results option must be provided.
 .PARAMETER verbose
     If provided, the script will retrieve print activity messages
 .EXAMPLE
@@ -45,8 +47,16 @@ param(
     $results,
     [Parameter(Mandatory=$False)]
     [switch]
+    $exclresults,
+    [Parameter(Mandatory=$False)]
+    [switch]
     $AllowUnencryptedAuthenticationresults
     )
+
+if ( ! ( $results -or $exclresults ) ) {
+    Write-Error "Either -Results or -ExclResults must be provided"
+    exit
+}
 
 ###### Do Not Change The Following Configs ######
 $grantType = "password"
