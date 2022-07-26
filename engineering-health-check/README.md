@@ -43,3 +43,11 @@ To exclude the triage results, use the `-ExclResults` command line switch:
 ```
 .\cxInsight_X_X.ps1 -ExclResults
 ```
+
+The `-ExclResults` switch takes precedence over the `-Results` switch.
+
+## Excluding Project and Team Name
+
+The `-ExclProjectName` and `-ExclTeamName` command line switches can be used to prevent the inclusion of the project name and the team name, respectively, in the scan data.
+
+For convenience, the `-ExclAll` command line switch can be used to suppress the retrieval of result data and the suppression of the project and team names.

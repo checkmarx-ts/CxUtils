@@ -22,21 +22,23 @@ This script will collect Scan Information that includes data about: Projects, Pr
 .PARAMETER ExclTeamName
     If provided, the team name will be excluded from the scan results.
 .PARAMETER ExclAll
-    If provided, both the project name and the team name will be excluded from the scan results.
+If provided, the project name and the team name will be excluded from the scan results, and the result data will not be retrieved.
 .PARAMETER verbose
     If provided, the script will retrieve print activity messages
 .EXAMPLE
-    C:\PS> .\cxInsight_8_9.ps1 -cx_sast_server https://customerurl.checkmarx.net
+    C:\PS> .\cxInsight_8_9.ps1 -cx_sast_server https://customerurl.checkmarx.net -exclresults
 .EXAMPLE
-    C:\PS> .\cxInsight_8_9.ps1 -start_date 2019-04-01
+    C:\PS> .\cxInsight_8_9.ps1 -start_date 2019-04-01 -exclresults
 .EXAMPLE
-    C:\PS> .\cxInsight_8_9.ps1 -cx_sast_server http://localhost -day_span 180
+    C:\PS> .\cxInsight_8_9.ps1 -cx_sast_server http://localhost -day_span 180 -exclresults
 .EXAMPLE
     C:\PS> .\cxInsight_8_9.ps1 -cx_sast_server http://localhost -results
+.EXAMPLE
+    C:\PS> .\cxInsight_8_9.ps1 -cx_sast_server http://localhost -exclall
 .NOTES
     Author: Checkmarx
     Date:   April 13, 2020
-    Updated: July 1, 2022
+    Updated: July 26, 2022
 #>
 
 param(
@@ -66,9 +68,16 @@ param(
     $AllowUnencryptedAuthenticationresults
     )
 
-if ( ! ( $results -or $exclresults ) ) {
-    Write-Error "Either -Results or -ExclResults must be provided"
+if ( ! ( $results -or $exclresults -or $exclAll ) ) {
+    Write-Error "Either -Results, -ExclResults or -ExclAll must be provided"
     exit
+}
+
+if ( $exclResults -or $exclAll ) {
+    if ( $results ) {
+        Write-Warning "The -ExclResults and -ExclAll options take precedence over the -Results option"
+        $results = $null
+    }
 }
 
 ###### Do Not Change The Following Configs ######
@@ -91,7 +100,6 @@ if ( $exclTeamName -or $exclAll ) {
 }
 
 Write-Host "Running Script on Version " (get-host).Version
-#$token = getOAuth2Token
 
 function odata() {
     param (
@@ -142,8 +150,7 @@ function getResultOData {
     param (
         $outputFile
     )
-    Write-Progress -Activity "Retrieving result data" -Status "Retrieving result data for scan ${lastScanId} (project ${projectId})"
-    Write-Verbose "Retrieving result data for scan ${lastScanId} (project ${projectId})"
+    Write-Verbose "Retrieving result data"
 
     $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Projects?`$select=Id,LastScanId"
     try {
@@ -158,7 +165,7 @@ function getResultOData {
                 return
             }
 
-            Write-Progress -Activity "Retrieving Results"
+            Write-Progress -Activity "Retrieving Results" -Status "Retrieving result data for scan ${lastScanId} (project ${projectId})"
             Write-Verbose "Retrieving result data for scan ${lastScanId} (project ${projectId})"
 
             $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$filter=Id%20eq%20${lastScanId}%20and%20ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z&`$select=Id&`$expand=Results(`$select=Id,ScanId,ResultId,StateId;`$expand=State)"
@@ -233,7 +240,7 @@ try
     if ($PSVersionTable.PSVersion.Major -gt 4) {
         Compress-Archive -Path $files -DestinationPath ".\data.zip" -Force
         Remove-Item -Path $files
-        Read-Host -Prompt "The script was successful. Please send the data.zip file in this directory to your Checkmarx Engineer. Press Enter to exit"
+        Read-Host -Prompt "The script was successful. Please send the 'data.zip' file in this directory to your Checkmarx Engineer. Press Enter to exit"
     }
     else {
         Read-Host -Prompt "The script was successful. Please send the ${files} file(s) in this directory to your Checkmarx Engineer. Press Enter to exit"
