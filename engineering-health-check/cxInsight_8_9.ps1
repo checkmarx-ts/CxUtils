@@ -17,6 +17,12 @@ This script will collect Scan Information that includes data about: Projects, Pr
     If provided, the script will retrieve and summarize result data as well as scan data. Either this option or the -ExclResults option must be provided.
 .PARAMETER ExclResults
     If provided, the script will not retrieve result data. Either this option or the -Results option must be provided.
+.PARAMETER ExclProjectName
+    If provided, the project name will be excluded from the scan results.
+.PARAMETER ExclTeamName
+    If provided, the team name will be excluded from the scan results.
+.PARAMETER ExclAll
+    If provided, both the project name and the team name will be excluded from the scan results.
 .PARAMETER verbose
     If provided, the script will retrieve print activity messages
 .EXAMPLE
@@ -48,6 +54,13 @@ param(
     [Parameter(Mandatory=$False)]
     [switch]
     $exclresults,
+    $exclProjectName,
+    [Parameter(Mandatory=$False)]
+    [switch]
+    $exclTeamName,
+    [Parameter(Mandatory=$False)]
+    [switch]
+    $exclAll,
     [Parameter(Mandatory=$False)]
     [switch]
     $AllowUnencryptedAuthenticationresults
@@ -65,6 +78,17 @@ $clientId = "resource_owner_client"
 $clientSecret = "014DF517-39D1-4453-B7B3-9930C563627C"
 
 $cred = Get-Credential -Credential $null
+
+# Data exclusion
+$projectName = "ProjectName,"
+$teamName = "TeamName,"
+
+if ( $exclProjectName -or $exclAll ) {
+    $projectName = ""
+}
+if ( $exclTeamName -or $exclAll ) {
+    $teamName = ""
+}
 
 Write-Host "Running Script on Version " (get-host).Version
 #$token = getOAuth2Token
@@ -99,7 +123,7 @@ function getScanOdata {
     )
     Write-Verbose "Retrieving scan data"
 
-    $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$select=Id,ProjectId,ProjectName,OwningTeamId,TeamName,ProductVersion,EngineServerId,Origin,PresetName,ScanRequestedOn,QueuedOn,EngineStartedOn,EngineFinishedOn,ScanCompletedOn,ScanDuration,FileCount,LOC,FailedLOC,TotalVulnerabilities,High,Medium,Low,Info,IsIncremental,IsLocked,IsPublic&`$expand=ScannedLanguages(`$select=LanguageName)&`$filter=ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z"
+    $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$select=Id,ProjectId,${ProjectName}OwningTeamId,${TeamName}ProductVersion,EngineServerId,Origin,PresetName,ScanRequestedOn,QueuedOn,EngineStartedOn,EngineFinishedOn,ScanCompletedOn,ScanDuration,FileCount,LOC,FailedLOC,${vulnerabilities}IsIncremental,IsLocked,IsPublic&`$expand=ScannedLanguages(`$select=LanguageName)&`$filter=ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z"
     try {
         $response = odata -Uri $Url -OutFile $outputFile
     }
