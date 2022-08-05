@@ -79,6 +79,16 @@ if ( $exclResults -or $exclAll ) {
     }
 }
 
+# Make sure start and end date have been provided in the correct
+# format
+try {
+    $tmp = [datetime]::ParseExact($start_date, "yyyy-MM-dd", $null)
+    $tmp = [datetime]::ParseExact($end_date, "yyyy-MM-dd", $null)
+} catch {
+    Write-Error "Start and end dates must be in YYYY-MM-DD format"
+    exit
+}
+
 ###### Do Not Change The Following Configs ######
 $grantType = "password"
 $scope = "access_control_api sast_api"
