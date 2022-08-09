@@ -32,7 +32,7 @@ param(
     [Parameter(Mandatory = $true)]
     [String]$username,
     [Parameter(Mandatory = $true)]
-    [String]$password,
+    [SecureString]$password,
     [Switch]$dbg
 )
 
@@ -40,8 +40,9 @@ param(
 
 setupDebug($dbg.IsPresent)
 
-
-$session = &"$PSScriptRoot/support/rest/sast/login.ps1" $sast_url $username $password -dbg:$dbg.IsPresent
+$BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password)
+$plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+$session = &"$PSScriptRoot/support/rest/sast/login.ps1" $sast_url $username $plainPassword -dbg:$dbg.IsPresent
 
 $timer = $(Get-Date)
 Write-Output "Fetching projects"
@@ -85,7 +86,7 @@ $projects | % {
 
 #Probe for report completion
 Write-Output "Checking status of all reports"
-$report_index.Keys |%{
+$report_index.Keys | % {
     $reportId = $report_index.Item($_)
     $reportstatus = &"$PSScriptRoot/support/rest/sast/reportStatus.ps1" $session $reportId
     
@@ -93,9 +94,10 @@ $report_index.Keys |%{
         $reportstatus = &"$PSScriptRoot/support/rest/sast/reportStatus.ps1" $session $reportId
         Write-Debug $reportstatus.status.value
     }
-    if($reportstatus.status.value -eq "Created"){
+    if ($reportstatus.status.value -eq "Created") {
         $status = [String]::Format("Report successfully created for id = {0}", $reportId)
-    }else{
+    }
+    else {
         $status = [String]::Format("Report creation failed for id = {0}", $reportId)
     }
     Write-Output $status
@@ -105,7 +107,7 @@ Write-Output "All reports have been created"
 
 #Download all reports
 Write-Output "Starting to download all reports"
-$report_index.Keys | %{
+$report_index.Keys | % {
     #get all team, project, scan, report, and output path information
     $reportid = $report_index.Item($_)
     $scanid = $report_index.Item($_)
