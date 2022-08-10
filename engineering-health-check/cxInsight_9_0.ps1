@@ -13,22 +13,32 @@ This script will collect Scan Information that includes data about: Projects, Pr
     The end date of the date range you would like to collect data (Format: yyyy-mm-DD)
 .PARAMETER bypassProxy
     If provided, the script will attempt to bypass any proxy when invoking the CxSAST API
-.PARAMETER results
-If provided, the script will retrieve and summarize result data as well as scan data
+.PARAMETER Results
+    If provided, the script will retrieve and summarize result data as well as scan data. Either this option or the -ExclResults option must be provided.
+.PARAMETER ExclResults
+    If provided, the script will not retrieve result data. Either this option or the -Results option must be provided.
+.PARAMETER ExclProjectName
+    If provided, the project name will be excluded from the scan results.
+.PARAMETER ExclTeamName
+    If provided, the team name will be excluded from the scan results.
+.PARAMETER ExclAll
+    If provided, the project name and the team name will be excluded from the scan results, and the result data will not be retrieved.
 .PARAMETER verbose
-If provided, the script will retrieve print activity messages
+    If provided, the script will retrieve print activity messages
 .EXAMPLE
-    C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server https://customerurl.checkmarx.net
+    C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server https://customerurl.checkmarx.net -exclresults
 .EXAMPLE
-    C:\PS> .\cxInsight_9_0.ps1 -start_date 2019-04-01
+    C:\PS> .\cxInsight_9_0.ps1 -start_date 2019-04-01 -exclresults
 .EXAMPLE
-    C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server http://localhost -day_span 180
+    C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server http://localhost -day_span 180 -exclresults
 .EXAMPLE
-C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server http://localhost -results
+    C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server http://localhost -results
+.EXAMPLE
+    C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server http://localhost -exclall
 .NOTES
     Author: Checkmarx
     Date:   April 13, 2020
-    Updated: June 24, 2022
+    Updated: July 26, 2022
 #>
 
 param(
@@ -42,8 +52,42 @@ param(
     $bypassProxy,
     [Parameter(Mandatory=$False)]
     [switch]
-    $results
+    $results,
+    [Parameter(Mandatory=$False)]
+    [switch]
+    $exclresults,
+    [Parameter(Mandatory=$False)]
+    [switch]
+    $exclProjectName,
+    [Parameter(Mandatory=$False)]
+    [switch]
+    $exclTeamName,
+    [Parameter(Mandatory=$False)]
+    [switch]
+    $exclAll
     )
+
+if ( ! ( $results -or $exclresults -or $exclAll ) ) {
+    Write-Error "Either -Results, -ExclResults or -ExclAll must be provided"
+    exit
+}
+
+if ( $exclResults -or $exclAll ) {
+    if ( $results ) {
+        Write-Warning "The -ExclResults and -ExclAll options take precedence over the -Results option"
+        $results = $null
+    }
+}
+
+# Make sure start and end date have been provided in the correct
+# format
+try {
+    $tmp = [datetime]::ParseExact($start_date, "yyyy-MM-dd", $null)
+    $tmp = [datetime]::ParseExact($end_date, "yyyy-MM-dd", $null)
+} catch {
+    Write-Error "Start and end dates must be in YYYY-MM-DD format"
+    exit
+}
 
 ###### Do Not Change The Following Configs ######
 $grantType = "password"
@@ -54,6 +98,17 @@ $clientSecret = "014DF517-39D1-4453-B7B3-9930C563627C"
 $cred = Get-Credential -Credential $null
 $cxUsername = $cred.UserName
 $cxPassword = $cred.GetNetworkCredential().password
+
+# Data exclusion
+$projectName = "ProjectName,"
+$teamName = "TeamName,"
+
+if ( $exclProjectName -or $exclAll ) {
+    $projectName = ""
+}
+if ( $exclTeamName -or $exclAll ) {
+    $teamName = ""
+}
 
 $serverRestEndpoint = $cx_sast_server + "/cxrestapi/"
 function getOAuth2Token() {
@@ -127,16 +182,17 @@ function getScanOdata {
     )
     Write-Verbose "Retrieving scan data"
 
-    $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$select=Id,ProjectId,ProjectName,OwningTeamId,TeamName,ProductVersion,EngineServerId,Origin,PresetName,ScanRequestedOn,QueuedOn,EngineStartedOn,EngineFinishedOn,ScanCompletedOn,ScanDuration,FileCount,LOC,FailedLOC,TotalVulnerabilities,High,Medium,Low,Info,IsIncremental,IsLocked,IsPublic&`$expand=ScannedLanguages(`$select=LanguageName)&`$filter=ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z"
+    $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$select=Id,ProjectId,${ProjectName}OwningTeamId,${TeamName}ProductVersion,EngineServerId,Origin,PresetName,ScanRequestedOn,QueuedOn,EngineStartedOn,EngineFinishedOn,ScanCompletedOn,ScanDuration,FileCount,LOC,FailedLOC,${vulnerabilities}IsIncremental,IsLocked,IsPublic&`$expand=ScannedLanguages(`$select=LanguageName)&`$filter=ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z"
     try {
         $response = odata -Uri $Url -OutFile $outputFile
     }
     catch {
-        Write-Host "Exception:" $_
+        Write-Host "Exception:" $_ -ForegroundColor "Red"
+        Write-Host $_.ScriptStackTrace -ForegroundColor "DarkGray"
         Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
         Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
-	Write-Host $Url
-	Write-Host "An error has prevented this script from collecting scan Odata."
+        Write-Host $Url
+        Write-Host "An error has prevented this script from collecting scan Odata."
         exit(-1)
     }
 }
@@ -149,8 +205,7 @@ function getResultOData {
 
     $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Projects?`$select=Id,LastScanId"
     try {
-        $response = odata -Uri $url
-
+        $response = odata -Uri $Url
         $projects = @{}
         $response | Select-Object -ExpandProperty Value | ForEach-Object {
             $projectId = "$($_.Id)"
@@ -161,7 +216,7 @@ function getResultOData {
                 return
             }
 
-            Write-Progress -Activity "Retrieving Results"
+            Write-Progress -Activity "Retrieving Results" -Status "Retrieving result data for scan ${lastScanId} (project ${projectId})"
             Write-Verbose "Retrieving result data for scan ${lastScanId} (project ${projectId})"
 
             $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$filter=Id%20eq%20${lastScanId}%20and%20ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z&`$select=Id&`$expand=Results(`$select=Id,ScanId,ResultId,StateId;`$expand=State)"
@@ -217,8 +272,8 @@ function getResultOData {
         Write-Host "Exception:" $_
         Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
         Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
-	Write-Host $Url
-	Write-Host "An error has prevented this script from collecting result Odata."
+        Write-Host $Url
+        Write-Host "An error has prevented this script from collecting result Odata."
         exit(-1)
     }
 }
@@ -231,6 +286,7 @@ try
         $files += ".\result-data.json"
         getResultOdata($files[1])
     }
+    # Compress-Archive was introduced in PowerShell version 5.
     if ($PSVersionTable.PSVersion.Major -gt 4) {
         Compress-Archive -Path $files -DestinationPath ".\data.zip" -Force
         Remove-Item -Path $files
