@@ -5,9 +5,8 @@
     This script can be used to find scan directories that should have been removed 
     by CxSAST data retention functionality.  It is meant to supplement data retention 
     capabilities until bug 175055 is resolved by R&D.  Without the -delete switch, this 
-    script will only identify folders that should have been removed by data retention and 
-    determine the amount of disk space that will be released if the scans were deleted 
-    from CxSRC.
+    script will only determine the amount of disk space that will be released if the 
+    scans were deleted from CxSRC.
 .PARAMETER delete
     Removes files from the file system that should have been removed by CxSAST data retention
 .PARAMETER cxsrc
@@ -18,6 +17,8 @@
     SQL server user if using SQL auth
 .PARAMETER sqlPassword
     Password for SQL server user if using SQL auth
+.PARAMETER threads
+    The maximum number of concurrent threads.  If not supplied, the .Net default is used.
 .EXAMPLE
     .\CxDR.ps1 -cxsrc C:\CxSrc\ -sqlServer WIN-04MAT5MP9H1\SQLEXPRESS
     This will only analyze CxSRC; it will not delete anything.  It will also use integrated auth to authenticate to the SQL server.
@@ -29,7 +30,10 @@
     This will delete folders from the file system that should have been deleted by CxSAST data retention; it will use integrated auth to authenticate to the SQL server.
 .NOTES
     Author: Chris Merritt
-    Date:   August 31, 2019    
+    Date:   August 31, 2019
+
+    Update: Nathan Leach
+    Date:   September 2, 2022
 #>
 
  param (
@@ -46,21 +50,25 @@
     [string]$sqlUserName,
 
     [Parameter(Mandatory=$false)]
-    [string]$sqlPassword
+    [string]$sqlPassword,
+
+    [Parameter(Mandatory=$false)]
+    [string]$threads=0
  )
 
 #variable declarations
 $query = "SELECT CONCAT('$cxsrc',ProjectId,'_',SourceId) AS FullPath FROM CxEntities.Scan"
-$totalSize = 0
-$printMe = @()
-$i = 0
-$deletedCount = 0
-$deletedSize = 0
+$scansInCxSRC = 0
+$scansToKeep = 0
 
+Write-Host "Reading directory $cxsrc"
 #Get all directories in CxSRC
 $scansInCxSRC = (Get-ChildItem $cxsrc).FullName
+Write-Host "Finished reading directory, $($scansInCxSRC.Count) folders found."
 
 #Get all scans in the scan view of CxDB -- these should be the same scans as what's in CxSRC
+Write-Host "Reading scans from database"
+
 try {
     if(!$sqlUserName -and !$sqlPassword) {
         $scansToKeep = (Invoke-Sqlcmd -Query $query -ServerInstance $sqlServer -Database "CxDB" -ErrorAction Stop).FullPath
@@ -72,42 +80,133 @@ try {
     exit
 }
 
+Write-Host "Finished reading scans from database"
+
 # {scans in CxSRC} - {scans in CxDB} --> {scans that should be deleted from CxSRC}
 $scansToDelete = $scansInCxSRC | Where {$scansToKeep -NotContains $_}
 
-foreach($scan in $scansToDelete){
-    
-    #get the size of the directory that should have been deleted
-    try {
-        $size = ((Get-ChildItem $scan -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB)
-        $totalSize += $size
-        $printMe += [pscustomobject]@{Directory = $scan; Size = "{0:N2} MB" -f $size}
-    } catch {
-        $printMe += [pscustomobject]@{Directory = $scan; Size = "ERROR"}
-    }
 
-    #if the delete switch is set, delete the directory that should have been deleted by data retention
-    if($delete -eq $true){
-        try {
-            Write-Host "Deleting $($scan) ($("{0:N2} MB" -f $size))."
-            Remove-Item -LiteralPath $scan -Force -Recurse -ErrorAction Stop
-            $deletedCount++
-            $deletedSize += $size
-        } catch {
-            Write-Host "Could not delete $($scan)." -ForegroundColor Red
+$threading = @"
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+
+
+
+public class OrphanSourcePurge
+{
+    private ConcurrentBag<String> _targetDirs = new ConcurrentBag<string>();
+
+    private static readonly Double SIZE_DIVISOR = 1024000.0;
+
+    private ParallelOptions _opts;
+
+    class Reporter : IDisposable
+    {
+        private long _maxSize;
+        private long _progress;
+        private int _previousStrLen = 0;
+        private String _label;
+        private int _interval;
+        DateTime _start = DateTime.Now;
+
+        public Reporter(String label, long maxSize, int interval = 3)
+        {
+            _maxSize = maxSize;
+            _label = label;
+            _interval = interval;
+        }
+
+        public void Dispose()
+        {
+            var elapsed = DateTime.Now.Subtract(_start);
+
+            Console.WriteLine(String.Format(" ({0:F2}ms)", elapsed.TotalMilliseconds) );
+        }
+
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public void UpdateProgress(long by = 1)
+        {
+            _progress += by;
+            
+            int percent = (int)((_progress / (double)_maxSize) * 100.0);
+
+            if (percent % _interval == 0 || _progress >= _maxSize)
+            {
+                Console.Write("".PadLeft(_previousStrLen, '\b'));
+                String display = String.Format("{0} {1}%", _label, percent);
+                _previousStrLen = display.Length;
+                Console.Write(display);
+            }
         }
     }
 
-    #just tracking progress here...
-    $i++
-    $percomplete = $i / $scansToDelete.Count * 100
-    Write-Progress -Activity "Calculating directory sizes" -Status "$percomplete% Complete:" -PercentComplete $percomplete;
+
+    public OrphanSourcePurge(Object[] deleteDirectories, int concurrentThreads = 0)
+    {
+        _opts = new ParallelOptions();
+
+        if (concurrentThreads > 0)
+            _opts.MaxDegreeOfParallelism = concurrentThreads;
+
+
+        Parallel.ForEach(deleteDirectories, _opts, (dir) => {
+
+            if (dir != null)
+                _targetDirs.Add(dir.ToString());
+        });
+    }
+
+    public double GetSizeInMB()
+    {
+        long size = 0;
+
+        using (var progress = new Reporter("Calculating size: ", _targetDirs.Count))
+            Parallel.ForEach(_targetDirs, _opts, (dir) =>
+            {
+                var files = Directory.EnumerateFiles(dir, "*", SearchOption.AllDirectories);
+                Parallel.ForEach(files, _opts, (f) =>
+                {
+                    var fi = new FileInfo(f);
+                    Interlocked.Add(ref size, new FileInfo(f).Length);
+                });
+                progress.UpdateProgress();
+            });
+
+        return size / SIZE_DIVISOR;
+    }
+
+
+    public void Delete()
+    {
+        using (var progress = new Reporter("Deleting directories: ", _targetDirs.Count))
+            Parallel.ForEach(_targetDirs, _opts, (dir) =>
+            {
+                Directory.Delete(dir, true);
+                progress.UpdateProgress();
+            });
+    }
+}
+"@
+
+if (-not ("OrphanSourcePurge" -as [type]))
+{
+    Add-Type -TypeDefinition $threading -Language CSharp
 }
 
-#Print a summary of what should be deleted if the delete switch is not set OR print the total number of scans + freed storage space
-if($delete -eq $false) {
-    $printMe | Format-Table
-    Write-Host "$($scansToDelete.Count) scan(s) ($("{0:N2} GB" -f ($totalSize/1000))) should be deleted."
-} else {
-    Write-Host "`n$($deletedCount) scan(s) ($("{0:N2} GB" -f ($deletedSize/1000))) deleted."
+$purgeObj = [OrphanSourcePurge]::new($scansToDelete, $threads)
+
+if ($delete -eq $False)
+{
+    $mbSize = $purgeObj.GetSizeInMB();
+
+    Write-Host $("{0:N2} MB to delete" -f $mbSize)
 }
+else 
+{
+    $purgeObj.Delete()
+}
+
