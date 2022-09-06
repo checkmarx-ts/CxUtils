@@ -61,9 +61,15 @@ $query = "SELECT CONCAT('$cxsrc',ProjectId,'_',SourceId) AS FullPath FROM CxEnti
 $scansInCxSRC = 0
 $scansToKeep = 0
 
+
 Write-Host "Reading directory $cxsrc"
 #Get all directories in CxSRC
 $scansInCxSRC = (Get-ChildItem $cxsrc).FullName
+$hashSetOfScansInCxSRC = [System.Collections.Generic.HashSet[Object]]::new()
+foreach($scan in $scansInCxSRC) {
+    $res = $hashSetOfScansInCxSRC.Add($scan.ToString())
+}
+
 Write-Host "Finished reading directory, $($scansInCxSRC.Count) folders found."
 
 #Get all scans in the scan view of CxDB -- these should be the same scans as what's in CxSRC
@@ -81,10 +87,14 @@ try {
 }
 
 Write-Host "Finished reading scans from database"
+$listOfScansToKeep = [System.Collections.Generic.LinkedList[String]]::new()
+foreach($keeper in $scansToKeep) {
+    $res = $listOfScansToKeep.Add($keeper.ToString())
+}
 
 # {scans in CxSRC} - {scans in CxDB} --> {scans that should be deleted from CxSRC}
-$scansToDelete = $scansInCxSRC | Where {$scansToKeep -NotContains $_}
-
+$hashSetOfScansInCxSRC.ExceptWith($listOfScansToKeep)
+$scansToDelete = $hashSetOfScansInCxSRC
 
 $threading = @"
 using System;
