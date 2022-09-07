@@ -57,7 +57,18 @@
  )
 
 #variable declarations
-$query = "SELECT CONCAT('$cxsrc',ProjectId,'_',SourceId) AS FullPath FROM CxEntities.Scan"
+$query = @"
+SELECT CONCAT('$cxsrc',ProjectId,'_',SourceId) AS FullPath 
+FROM CxEntities.Scan
+UNION
+SELECT CONCAT('$cxsrc',ProjectId,'_',SourceId) AS FullPath 
+FROM [CxDB].[dbo].[ScanRequests]
+WHERE SourceId != '' OR SourceId != NULL
+UNION
+SELECT CONCAT('$cxsrc',ProjectId,'_',SourceId) AS FullPath 
+FROM [CxDB].[dbo].[FailedScans]
+WHERE SourceId != '' OR SourceId != NULL
+"@
 $scansInCxSRC = 0
 $scansToKeep = 0
 
@@ -86,7 +97,7 @@ try {
     exit
 }
 
-Write-Host "Finished reading scans from database"
+Write-Host "Finished reading scans from database, $($scansToKeep.Count) scans found."
 $listOfScansToKeep = [System.Collections.Generic.LinkedList[String]]::new()
 foreach($keeper in $scansToKeep) {
     $res = $listOfScansToKeep.Add($keeper.ToString())
@@ -96,6 +107,13 @@ foreach($keeper in $scansToKeep) {
 $hashSetOfScansInCxSRC.ExceptWith($listOfScansToKeep)
 $scansToDelete = $hashSetOfScansInCxSRC
 
+Write-Host "There are $($scansToDelete.Count) folders to delete."
+
+if ($scansToDelete.Count -eq 0)
+{
+    exit
+}
+
 $threading = @"
 using System;
 using System.IO;
@@ -103,6 +121,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
+
 
 
 
@@ -113,6 +133,8 @@ public class OrphanSourcePurge
     private static readonly Double SIZE_DIVISOR = 1024000.0;
 
     private ParallelOptions _opts;
+
+    private Regex _srcPulling = new Regex(".*[a-f, 0-9]{8}-[a-f, 0-9]{4}-[a-f, 0-9]{4}-[a-f, 0-9]{4}-[a-f, 0-9]{12}$");
 
     class Reporter : IDisposable
     {
@@ -162,11 +184,14 @@ public class OrphanSourcePurge
         if (concurrentThreads > 0)
             _opts.MaxDegreeOfParallelism = concurrentThreads;
 
-
         Parallel.ForEach(deleteDirectories, _opts, (dir) => {
 
             if (dir != null)
-                _targetDirs.Add(dir.ToString());
+            {
+                String toAdd = dir.ToString();
+                if (!_srcPulling.IsMatch(toAdd))
+                  _targetDirs.Add(toAdd);
+            }
         });
     }
 
@@ -195,7 +220,9 @@ public class OrphanSourcePurge
         using (var progress = new Reporter("Deleting directories: ", _targetDirs.Count))
             Parallel.ForEach(_targetDirs, _opts, (dir) =>
             {
-                Directory.Delete(dir, true);
+                try {Directory.Delete(dir, true);}
+                catch (Exception) {}
+
                 progress.UpdateProgress();
             });
     }
