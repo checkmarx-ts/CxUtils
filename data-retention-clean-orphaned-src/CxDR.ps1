@@ -56,6 +56,9 @@
     [string]$threads=0
  )
 
+$cxsrc = [String]::Format("{0}{1}", [System.IO.Path]::GetFullPath($cxsrc).TrimEnd([System.IO.Path]::DirectorySeparatorChar),
+    [System.IO.Path]::DirectorySeparatorChar)
+
 #variable declarations
 $query = @"
 SELECT CONCAT('$cxsrc',ProjectId,'_',SourceId) AS FullPath 
@@ -72,6 +75,17 @@ WHERE SourceId != '' OR SourceId != NULL
 $scansInCxSRC = 0
 $scansToKeep = 0
 
+if (-not [System.IO.Directory]::Exists($cxSrc) -eq $True)
+{
+    Write-Host "The path" $cxsrc "does not exist or is an invalid path."
+    exit 1
+}
+
+if ([System.IO.Path]::GetPathRoot($cxsrc) -eq $cxsrc)
+{
+    Write-Host "The path" $cxsrc "is a volume root, please specify a sub-directory."
+    exit 1
+}
 
 Write-Host "Reading directory $cxsrc"
 #Get all directories in CxSRC
