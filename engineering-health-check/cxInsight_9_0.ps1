@@ -25,6 +25,9 @@ This script will collect Scan Information that includes data about: Projects, Pr
     If provided, the project name and the team name will be excluded from the scan results, and the result data will not be retrieved.
 .PARAMETER verbose
     If provided, the script will retrieve print activity messages
+.PARAMETER CredentialsFile
+If provided, the script will try to read credentials from the named file
+
 .EXAMPLE
     C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server https://customerurl.checkmarx.net -exclresults
 .EXAMPLE
@@ -64,7 +67,10 @@ param(
     $exclTeamName,
     [Parameter(Mandatory=$False)]
     [switch]
-    $exclAll
+    $exclAll,
+    [Parameter(Mandatory=$False)]
+    [string]
+    $credentialsFile
     )
 
 if ( ! ( $results -or $exclresults -or $exclAll ) ) {
@@ -95,9 +101,15 @@ $scope = "access_control_api sast_api"
 $clientId = "resource_owner_sast_client"
 $clientSecret = "014DF517-39D1-4453-B7B3-9930C563627C"
 
-$cred = Get-Credential -Credential $null
-$cxUsername = $cred.UserName
-$cxPassword = $cred.GetNetworkCredential().password
+if ($credentialsFile) {
+    $cred = Import-CliXml $credentialsFile
+    $cxUsername = $cred.username
+    $cxPassword = [System.Net.NetworkCredential]::new("", $cred.password).password
+} else {
+    $cred = Get-Credential -Credential $null
+    $cxUsername = $cred.UserName
+    $cxPassword = $cred.GetNetworkCredential().password
+}
 
 # Data exclusion
 $projectName = "ProjectName,"
@@ -290,10 +302,10 @@ try
     if ($PSVersionTable.PSVersion.Major -gt 4) {
         Compress-Archive -Path $files -DestinationPath ".\data.zip" -Force
         Remove-Item -Path $files
-        Read-Host -Prompt "The script was successful. Please send the 'data.zip' file in this directory to your Checkmarx Engineer. Press Enter to exit"
+        Write-Host "The script was successful. Please send the 'data.zip' file in this directory to your Checkmarx Engineer."
     }
     else {
-        Read-Host -Prompt "The script was successful. Please send the ${files} file(s) in this directory to your Checkmarx Engineer. Press Enter to exit"
+        Write-Host "The script was successful. Please send the ${files} file(s) in this directory to your Checkmarx Engineer."
     }
 }
 catch

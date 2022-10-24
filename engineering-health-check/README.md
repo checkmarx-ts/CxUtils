@@ -30,6 +30,22 @@ $key = "HKLM:\SOFTWARE\Microsoft\PowerShell\1\ShellIds"
 Set-ItemProperty $key ConsolePrompting True
 ```
 
+## Storing Credentials in a File
+
+For non-interactive use, it is possible to store the credentials that the script uses to connect to CxSAST in a file. To prepare the file, use the following command.
+
+```
+Get-Credential | Export-CliXml <filename>
+```
+
+Then, use the EHC script’s `-CredentialsFile` command line option to tell it where to find the file.
+
+```
+.\cxInsight_X_X.ps1 -Results -CredentialsFile <filename>
+```
+
+Currently, this functionality is only available for the `cxInsight_9_0.ps1` script.
+
 ## Triage Results
 
 When running the cxInsight_X_X.ps1 script, you must explicitly decide whether to retrieve triage results. To retrieve triage results, pass the `-Results` command line switch:
