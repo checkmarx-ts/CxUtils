@@ -72,15 +72,18 @@ $prj_index = New-Object 'System.Collections.Generic.Dictionary[string,string]'
 $projects | % {
     
     $scans = &"$PSScriptRoot/support/rest/sast/scans.ps1" $session $_.id
-    $scan_index.Add($scans.id, $scans.owningTeamId)
-    $prj_index.Add($scans.id, $scans.project.name)
-    
-    Write-Output $scans
+    if ($scans) {
+        $scan_index.Add($scans.id, $scans.owningTeamId)
+        $prj_index.Add($scans.id, $scans.project.name)
 
-    #generate the report
-    $report = &"$PSScriptRoot/support/soap/generate_report.ps1" $session $scans.id
-    $report_index.Add($scans.id, $report)
+        Write-Output $scans
 
+        #generate the report
+        $report = &"$PSScriptRoot/support/soap/generate_report.ps1" $session $scans.id
+        $report_index.Add($scans.id, $report)
+    } else {
+        Write-Debug "No scans found for project $($_.id))"
+    }
 }
 
 #Probe for report completion
@@ -90,6 +93,7 @@ $report_index.Keys |%{
     $reportstatus = &"$PSScriptRoot/support/rest/sast/reportStatus.ps1" $session $reportId
     
     while ($reportstatus.status.value -ne "Created" -and $reportstatus.status.value -ne "Failed") {
+        Start-Sleep -Seconds 5
         $reportstatus = &"$PSScriptRoot/support/rest/sast/reportStatus.ps1" $session $reportId
         Write-Debug $reportstatus.status.value
     }
