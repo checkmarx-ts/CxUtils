@@ -54,7 +54,7 @@ For convenience, the `-ExclAll` command line switch can be used to suppress the 
 
 ## LDAP Users
 
-It is possible to use the credentials of an LDAP user to run the `cxInsight_X_X.ps1` script. In this case, the username passed to the script should be of the form *<authentication provider name>\<username>*. The authentication provider name can be seen in the “Sign in method” dropdown menu of the CxSAST portal’s login screen.
+It is possible to use the credentials of an LDAP user to run the `cxInsight_X_X.ps1` script. In this case, the username passed to the script should be of the form *authentication provider name\username*. The authentication provider name can be seen in the “Sign in method” dropdown menu of the CxSAST portal’s login screen.
 
 Note that it is not possible to use the credentials of a SAML user.
 
