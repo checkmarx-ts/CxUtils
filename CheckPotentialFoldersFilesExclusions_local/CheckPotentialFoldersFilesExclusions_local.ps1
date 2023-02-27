@@ -3,7 +3,7 @@ param (
     [string]$basedir
 )
 
-#"D:\Users\nuno.rocha\Desktop\CLI\SFLY\3529-dci-portal-aliaswire-service-20221021163844-1021107"
+#"C:\Users\Documents\CLI\myClientProjectSrc"
 $base_directory_path = $basedir
 
 #####################################
