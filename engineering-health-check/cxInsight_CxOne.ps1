@@ -171,9 +171,9 @@ class Scan {
     [string]$projectId
     [string]$projectName
     [string]$initiator
-    [string]$tags
-    [string]$metadata
-    [string]$engines
+    [object]$tags
+    [string]$type
+    [object]$engines
     [string]$sourceType
     [string]$sourceOrigin
     # Scan metadata
@@ -239,7 +239,8 @@ foreach ($scan in $getScansResult.Scans) {
     }
     $newScan.initiator = $scan.initiator
     $newScan.tags = $scan.tags
-    $newScan.metadata = $scan.metadata
+    # The type property is the only metadata property that we are interested in
+    $newScan.type = $scan.metadata.type
     $newScan.engines = $scan.engines
     $newScan.sourceType = $scan.sourceType
     $newScan.sourceOrigin = $scan.sourceOrigin
