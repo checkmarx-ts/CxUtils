@@ -51,6 +51,13 @@ Param(
 )
 
 $restEndpoint = $cxserver + "/cxrestapi"
+# CxSAST control files
+$ignoreList = @(
+    ".ActiveScans",
+    ".SourceControl",
+    "CxSourceHash._cx_",
+    "MethodsMapping.zip"
+)
 $exclusionFolderList = @(
     "test", # Tests
     "mock", # Tests
@@ -135,6 +142,10 @@ $exclusionFileList = @(
     "test", # Tests
     "mock" # Tests
 )
+$3rdpartyExclusionFileList = @(
+    "license",
+    "copyright" 
+)
 
 function getOAuth2Token() {
     $body = @{
@@ -182,62 +193,219 @@ function getProjectExcludeSettingsById($id) {
     }
 }
 
+function printProgress([int]$i, [int]$totalCount){
+    $percentage = [math]::Round(($i / $totalCount) * 100, 2)
+        if([math]::Round($percentage, 0) % 5 -eq 0){
+            Write-Host "Progress...${i} out of ${totalCount} (${percentage}%)"
+            Write-Progress -Activity "Analysing ${i} out of ${totalCount} Files/Folders..." -Status "${percentage}% Complete:" -PercentComplete $percentage
+        }
+}
+<#
+.Description
+getProjectId Calculates the project id based on the root path
+#>
+function getProjectId{
+	param(
+			[string]$fullPath,
+			[string]$cxSrcFolder
+		)
+	$projId = 0;
+	
+	if($cxSrcFolder.Contains("_")){
+		$projId = $fullPath.Split("_")[0].Replace("${cxSrcFolder}\", "")
+	}else{
+		$aux = $cxSrcFolder.Split("-")
+		if($aux.Count -gt 2){		
+			$projId =$aux[$aux.length -2]
+		}
+	}
+	
+	return $projId
+}
+
+<#
+.Description
+# Validate if filename is excludable by pattern or by content
+#>
+function isFileExcludable($file_path){
+	# Extrai o nome do arquivo do caminho do arquivo
+	$file_name = Split-Path $file_path -Leaf
+
+	# Extrai o nome do arquivo sem a extensão
+	$base_name = [System.IO.Path]::GetFileNameWithoutExtension($file_name)
+
+	# Extrai a extensão do arquivo
+	$extension = [System.IO.Path]::GetExtension($file_name)
+
+	# Exibe os resultados
+	#Write-Host "Nome do arquivo: $file_name"
+	#Write-Host "Nome base do arquivo: $base_name"
+	#Write-Host "Extensão do arquivo: $extension"
+	
+	# does filename match the exclusion pattern?
+	foreach($exclusionFile in $exclusionFileList){
+                if($file_name -match $exclusionFile){
+                    return $true;
+                }
+	}
+	# does file have any content that indicates it is possible to be excluded?
+	
+	return isFileContainsKeyword($file_path);
+}
+
+<#
+.Description
+# validates if a string is present in the fisrt 10 lines of a document
+#>
+function isFileContainsKeyword($arquivo_path ){
+	#Write-Host "--- analisando ficheiro $arquivo_path "
+	$options = [System.StringComparison]::InvariantCultureIgnoreCase
+	
+	foreach ($palavra_procurada in $3rdpartyExclusionFileList) {
+		# Lê as primeiras 10 linhas do arquivo e procura pela palavra
+		$resultado = Get-Content -Path $arquivo_path -TotalCount 10 | Select-String -Pattern $palavra_procurada #-SimpleMatch -Options $options
+
+		# Verifica se a palavra foi encontrada nas primeiras 10 linhas
+		if ($resultado) {
+			#Write-Host "A palavra '$palavra_procurada' foi encontrada nas primeiras 10 linhas do arquivo."		
+			return $true;
+		} 
+	}
+	#Write-Host "Nenhuma palavra-chave não foi encontrada nas primeiras 10 linhas do arquivo."
+	return $false;	
+}
+
+<#
+.Description
+# Validate if folder name is excludable by pattern or by content
+#>
+function isFolderExcludable($file_path){
+	#Write-Host " --- analisando folder $file_path "
+	foreach($exclusionFolder in $exclusionFolderList){
+            if($file_path -match $exclusionFolder){                
+                return $true;
+            }
+        }
+	return $false;
+}
+
+<#
+.Description
+# Verify if file is under and excludable folder
+#>
+function isFileUnderExcludedFolder{
+	param(
+			[string]$file_path,
+			[string[]]$folder_exclusion_list
+		)
+
+	foreach($directory_path in $folder_exclusion_list){
+		#Write-Host "Verificar se $file_path esta dentro de $directory_path"
+		#if (Test-Path $file_path -PathType Leaf -ea SilentlyContinue) {
+		if (  ($file_path.StartsWith($directory_path)) -and ($file_path -ne $directory_path ) ) {
+			return $true;
+		} 
+	}	
+	return $false;
+}
+
+<#
+.Description
+# Removes the prefix from the begining of any string in a list
+#>
+function removePrefix{
+	param(
+			[string[]]$myList,
+			[string]$prefixToRemove
+	)
+	
+	$new_list = New-Object System.Collections.Generic.List[string]
+	foreach($str in $myList){		
+		#Write-Host "------------------------------ $str"
+		if ($str.StartsWith($prefixToRemove)) {
+			$str = $str.Remove(0, $prefixToRemove.Length)
+		}
+		#Write-Host "------------------------------ $str"
+		$new_list.Add($str)
+	}
+	
+	return $new_list
+}
+
+####################################
+
 $exclusions = @()
 $cxSrcFolder = $cxSrcFolder.ToLowerInvariant()
-if(Test-Path $cxSrcFolder -PathType Container){
-    
+#Write-Host $cxSrcFolder
+
+if(Test-Path -Path $cxSrcFolder -PathType Container){
+    # Retrieve API token 
     $token = getOAuth2Token
     if ($token) {
         $authHeader = @{
             Authorization = $token
         } 
     }
+
+    # Fetch all files and folders under root path
     $children = Get-ChildItem -Path $cxSrcFolder -recurse
     $totalCount = $children.Count
     Write-Host "`nAnalysing ${totalCount} Files/Folders..."
+    
 
     for ($i = 0; $i -lt $totalCount; $i++) {
-        $percentage = [math]::Round(($i / $totalCount) * 100, 2)
-        if([math]::Round($percentage, 0) % 5 -eq 0){
-            Write-Host "Progress...${i} out of ${totalCount} (${percentage}%)"
-            Write-Progress -Activity "Analysing ${i} out of ${totalCount} Files/Folders..." -Status "${percentage}% Complete:" -PercentComplete $percentage
-        }
+        printProgress $i $totalCount
+            
         $child = $children[$i]
         $shortName = $child.PSChildName
-        $fullPath = $child.FullName.ToLowerInvariant()
-        $projectId = $fullPath.Split("_")[0].Replace("${cxSrcFolder}\", "")
+        $fullPath = $child.FullName.ToLowerInvariant()        
+		# Root folder maybe be a full BA and include many projects
+        $projectId = getProjectId $fullPath $cxSrcFolder
+        
+        # Check if is a ignorable file ....
+        $skipFlag = $false;	
+        foreach($ignore in $ignoreList){
+            if($name -eq $ignore){
+                $skipFlag=$true
+            }
+        }
+        if($skipFlag) {
+            continue
+        }
+
         if ($child.PSIsContainer) {
             # Is Folder
-            foreach ($exclusionFolder in $exclusionFolderList) {
-                if ($shortName -match $exclusionFolder) {
-                    $exclusions += @{
+            if (isFolderExcludable($shortName)){
+				#Write-Host "`nexcluding folder ${shortName} ..."
+                $exclusions += @{
                         projectId = $projectId
                         type      = "folder"
                         shortName = $shortName
                         fullPath  = $fullPath
-                    }
-                    break;
                 }
+                continue;                
             }
         }
+		
         else {
             # Is File
             foreach ($c in $child) {
                 $shortName = $c.PSChildName
                 $fullPath = $c.FullName
-                foreach ($exclusionFile in $exclusionFileList) {
-                    if ($shortName -match $exclusionFile) {
+                if( isFileExcludable($fullPath)){
+					#Write-Host "`nexcluding file ${fullPath} ..."
                         $exclusions += @{
                             projectId = $projectId
                             type      = "file"
                             shortName = $shortName
                             fullPath  = $fullPath
                         }
-                        break;
-                    }
+                        continue;    
+                    
                 }
             }
         }
+		
     }
 
     ### Group Exclusions per Project IDs

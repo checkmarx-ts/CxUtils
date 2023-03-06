@@ -52,3 +52,6 @@ REMARKS
     For more information, type: "get-help C:\path\CheckExclusionsFoldersFiles.ps1 -detailed".
     
     For technical information, type: "get-help C:\path\CheckExclusionsFoldersFiles.ps1 -full".
+
+    For local storage usage also checkout https://checkmarx.atlassian.net/wiki/spaces/AA/pages/6825215196/Quick+Exclusions
+    Do not apply this exclusions blindly! Some customers alter 3rd party files introducing vulnerabilities!
