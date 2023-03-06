@@ -34,6 +34,8 @@ param (
     $exclProjectName
 )
 
+Set-StrictMode -Version 1.0
+
 # See https://www.michev.info/Blog/Post/2140/decode-jwt-access-and-id-tokens-via-powershell
 function Parse-JWTtoken {
     [cmdletbinding()]
