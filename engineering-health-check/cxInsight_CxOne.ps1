@@ -244,16 +244,16 @@ foreach ($scan in $getScansResult.Scans) {
     $newScan.sourceType = $scan.sourceType
     $newScan.sourceOrigin = $scan.sourceOrigin
 
-    $newScan.loc = $getScanMetaDataResult.loc
-    $newScan.fileCount = $getScanMetaDataResult.fileCount
-    $newScan.isIncremental = $getScanMetaDataResult.isIncremental
-    $newScan.isIncrementalCancelled = $getScanMetaDataResult.isIncrementalCancelled
-    $newScan.incrementalCancelledReason = $getScanMetaDataResult.incrementalCancelledReason
-    $newScan.baseId = $getScanMetaDataResult.baseId
-    $newScan.addedFilesCount = $getScanMetaDataResult.addedFilesCount
-    $newScan.changedFilesCount = $getScanMetaDataResult.changedFilesCount
-    $newScan.changePercentage = $getScanMetaDataResult.changePercentage
-    $newScan.queryPreset = $getScanMetaDataResult.queryPreset
+    $newScan.loc = $GetSastMetaDataResult.loc
+    $newScan.fileCount = $GetSastMetaDataResult.fileCount
+    $newScan.isIncremental = $GetSastMetaDataResult.isIncremental
+    $newScan.isIncrementalCancelled = $GetSastMetaDataResult.isIncrementalCancelled
+    $newScan.incrementalCancelledReason = $GetSastMetaDataResult.incrementalCancelledReason
+    $newScan.baseId = $GetSastMetaDataResult.baseId
+    $newScan.addedFilesCount = $GetSastMetaDataResult.addedFilesCount
+    $newScan.changedFilesCount = $GetSastMetaDataResult.changedFilesCount
+    $newScan.changePercentage = $GetSastMetaDataResult.changePercentage
+    $newScan.queryPreset = $GetSastMetaDataResult.queryPreset
 
     $newScan.totalResults = $totalResults
     $newScan.high = $severities["HIGH"]
