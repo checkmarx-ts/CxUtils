@@ -165,6 +165,7 @@ class Scan {
     # Scan fields
     [string]$id
     [string]$status
+    [object]$statusDetails
     [string]$branch
     [DateTime]$createdAt
     [DateTime]$updatedAt
@@ -230,6 +231,10 @@ foreach ($scan in $getScansResult.Scans) {
     $newScan = [Scan]::new()
     $newScan.id = $scan.id
     $newScan.status = $scan.status
+    $newScan.statusDetails = @{}
+    foreach ($statusDetails in $scan.statusDetails) {
+        $newScan.statusDetails[$statusDetails.name] = $statusDetails.status
+    }
     $newScan.branch = $scan.branch
     $newScan.createdAt = $scan.createdAt
     $newScan.updatedAt = $scan.updatedAt
