@@ -146,6 +146,13 @@ class CxOneClient {
         return $scans
     }
 
+    [object] GetSastMetaDataMetrics($ScanId) {
+
+        $ApiPath = "/sast-metadata/$ScanId/metrics"
+        $scans = $this.InvokeApi($ApiPath)
+        return $scans
+    }
+
     [object] GetSastScanResults($ScanId) {
 
         $ApiPath = "/sast-results/?scan-id=${ScanId}"
@@ -188,6 +195,8 @@ class Scan {
     [int]$changedFilesCount
     [double]$changePercentage
     [string]$queryPreset
+    # Scan metadata metrics
+    [object]$languages
     # Scan results
     # - Severities
     [int]$totalResults
@@ -216,6 +225,7 @@ $getScansResult = $client.GetScans($StartDate, $EndDate)
 $scans = @()
 foreach ($scan in $getScansResult.Scans) {
     $GetSastMetaDataResult = $client.GetSastMetaData($Scan.id)
+    $GetSastMetaDataMetricsResult = $client.GetSastMetaDataMetrics($Scan.id)
     $GetSastScanResultsResult = $client.GetSastScanResults($Scan.id)
     $severities = @{}
     $states = @{}
@@ -260,6 +270,10 @@ foreach ($scan in $getScansResult.Scans) {
     $newScan.changedFilesCount = $GetSastMetaDataResult.changedFilesCount
     $newScan.changePercentage = $GetSastMetaDataResult.changePercentage
     $newScan.queryPreset = $GetSastMetaDataResult.queryPreset
+
+    # We wrap the right hand side in @() to force an array even when
+    # there is only one language
+    $newScan.languages = @($GetSastMetaDataMetricsResult.scannedFilesPerLanguage.psobject.properties | foreach-object { $_.name })
 
     $newScan.totalResults = $totalResults
     $newScan.high = $severities["HIGH"]
