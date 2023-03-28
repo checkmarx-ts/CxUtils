@@ -27,6 +27,13 @@
         .PARAMETER dbg
         (Optional Flag) Runs in debug mode and prints verbose information to the screen while processing. 
 
+    .INPUTS
+    None
+
+    .OUTPUTS
+    A list of scans proposed for deletion if run without -commit.
+    A list of scans deleted if run with -commit.
+
 #>
 param(
     [Parameter(Mandatory = $true)]
