@@ -32,7 +32,10 @@ else {
         client_secret = "014DF517-39D1-4453-B7B3-9930C563627C";
     }
     
-    $soap_session = & $soap_login_script $sast_url $username $password
+    $system_version = & "$PSScriptRoot/systemVersion.ps1" $sast_url
+    $soap_session = @{
+        v9 = $system_version.version[0] -eq "9"
+    }
     
     if ($true -eq $soap_session.v9) {
         $query_elems.scope = "sast_api"
@@ -48,7 +51,7 @@ else {
     $api_uri_base = New-Object System.Uri $sast_url, $api_path
     $api_uri = New-Object System.UriBuilder $api_uri_base
 
-    $query = GetQueryStringFromHashtable $query_elems
+    $query = GetXFormUrlEncodedPayloadFromHashtable $query_elems
 
     $session.reauth_uri  = $api_uri.Uri;
     $session.reauth_body = $query

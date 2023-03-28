@@ -25,13 +25,24 @@ function GetRestHeadersForJsonRequest($session_token, $version) {
 }
 
 
+function GetXFormUrlEncodedPayloadFromHashtable($table) {
+
+    $query_builder = New-Object System.Text.StringBuilder
+    $sep = ""
+
+    $table.Keys | % { 
+        [void]$query_builder.Append($sep).AppendFormat("{0}={1}", $_, $table.Item($_))
+        $sep = "&"
+    }
+
+    $query_builder.ToString()
+}
 
 
 function GetQueryStringFromHashtable($table) {
 
     $query_builder = New-Object System.Text.StringBuilder
     $sep = ""
-
 
     $table.Keys | % { 
         [void]$query_builder.Append($sep).AppendFormat("{0}={1}", $_, [System.Web.HttpUtility]::UrlEncode($table.Item($_)))
