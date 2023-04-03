@@ -178,13 +178,16 @@ function odata() {
 
 function getScanOdata {
     param (
-        $outputFile
+        $fileList
     )
+
+    $outputFile = ".\scan-data.json"
     Write-Verbose "Retrieving scan data"
 
     $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$select=Id,ProjectId,${ProjectName}OwningTeamId,${TeamName}ProductVersion,EngineServerId,Origin,PresetName,ScanRequestedOn,QueuedOn,EngineStartedOn,EngineFinishedOn,ScanCompletedOn,ScanDuration,FileCount,LOC,FailedLOC,TotalVulnerabilities,High,Medium,Low,Info,IsIncremental,IsLocked,IsPublic&`$expand=ScannedLanguages(`$select=LanguageName)&`$filter=ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z"
     try {
         $response = odata -Uri $Url -OutFile $outputFile
+        [void]$fileList.Add($outputFile)
     }
     catch {
         Write-Host "Exception:" $_ -ForegroundColor "Red"
@@ -193,14 +196,16 @@ function getScanOdata {
         Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
         Write-Host $Url
         Write-Host "An error has prevented this script from collecting scan Odata."
-        exit(-1)
+        return $false
     }
 }
 
 function getResultOData {
     param (
-        $outputFile
+        $fileList
     )
+
+    $outputFile = ".\result-data.json"
     Write-Verbose "Retrieving result data"
 
     $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Projects?`$select=Id,LastScanId"
@@ -267,6 +272,7 @@ function getResultOData {
         }
 
         $response | ConvertTo-Json -Compress -Depth 4 | Out-File -FilePath $outputFile -Encoding utf8
+        [void]$fileList.Add($outputFile)
     }
     catch {
         Write-Host "Exception:" $_
@@ -274,17 +280,68 @@ function getResultOData {
         Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
         Write-Host $Url
         Write-Host "An error has prevented this script from collecting result Odata."
-        exit(-1)
+    }
+}
+
+function getLicenseData {
+    param (
+        $fileList
+    )
+
+    $outputFile = ".\license-data.json"
+    Write-Verbose "Retrieving license data"
+
+    $Url = "${cx_sast_server}/cxrestapi/serverLicenseData"
+    try {
+        $response = odata -Uri $Url -OutFile $outputFile
+        [void]$fileList.Add($outputFile)
+    }
+    catch {
+        if ($_.Exception.Response.StatusCode.value__ -eq 404) {
+            Write-Host "Server license data not available"
+        } else {
+            Write-Host "Exception:" $_ -ForegroundColor "Red"
+            Write-Host $_.ScriptStackTrace -ForegroundColor "DarkGray"
+            Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
+            Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+            Write-Host $Url
+            Write-Host "An error has prevented this script from collecting license data."
+        }
+    }
+}
+
+function getEngineData {
+    param (
+        $fileList
+    )
+
+    $outputFile = ".\engine-data.json"
+    Write-Verbose "Retrieving engine data"
+
+    $Url = "${cx_sast_server}/cxrestapi/sast/engineServers"
+    try {
+        $response = odata -Uri $Url -OutFile $outputFile
+        [void]$fileList.Add($outputFile)
+    }
+    catch {
+        Write-Host "Exception:" $_ -ForegroundColor "Red"
+        Write-Host $_.ScriptStackTrace -ForegroundColor "DarkGray"
+        Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
+        Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Host $Url
+        Write-Host "An error has prevented this script from collecting license data."
+        return $false
     }
 }
 
 try
 {
-    $files = @(".\scan-data.json")
-    getScanOdata($files[0])
-    if ( $results) {
-        $files += ".\result-data.json"
-        getResultOdata($files[1])
+    $files = [System.Collections.ArrayList]::new()
+    getScanOdata $files
+    getEngineData $files
+    getLicenseData $files
+    if ($results) {
+        getResultOdata $files
     }
     # Compress-Archive was introduced in PowerShell version 5.
     if ($PSVersionTable.PSVersion.Major -gt 4) {
