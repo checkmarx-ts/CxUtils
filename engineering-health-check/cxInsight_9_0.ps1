@@ -196,7 +196,6 @@ function getScanOdata {
         Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
         Write-Host $Url
         Write-Host "An error has prevented this script from collecting scan Odata."
-        return $false
     }
 }
 
