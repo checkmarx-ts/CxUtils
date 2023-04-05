@@ -293,4 +293,11 @@ foreach ($scan in $getScansResult.Scans) {
     $scans += $newScan
 }
 
-$scans | ConvertTo-Json
+$scans | ConvertTo-Json | Out-File -Encoding utf8 -FilePath ".\scan-data.json"
+
+$files = @(".\scan-data.json")
+# Compress-Archive was introduced in PowerShell version 5.
+if ($PSVersionTable.PSVersion.Major -gt 4) {
+    Compress-Archive -Path $files -DestinationPath ".\data.zip" -Force
+    Remove-Item -Path $files
+}
