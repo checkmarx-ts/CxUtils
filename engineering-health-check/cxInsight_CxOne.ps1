@@ -48,25 +48,25 @@ function Parse-JWTtoken {
     #Header
     $tokenheader = $token.Split(".")[0].Replace('-', '+').Replace('_', '/')
     #Fix padding as needed, keep adding "=" until string length modulus 4 reaches 0
-    while ($tokenheader.Length % 4) { Write-Verbose "Invalid length for a Base-64 char array or string, adding ="; $tokenheader += "=" }
-    Write-Verbose "Base64 encoded (padded) header:"
-    Write-Verbose $tokenheader
+    while ($tokenheader.Length % 4) { Write-Debug "Invalid length for a Base-64 char array or string, adding ="; $tokenheader += "=" }
+    Write-Debug "Base64 encoded (padded) header:"
+    Write-Debug $tokenheader
 
     #Payload
     $tokenPayload = $token.Split(".")[1].Replace('-', '+').Replace('_', '/')
     #Fix padding as needed, keep adding "=" until string length modulus 4 reaches 0
     while ($tokenPayload.Length % 4) { Write-Verbose "Invalid length for a Base-64 char array or string, adding ="; $tokenPayload += "=" }
-    Write-Verbose "Base64 encoded (padded) payload:"
-    Write-Verbose $tokenPayload
+    Write-Debug "Base64 encoded (padded) payload:"
+    Write-Debug $tokenPayload
     #Convert to Byte array
     $tokenByteArray = [System.Convert]::FromBase64String($tokenPayload)
     #Convert to string array
     $tokenArray = [System.Text.Encoding]::ASCII.GetString($tokenByteArray)
-    Write-Verbose "Decoded array in JSON format:"
-    Write-Verbose $tokenArray
+    Write-Debug "Decoded array in JSON format:"
+    Write-Debug $tokenArray
     #Convert from JSON to PSObject
     $tokobj = $tokenArray | ConvertFrom-Json
-    Write-Verbose "Decoded Payload:"
+    Write-Debug "Decoded Payload:"
 
     return $tokobj
 }
@@ -112,7 +112,7 @@ class CxOneClient {
         }
         $uri = $this.IamBaseUrl + "/protocol/openid-connect/token"
         $this.AccessToken = (Invoke-RestMethod $uri -Method POST -Body $params).access_token
-        Write-Verbose "Access Token: $($this.AccessToken)"
+        Write-Debug "Access Token: $($this.AccessToken)"
     }
 
     [object] InvokeApi($ApiPath) {
