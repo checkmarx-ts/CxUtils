@@ -13,10 +13,14 @@ The start date of the date range you would like to collect data (Format: yyyy-mm
 The end date of the date range you would like to collect data (Format: yyyy-mm-DD)
 .PARAMETER exclProjectName
 Exclude the project name from the output
+.PARAMETER limit
+The maximum number of objects to retrieve in a single API call (defaults to 200)
 .EXAMPLE
 C:\PS> .\cxInsight_CxOne.ps1 -ApiKey eyJhbG...y4J22
 .EXAMPLE
 C:\PS> .\cxInsight_CxOne.ps1 -ApiKey eyJhbG...y4J22 -DaySpan 180
+.EXAMPLE
+C:\PS> .\cxInsight_CxOne.ps1 -ApiKey eyJhbG...y4J22 -Limit 500
 .NOTES
 Author:  Checkmarx Professional Services
 Date:    2023-02-08
@@ -31,7 +35,8 @@ param (
     [string]$endDate = (Get-Date -format "yyyy-MM-dd"),
     [Parameter(Mandatory=$False)]
     [switch]
-    $exclProjectName
+    $exclProjectName,
+    [int]$limit = 200
 )
 
 Set-StrictMode -Version 1.0
@@ -77,11 +82,13 @@ class CxOneClient {
     [string]$IamBaseUrl
     [string]$Instance
     [object]$JwtData
+    [int]$limit
     [string]$Tenant
     [string]$AccessToken
 
-    CxOneClient([string]$ApiKey) {
+    CxOneClient([string]$ApiKey, [int]$limit) {
         $this.ApiKey = $ApiKey
+        $this.limit = $limit
         $this.JwtData = Parse-JWTtoken $ApiKey
         $this.IamBaseUrl = $this.JwtData.iss
         $bits = $this.IamBaseUrl.Split("/")
@@ -134,7 +141,7 @@ class CxOneClient {
         }
         $results = [System.Collections.ArrayList]::new()
         do {
-            $uriWithOffset ="$uri${sep}offset=${offset}"
+            $uriWithOffset ="$uri${sep}offset=${offset}&limit=$($this.limit)"
             Write-Verbose "URI with offset: $uriWithOffset"
             $response = $this.InvokeApi($uri, "GET", $headers)
             Write-Debug "Retrieved $($response.$resultsProperty.length) items"
@@ -282,7 +289,7 @@ class Scan {
 $StartDate = "${StartDate}T00%3A00%3A00Z"
 $EndDate = "${EndDate}T00%3A00%3A00Z"
 
-$client = [CxOneClient]::new($ApiKey)
+$client = [CxOneClient]::new($ApiKey, $limit)
 $getScansResult = $client.GetScans($StartDate, $EndDate)
 $scans = @()
 foreach ($scan in $getScansResult) {
