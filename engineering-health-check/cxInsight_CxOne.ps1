@@ -198,7 +198,7 @@ class CxOneClient {
     [object] GetResultsForAllScanners($ScanId) {
 
         $ApiPath = "/results/?scan-id=${ScanId}"
-        $scanResults = $this.InvokeApi($ApiPath, "results")
+        $scanResults = $this.InvokeArrayApi($ApiPath, "results")
         return $scanResults
     }
 }
