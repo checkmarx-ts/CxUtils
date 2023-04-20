@@ -124,6 +124,7 @@ class CxOneClient {
         $uri = "$($this.ApiBaseUrl)$ApiPath"
         Write-Verbose "URI: $uri"
         $count = 0
+        $offset = 0
         $totalCount = 0
         $response = $null
         if ($apiPath.contains("?")) {
@@ -133,11 +134,16 @@ class CxOneClient {
         }
         $results = [System.Collections.ArrayList]::new()
         do {
-            $uriWithOffset ="$uri${sep}offset=${count}"
+            $uriWithOffset ="$uri${sep}offset=${offset}"
             Write-Verbose "URI with offset: $uriWithOffset"
             $response = (Invoke-RestMethod $uriWithOffset -Method GET -Headers $headers)
-            Write-Debug "Retrieved $($response.$resultsProperty.length) items"
+             Write-Debug "Retrieved $($response.$resultsProperty.length) items"
+            if ($response.$resultsProperty.length -eq 0 -and $response.totalCount -gt 0) {
+                Write-Host "Warning: invoking ${uriWithOffset} returned 0 results"
+                break
+            }
             $count += $response.$resultsProperty.length
+            $offset += 1
             $results.AddRange($response.$resultsProperty)
             # Annoyingly, some API responses have the filteredTotalCount
             # property but others do not.
