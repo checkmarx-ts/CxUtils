@@ -136,8 +136,8 @@ class CxOneClient {
         do {
             $uriWithOffset ="$uri${sep}offset=${offset}"
             Write-Verbose "URI with offset: $uriWithOffset"
-            $response = (Invoke-RestMethod $uriWithOffset -Method GET -Headers $headers)
-             Write-Debug "Retrieved $($response.$resultsProperty.length) items"
+            $response = $this.InvokeApi($uri, "GET", $headers)
+            Write-Debug "Retrieved $($response.$resultsProperty.length) items"
             if ($response.$resultsProperty.length -eq 0 -and $response.totalCount -gt 0) {
                 Write-Host "Warning: invoking ${uriWithOffset} returned 0 results"
                 break
@@ -164,7 +164,28 @@ class CxOneClient {
         }
         $uri = "$($this.ApiBaseUrl)$ApiPath"
         Write-Verbose "URI: $uri"
-        $response = (Invoke-RestMethod $uri -Method GET -Headers $headers)
+        $response = $this.InvokeApi($uri, "GET", $headers)
+        return $response
+    }
+
+    [object] InvokeApi($uri, $method, $headers) {
+        $response = $null
+        try {
+            $response = Invoke-RestMethod $uri -Method GET -Headers $headers
+        } catch {
+            $statusCode = $_.Exception.Response.StatusCode.value__
+            switch ($statusCode) {
+                401 {
+                    Write-Verbose "Received a 401 response. Reconnecting..."
+                }
+                404 {
+                    Write-Host "Received a 404 response for ${uri}"
+                }
+                default {
+                    Write-Error "Received a ${statusCode} response for ${uri}"
+                }
+            }
+        }
         return $response
     }
 
