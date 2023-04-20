@@ -255,7 +255,6 @@ $StartDate = "${StartDate}T00%3A00%3A00Z"
 $EndDate = "${EndDate}T00%3A00%3A00Z"
 
 $client = [CxOneClient]::new($ApiKey)
-$getProjectsResult =  $client.GetProjects()
 $getScansResult = $client.GetScans($StartDate, $EndDate)
 $scans = @()
 foreach ($scan in $getScansResult) {
