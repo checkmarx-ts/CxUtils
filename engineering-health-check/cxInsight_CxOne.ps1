@@ -111,8 +111,9 @@ class CxOneClient {
             refresh_token = $this.ApiKey
         }
         $uri = $this.IamBaseUrl + "/protocol/openid-connect/token"
-        $this.AccessToken = (Invoke-RestMethod $uri -Method POST -Body $params).access_token
-        Write-Debug "Access Token: $($this.AccessToken)"
+        $resp = Invoke-RestMethod $uri -Method POST -Body $params
+        Write-Debug "Response: ${resp}"
+        $this.AccessToken = $resp.access_token
     }
 
     [object] InvokeArrayApi($ApiPath, $resultsProperty) {
