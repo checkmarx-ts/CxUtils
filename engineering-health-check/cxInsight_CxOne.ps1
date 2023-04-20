@@ -115,7 +115,42 @@ class CxOneClient {
         Write-Debug "Access Token: $($this.AccessToken)"
     }
 
-    [object] InvokeApi($ApiPath) {
+    [object] InvokeArrayApi($ApiPath, $resultsProperty) {
+        $headers = @{
+            Accept = "application/json; version=1.0"
+            Authorization = "Bearer $($this.AccessToken)"
+        }
+        $uri = "$($this.ApiBaseUrl)$ApiPath"
+        Write-Verbose "URI: $uri"
+        $count = 0
+        $totalCount = 0
+        $response = $null
+        if ($apiPath.contains("?")) {
+            $sep = "&"
+        } else {
+            $sep = "?"
+        }
+        $results = [System.Collections.ArrayList]::new()
+        do {
+            $uriWithOffset ="$uri${sep}offset=${count}"
+            Write-Verbose "URI with offset: $uriWithOffset"
+            $response = (Invoke-RestMethod $uriWithOffset -Method GET -Headers $headers)
+            Write-Debug "Retrieved $($response.$resultsProperty.length) items"
+            $count += $response.$resultsProperty.length
+            $results.AddRange($response.$resultsProperty)
+            # Annoyingly, some API responses have the filteredTotalCount
+            # property but others do not.
+            if ($response.PSObject.Properties.name -match "filteredTotalCount") {
+                $totalCount = $response.filteredTotalCount
+            } else {
+                $totalCount = $response.totalCount
+            }
+            Write-Debug "Count: ${count}, total count: $totalCount"
+        } while ($count -lt $totalCount)
+        return $results
+    }
+
+    [object] InvokeObjectApi($ApiPath) {
         $headers = @{
             Accept = "application/json; version=1.0"
             Authorization = "Bearer $($this.AccessToken)"
@@ -128,42 +163,42 @@ class CxOneClient {
 
     [object] GetProjects() {
         $ApiPath = "/projects"
-        $projects = $this.InvokeApi($ApiPath)
+        $projects = $this.InvokeArrayApi($ApiPath, "projects")
         return $projects
     }
 
     [object] GetScans($FromDate, $ToDate) {
 
         $ApiPath = "/scans/?from-date=${FromDate}&to-date=${ToDate}"
-        $scans = $this.InvokeApi($ApiPath)
+        $scans = $this.InvokeArrayApi($ApiPath, "scans")
         return $scans
     }
 
     [object] GetSastMetaData($ScanId) {
 
         $ApiPath = "/sast-metadata/$ScanId"
-        $scans = $this.InvokeApi($ApiPath)
+        $scans = $this.InvokeObjectApi($ApiPath)
         return $scans
     }
 
     [object] GetSastMetaDataMetrics($ScanId) {
 
         $ApiPath = "/sast-metadata/$ScanId/metrics"
-        $scans = $this.InvokeApi($ApiPath)
+        $scans = $this.InvokeObjectApi($ApiPath)
         return $scans
     }
 
     [object] GetSastScanResults($ScanId) {
 
         $ApiPath = "/sast-results/?scan-id=${ScanId}"
-        $scanResults = $this.InvokeApi($ApiPath)
+        $scanResults = $this.InvokeArrayApi($ApiPath, "results")
         return $scanResults
     }
 
     [object] GetResultsForAllScanners($ScanId) {
 
         $ApiPath = "/results/?scan-id=${ScanId}"
-        $scanResults = $this.InvokeApi($ApiPath)
+        $scanResults = $this.InvokeApi($ApiPath, "results")
         return $scanResults
     }
 }
@@ -223,7 +258,7 @@ $client = [CxOneClient]::new($ApiKey)
 $getProjectsResult =  $client.GetProjects()
 $getScansResult = $client.GetScans($StartDate, $EndDate)
 $scans = @()
-foreach ($scan in $getScansResult.Scans) {
+foreach ($scan in $getScansResult) {
     $GetSastMetaDataResult = $client.GetSastMetaData($Scan.id)
     $GetSastMetaDataMetricsResult = $client.GetSastMetaDataMetrics($Scan.id)
     $GetSastScanResultsResult = $client.GetSastScanResults($Scan.id)
@@ -231,7 +266,7 @@ foreach ($scan in $getScansResult.Scans) {
     $states = @{}
     $statuses = @{}
     $totalResults = 0
-    foreach ($result in $getSastScanResultsResult.results) {
+    foreach ($result in $getSastScanResultsResult) {
         $Severities[$result.severity] += 1
         $States[$result.state] += 1
         $Statuses[$result.status] += 1
