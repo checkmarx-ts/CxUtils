@@ -123,7 +123,8 @@ class CxOneClient {
         $this.AccessToken = $resp.access_token
     }
 
-    [object] InvokeArrayApi($ApiPath, $resultsProperty) {
+    [object] InvokeArrayApi($ApiPath, $resultsProperty, $offsetByCount) {
+        Write-Debug "InvokeArrayApi: ApiPath: ${ApiPath}, resultsProperty: ${resultsProperty}, offsetByCount: ${offsetByCount}"
         $headers = @{
             Accept = "application/json; version=1.0"
             Authorization = "Bearer $($this.AccessToken)"
@@ -150,7 +151,11 @@ class CxOneClient {
                 break
             }
             $count += $response.$resultsProperty.length
-            $offset += 1
+            if ($offsetByCount) {
+                $offset += $count
+            } else {
+                $offset += 1
+            }
             $results.AddRange($response.$resultsProperty)
             # Annoyingly, some API responses have the filteredTotalCount
             # property but others do not.
@@ -205,7 +210,7 @@ class CxOneClient {
     [object] GetScans($FromDate, $ToDate) {
 
         $ApiPath = "/scans/?from-date=${FromDate}&to-date=${ToDate}"
-        $scans = $this.InvokeArrayApi($ApiPath, "scans")
+        $scans = $this.InvokeArrayApi($ApiPath, "scans", $true)
         return $scans
     }
 
@@ -226,14 +231,14 @@ class CxOneClient {
     [object] GetSastScanResults($ScanId) {
 
         $ApiPath = "/sast-results/?scan-id=${ScanId}"
-        $scanResults = $this.InvokeArrayApi($ApiPath, "results")
+        $scanResults = $this.InvokeArrayApi($ApiPath, "results", $true)
         return $scanResults
     }
 
     [object] GetResultsForAllScanners($ScanId) {
 
         $ApiPath = "/results/?scan-id=${ScanId}"
-        $scanResults = $this.InvokeArrayApi($ApiPath, "results")
+        $scanResults = $this.InvokeArrayApi($ApiPath, "results", $false)
         return $scanResults
     }
 }
