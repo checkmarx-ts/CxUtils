@@ -273,21 +273,7 @@ class Scan {
     # Scan metadata metrics
     [object]$languages
     # Scan results
-    # - Severities
-    [int]$totalResults
-    [int]$high
-    [int]$medium
-    [int]$low
-    [int]$info
-    # - States
-    [int]$toVerify
-    [int]$confirmed
-    [int]$proposedNotExploitable
-    [int]$notExploitable
-    [int]$urgent
-    # - Statuses
-    [int]$new
-    [int]$recurrent
+    [object]$results
 }
 
 # Dates should be in RFC3339 Date (Extend) format (e.g. 2021-06-02T12:14:18.028555Z)
@@ -300,16 +286,33 @@ $scans = @()
 foreach ($scan in $getScansResult) {
     $GetSastMetaDataResult = $client.GetSastMetaData($Scan.id)
     $GetSastMetaDataMetricsResult = $client.GetSastMetaDataMetrics($Scan.id)
-    $GetSastScanResultsResult = $client.GetSastScanResults($Scan.id)
-    $severities = @{}
-    $states = @{}
-    $statuses = @{}
-    $totalResults = 0
-    foreach ($result in $getSastScanResultsResult) {
-        $Severities[$result.severity] += 1
-        $States[$result.state] += 1
-        $Statuses[$result.status] += 1
-        $totalResults += 1
+    $GetResultsForAllScannersResult = $client.GetResultsForAllScanners($scan.id)
+    $results = @{}
+    foreach ($result in $GetResultsForAllScannersResult) {
+        $engine = $result.type
+        if (-not ($results.Keys -contains $engine)) {
+            $results[$engine] = @{}
+            $results[$engine]["count"] = 0
+            $results[$engine]["severity"] = @{}
+            $results[$engine]["state"] = @{}
+            $results[$engine]["status"] = @{}
+        }
+        $results[$engine]["count"] += 1
+        if ($results[$engine]["severity"].Keys -contains $result.severity) {
+            $results[$engine]["severity"][$result.severity] += 1
+        } else {
+            $results[$engine]["severity"][$result.severity] = 1
+        }
+        if ($results[$engine]["state"].Keys -contains $result.state) {
+            $results[$engine]["state"][$result.state] += 1
+        } else {
+            $results[$engine]["state"][$result.state] = 1
+        }
+        if ($results[$engine]["status"].Keys -contains $result.status) {
+            $results[$engine]["status"][$result.status] += 1
+        } else {
+            $results[$engine]["status"][$result.status] = 1
+        }
     }
 
     $newScan = [Scan]::new()
@@ -349,25 +352,12 @@ foreach ($scan in $getScansResult) {
     # there is only one language
     $newScan.languages = @($GetSastMetaDataMetricsResult.scannedFilesPerLanguage.psobject.properties | foreach-object { $_.name })
 
-    $newScan.totalResults = $totalResults
-    $newScan.high = $severities["HIGH"]
-    $newScan.medium = $severities["MEDIUM"]
-    $newScan.low = $severities["LOW"]
-    $newScan.info = $severities["INFO"]
-    # - States
-    $newScan.toVerify = $states["TO_VERIFY"]
-    $newScan.confirmed = $states["CONFIRMED"]
-    $newScan.proposedNotExploitable = $states["PROPOSED_NOT_EXPLOITABLE"]
-    $newScan.notExploitable = $states["NOT_EXPLOITABLE"]
-    $newScan.urgent = $states["URGENT"]
-    # - Statuses
-    $newScan.new = $statuses["NEW"]
-    $newScan.recurrent = $statuses["RECURRENT"]
+    $newScan.results = $results
 
     $scans += $newScan
 }
 
-$scans | ConvertTo-Json | Out-File -Encoding utf8 -FilePath ".\scan-data.json"
+$scans | ConvertTo-Json -Depth 5 | Out-File -Encoding utf8 -FilePath ".\scan-data.json"
 
 $files = @(".\scan-data.json")
 # Compress-Archive was introduced in PowerShell version 5.
