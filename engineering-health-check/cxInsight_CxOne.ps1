@@ -147,12 +147,13 @@ class CxOneClient {
             $uriWithOffset ="$uri${sep}offset=${offset}&limit=$($this.limit)"
             Write-Verbose "URI with offset: $uriWithOffset"
             $response = $this.InvokeApi($uriWithOffset, "GET", $headers)
-            Write-Debug "Retrieved $($response.$resultsProperty.length) items"
+            $retrieved = $response.$resultsProperty.length
+            Write-Debug "Retrieved ${retrieved} items"
             if ($response.$resultsProperty.length -eq 0 -and $response.totalCount -gt 0) {
                 Write-Host "Warning: invoking ${uriWithOffset} returned 0 results"
                 break
             }
-            $count += $response.$resultsProperty.length
+            $count += $retrieved
             if ($offsetByCount) {
                 $offset += $count
             } else {
