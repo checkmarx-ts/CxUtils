@@ -155,7 +155,7 @@ class CxOneClient {
             }
             $count += $retrieved
             if ($offsetByCount) {
-                $offset += $count
+                $offset = $count
             } else {
                 $offset += 1
             }
