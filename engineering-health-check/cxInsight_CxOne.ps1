@@ -117,10 +117,12 @@ class CxOneClient {
             client_id = "ast-app"
             refresh_token = $this.ApiKey
         }
+        Write-Verbose "Retrieving token..."
         $uri = $this.IamBaseUrl + "/protocol/openid-connect/token"
         $resp = Invoke-RestMethod $uri -Method POST -Body $params
         Write-Debug "Response: ${resp}"
         $this.AccessToken = $resp.access_token
+        Write-Verbose "Token retrieved"
     }
 
     [object] InvokeArrayApi($ApiPath, $resultsProperty, $offsetByCount) {
