@@ -247,6 +247,22 @@ class CxOneClient {
     }
 }
 
+class SastMetadata {
+    # Scan metadata
+    [int]$loc
+    [int]$fileCount
+    [bool]$isIncremental
+    [bool]$isIncrementalCancelled
+    [string]$incrementalCancelledReason
+    [string]$baseId
+    [int]$addedFilesCount
+    [int]$changedFilesCount
+    [double]$changePercentage
+    [string]$queryPreset
+    # Scan metadata metrics
+    [object]$languages
+}
+
 class Scan {
     # Scan fields
     [string]$id
@@ -263,20 +279,7 @@ class Scan {
     [object]$engines
     [string]$sourceType
     [string]$sourceOrigin
-    # Scan metadata
-    [int]$loc
-    [int]$fileCount
-    [bool]$isIncremental
-    [bool]$isIncrementalCancelled
-    [string]$incrementalCancelledReason
-    [string]$baseId
-    [int]$addedFilesCount
-    [int]$changedFilesCount
-    [double]$changePercentage
-    [string]$queryPreset
-    # Scan metadata metrics
-    [object]$languages
-    # Scan results
+    [object]$sastMetadata
     [object]$results
 }
 
@@ -288,8 +291,6 @@ $client = [CxOneClient]::new($ApiKey, $limit)
 $getScansResult = $client.GetScans($StartDate, $EndDate)
 $scans = @()
 foreach ($scan in $getScansResult) {
-    $GetSastMetaDataResult = $client.GetSastMetaData($Scan.id)
-    $GetSastMetaDataMetricsResult = $client.GetSastMetaDataMetrics($Scan.id)
     $GetResultsForAllScannersResult = $client.GetResultsForAllScanners($scan.id)
     $results = @{}
     foreach ($result in $GetResultsForAllScannersResult) {
@@ -341,20 +342,27 @@ foreach ($scan in $getScansResult) {
     $newScan.sourceType = $scan.sourceType
     $newScan.sourceOrigin = $scan.sourceOrigin
 
-    $newScan.loc = $GetSastMetaDataResult.loc
-    $newScan.fileCount = $GetSastMetaDataResult.fileCount
-    $newScan.isIncremental = $GetSastMetaDataResult.isIncremental
-    $newScan.isIncrementalCancelled = $GetSastMetaDataResult.isIncrementalCancelled
-    $newScan.incrementalCancelledReason = $GetSastMetaDataResult.incrementalCancelledReason
-    $newScan.baseId = $GetSastMetaDataResult.baseId
-    $newScan.addedFilesCount = $GetSastMetaDataResult.addedFilesCount
-    $newScan.changedFilesCount = $GetSastMetaDataResult.changedFilesCount
-    $newScan.changePercentage = $GetSastMetaDataResult.changePercentage
-    $newScan.queryPreset = $GetSastMetaDataResult.queryPreset
+    if ($scan.engines -contains "sast") {
+        Write-Verbose "Retrieving SAST metadata"
+        $GetSastMetaDataResult = $client.GetSastMetaData($Scan.id)
+        $GetSastMetaDataMetricsResult = $client.GetSastMetaDataMetrics($Scan.id)
+        $sastMetadata = [SastMetadata]::new()
+        $sastMetadata.loc = $GetSastMetaDataResult.loc
+        $sastMetadata.fileCount = $GetSastMetaDataResult.fileCount
+        $sastMetadata.isIncremental = $GetSastMetaDataResult.isIncremental
+        $sastMetadata.isIncrementalCancelled = $GetSastMetaDataResult.isIncrementalCancelled
+        $sastMetadata.incrementalCancelledReason = $GetSastMetaDataResult.incrementalCancelledReason
+        $sastMetadata.baseId = $GetSastMetaDataResult.baseId
+        $sastMetadata.addedFilesCount = $GetSastMetaDataResult.addedFilesCount
+        $sastMetadata.changedFilesCount = $GetSastMetaDataResult.changedFilesCount
+        $sastMetadata.changePercentage = $GetSastMetaDataResult.changePercentage
+        $sastMetadata.queryPreset = $GetSastMetaDataResult.queryPreset
 
-    # We wrap the right hand side in @() to force an array even when
-    # there is only one language
-    $newScan.languages = @($GetSastMetaDataMetricsResult.scannedFilesPerLanguage.psobject.properties | foreach-object { $_.name })
+        # We wrap the right hand side in @() to force an array even when
+        # there is only one language
+        $sastMetadata.languages = @($GetSastMetaDataMetricsResult.scannedFilesPerLanguage.psobject.properties | foreach-object { $_.name })
+        $newScan.sastMetadata = $sastMetadata
+    }
 
     $newScan.results = $results
 
