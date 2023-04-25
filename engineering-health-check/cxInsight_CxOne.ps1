@@ -189,6 +189,8 @@ class CxOneClient {
             switch ($statusCode) {
                 401 {
                     Write-Verbose "Received a 401 response. Reconnecting..."
+                    $this.Connect()
+                    $response = Invoke-RestMethod $uri -Method GET -Headers $headers
                 }
                 404 {
                     Write-Host "Received a 404 response for ${uri}"
