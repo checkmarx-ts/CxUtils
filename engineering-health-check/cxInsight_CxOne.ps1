@@ -253,8 +253,8 @@ class SastMetadata {
     [int]$loc
     [int]$fileCount
     [bool]$isIncremental
-    [bool]$isIncrementalCancelled
-    [string]$incrementalCancelledReason
+    [bool]$isIncrementalCanceled
+    [string]$incrementalCancelReason
     [string]$baseId
     [int]$addedFilesCount
     [int]$changedFilesCount
@@ -351,8 +351,8 @@ foreach ($scan in $getScansResult) {
         $sastMetadata.loc = $GetSastMetaDataResult.loc
         $sastMetadata.fileCount = $GetSastMetaDataResult.fileCount
         $sastMetadata.isIncremental = $GetSastMetaDataResult.isIncremental
-        $sastMetadata.isIncrementalCancelled = $GetSastMetaDataResult.isIncrementalCancelled
-        $sastMetadata.incrementalCancelledReason = $GetSastMetaDataResult.incrementalCancelledReason
+        $sastMetadata.isIncrementalCanceled = $GetSastMetaDataResult.isIncrementalCanceled
+        $sastMetadata.incrementalCancelReason = $GetSastMetaDataResult.incrementalCancelReason
         $sastMetadata.baseId = $GetSastMetaDataResult.baseId
         $sastMetadata.addedFilesCount = $GetSastMetaDataResult.addedFilesCount
         $sastMetadata.changedFilesCount = $GetSastMetaDataResult.changedFilesCount
