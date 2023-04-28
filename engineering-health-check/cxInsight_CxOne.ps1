@@ -282,6 +282,87 @@ class Scan {
     [string]$sourceOrigin
     [object]$sastMetadata
     [object]$results
+
+    Scan($client, $scan, $exclProjectName) {
+        $this.id = $scan.id
+        $this.status = $scan.status
+        $this.statusDetails = @{}
+        foreach ($statusDetails in $scan.statusDetails) {
+            $this.statusDetails[$statusDetails.name] = $statusDetails.status
+        }
+        $this.branch = $scan.branch
+        $this.createdAt = $scan.createdAt
+        $this.updatedAt = $scan.updatedAt
+        $this.projectId = $scan.projectId
+        if (! $exclProjectName) {
+            $this.projectName = $scan.projectName
+        }
+        $this.initiator = $scan.initiator
+        $this.tags = $scan.tags
+        # The type property is the only metadata property that we are interested in
+        $this.type = $scan.metadata.type
+        $this.engines = $scan.engines
+        $this.sourceType = $scan.sourceType
+        $this.sourceOrigin = $scan.sourceOrigin
+
+        if ($scan.engines -contains "sast") {
+            $this.getSastMetadata($client, $scan.id)
+        }
+
+        $this.getScanResults($client, $scan.id)
+    }
+
+    getScanResults($client, $scanId) {
+        $GetResultsForAllScannersResult = $client.GetResultsForAllScanners($scanId)
+        $this.results = @{}
+        foreach ($result in $GetResultsForAllScannersResult) {
+            $engine = $result.type
+            if (-not ($this.results.Keys -contains $engine)) {
+                $this.results[$engine] = @{}
+                $this.results[$engine]["count"] = 0
+                $this.results[$engine]["severity"] = @{}
+                $this.results[$engine]["state"] = @{}
+                $this.results[$engine]["status"] = @{}
+            }
+            $this.results[$engine]["count"] += 1
+            if ($this.results[$engine]["severity"].Keys -contains $result.severity) {
+                $this.results[$engine]["severity"][$result.severity] += 1
+            } else {
+                $this.results[$engine]["severity"][$result.severity] = 1
+            }
+            if ($this.results[$engine]["state"].Keys -contains $result.state) {
+                $this.results[$engine]["state"][$result.state] += 1
+            } else {
+                $this.results[$engine]["state"][$result.state] = 1
+            }
+            if ($this.results[$engine]["status"].Keys -contains $result.status) {
+                $this.results[$engine]["status"][$result.status] += 1
+            } else {
+                $this.results[$engine]["status"][$result.status] = 1
+            }
+        }
+    }
+
+    getSastMetadata($client, $scanId) {
+        Write-Verbose "Retrieving SAST metadata"
+        $GetSastMetaDataResult = $client.GetSastMetaData($ScanId)
+        $GetSastMetaDataMetricsResult = $client.GetSastMetaDataMetrics($ScanId)
+        $this.sastMetadata = [SastMetadata]::new()
+        $this.sastMetadata.loc = $GetSastMetaDataResult.loc
+        $this.sastMetadata.fileCount = $GetSastMetaDataResult.fileCount
+        $this.sastMetadata.isIncremental = $GetSastMetaDataResult.isIncremental
+        $this.sastMetadata.isIncrementalCanceled = $GetSastMetaDataResult.isIncrementalCanceled
+        $this.sastMetadata.incrementalCancelReason = $GetSastMetaDataResult.incrementalCancelReason
+        $this.sastMetadata.baseId = $GetSastMetaDataResult.baseId
+        $this.sastMetadata.addedFilesCount = $GetSastMetaDataResult.addedFilesCount
+        $this.sastMetadata.changedFilesCount = $GetSastMetaDataResult.changedFilesCount
+        $this.sastMetadata.changePercentage = $GetSastMetaDataResult.changePercentage
+        $this.sastMetadata.queryPreset = $GetSastMetaDataResult.queryPreset
+
+        # We wrap the right hand side in @() to force an array even when
+        # there is only one language
+        $this.sastMetadata.languages = @($GetSastMetaDataMetricsResult.scannedFilesPerLanguage.psobject.properties | foreach-object { $_.name })
+    }
 }
 
 # Dates should be in RFC3339 Date (Extend) format (e.g. 2021-06-02T12:14:18.028555Z)
@@ -292,82 +373,7 @@ $client = [CxOneClient]::new($ApiKey, $limit)
 $getScansResult = $client.GetScans($StartDate, $EndDate)
 $scans = @()
 foreach ($scan in $getScansResult) {
-    $GetResultsForAllScannersResult = $client.GetResultsForAllScanners($scan.id)
-    $results = @{}
-    foreach ($result in $GetResultsForAllScannersResult) {
-        $engine = $result.type
-        if (-not ($results.Keys -contains $engine)) {
-            $results[$engine] = @{}
-            $results[$engine]["count"] = 0
-            $results[$engine]["severity"] = @{}
-            $results[$engine]["state"] = @{}
-            $results[$engine]["status"] = @{}
-        }
-        $results[$engine]["count"] += 1
-        if ($results[$engine]["severity"].Keys -contains $result.severity) {
-            $results[$engine]["severity"][$result.severity] += 1
-        } else {
-            $results[$engine]["severity"][$result.severity] = 1
-        }
-        if ($results[$engine]["state"].Keys -contains $result.state) {
-            $results[$engine]["state"][$result.state] += 1
-        } else {
-            $results[$engine]["state"][$result.state] = 1
-        }
-        if ($results[$engine]["status"].Keys -contains $result.status) {
-            $results[$engine]["status"][$result.status] += 1
-        } else {
-            $results[$engine]["status"][$result.status] = 1
-        }
-    }
-
-    $newScan = [Scan]::new()
-    $newScan.id = $scan.id
-    $newScan.status = $scan.status
-    $newScan.statusDetails = @{}
-    foreach ($statusDetails in $scan.statusDetails) {
-        $newScan.statusDetails[$statusDetails.name] = $statusDetails.status
-    }
-    $newScan.branch = $scan.branch
-    $newScan.createdAt = $scan.createdAt
-    $newScan.updatedAt = $scan.updatedAt
-    $newScan.projectId = $scan.projectId
-    if (! $exclProjectName) {
-        $newScan.projectName = $scan.projectName
-    }
-    $newScan.initiator = $scan.initiator
-    $newScan.tags = $scan.tags
-    # The type property is the only metadata property that we are interested in
-    $newScan.type = $scan.metadata.type
-    $newScan.engines = $scan.engines
-    $newScan.sourceType = $scan.sourceType
-    $newScan.sourceOrigin = $scan.sourceOrigin
-
-    if ($scan.engines -contains "sast") {
-        Write-Verbose "Retrieving SAST metadata"
-        $GetSastMetaDataResult = $client.GetSastMetaData($Scan.id)
-        $GetSastMetaDataMetricsResult = $client.GetSastMetaDataMetrics($Scan.id)
-        $sastMetadata = [SastMetadata]::new()
-        $sastMetadata.loc = $GetSastMetaDataResult.loc
-        $sastMetadata.fileCount = $GetSastMetaDataResult.fileCount
-        $sastMetadata.isIncremental = $GetSastMetaDataResult.isIncremental
-        $sastMetadata.isIncrementalCanceled = $GetSastMetaDataResult.isIncrementalCanceled
-        $sastMetadata.incrementalCancelReason = $GetSastMetaDataResult.incrementalCancelReason
-        $sastMetadata.baseId = $GetSastMetaDataResult.baseId
-        $sastMetadata.addedFilesCount = $GetSastMetaDataResult.addedFilesCount
-        $sastMetadata.changedFilesCount = $GetSastMetaDataResult.changedFilesCount
-        $sastMetadata.changePercentage = $GetSastMetaDataResult.changePercentage
-        $sastMetadata.queryPreset = $GetSastMetaDataResult.queryPreset
-
-        # We wrap the right hand side in @() to force an array even when
-        # there is only one language
-        $sastMetadata.languages = @($GetSastMetaDataMetricsResult.scannedFilesPerLanguage.psobject.properties | foreach-object { $_.name })
-        $newScan.sastMetadata = $sastMetadata
-    }
-
-    $newScan.results = $results
-
-    $scans += $newScan
+    $scans += [Scan]::new($client, $scan, $exclProjectName)
 }
 
 $scans | ConvertTo-Json -Depth 5 | Out-File -Encoding utf8 -FilePath ".\scan-data.json"
