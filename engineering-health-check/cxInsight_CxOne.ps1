@@ -219,6 +219,13 @@ class CxOneClient {
         return $scans
     }
 
+    [object] GetScan($scanId) {
+
+        $ApiPath = "/scans/{$scanId}"
+        $scans = $this.InvokeObjectApi($ApiPath)
+        return $scans
+    }
+
     [object] GetSastMetaData($ScanId) {
 
         $ApiPath = "/sast-metadata/$ScanId"
