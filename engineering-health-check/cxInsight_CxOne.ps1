@@ -15,12 +15,16 @@ The end date of the date range you would like to collect data (Format: yyyy-mm-D
 Exclude the project name from the output
 .PARAMETER limit
 The maximum number of objects to retrieve in a single API call (defaults to 200)
+.PARAMETER scanId
+Return the data for the specified scan
 .EXAMPLE
 C:\PS> .\cxInsight_CxOne.ps1 -ApiKey eyJhbG...y4J22
 .EXAMPLE
 C:\PS> .\cxInsight_CxOne.ps1 -ApiKey eyJhbG...y4J22 -DaySpan 180
 .EXAMPLE
 C:\PS> .\cxInsight_CxOne.ps1 -ApiKey eyJhbG...y4J22 -Limit 500
+.EXAMPLE
+C:\PS> .\cxInsight_CxOne.ps1 -ApiKey eyJhbG...y4J22 -ScanId 5c7ffe5f-ff3c-473a-beb9-a59d8f6143b8
 .NOTES
 Author:  Checkmarx Professional Services
 Date:    2023-02-08
@@ -36,7 +40,8 @@ param (
     [Parameter(Mandatory=$False)]
     [switch]
     $exclProjectName,
-    [int]$limit = 200
+    [int]$limit = 200,
+    [string]$scanId
 )
 
 Set-StrictMode -Version 1.0
@@ -372,22 +377,28 @@ class Scan {
     }
 }
 
-# Dates should be in RFC3339 Date (Extend) format (e.g. 2021-06-02T12:14:18.028555Z)
-$StartDate = "${StartDate}T00%3A00%3A00Z"
-$EndDate = "${EndDate}T00%3A00%3A00Z"
-
 $client = [CxOneClient]::new($ApiKey, $limit)
-$getScansResult = $client.GetScans($StartDate, $EndDate)
-$scans = @()
-foreach ($scan in $getScansResult) {
-    $scans += [Scan]::new($client, $scan, $exclProjectName)
-}
+if ($scanId) {
+    $GetScanResult = $client.GetScan($scanId)
+    $scan = [Scan]::new($client, $GetScanResult, $exclProjectName)
+    $scan | ConvertTo-Json -Depth 5
+} else {
+    # Dates should be in RFC3339 Date (Extend) format (e.g. 2021-06-02T12:14:18.028555Z)
+    $StartDate = "${StartDate}T00%3A00%3A00Z"
+    $EndDate = "${EndDate}T00%3A00%3A00Z"
 
-$scans | ConvertTo-Json -Depth 5 | Out-File -Encoding utf8 -FilePath ".\scan-data.json"
+    $getScansResult = $client.GetScans($StartDate, $EndDate)
+    $scans = @()
+    foreach ($scan in $getScansResult) {
+        $scans += [Scan]::new($client, $scan, $exclProjectName)
+    }
 
-$files = @(".\scan-data.json")
-# Compress-Archive was introduced in PowerShell version 5.
-if ($PSVersionTable.PSVersion.Major -gt 4) {
-    Compress-Archive -Path $files -DestinationPath ".\data.zip" -Force
-    Remove-Item -Path $files
+    $scans | ConvertTo-Json -Depth 5 | Out-File -Encoding utf8 -FilePath ".\scan-data.json"
+
+    $files = @(".\scan-data.json")
+    # Compress-Archive was introduced in PowerShell version 5.
+    if ($PSVersionTable.PSVersion.Major -gt 4) {
+        Compress-Archive -Path $files -DestinationPath ".\data.zip" -Force
+        Remove-Item -Path $files
+    }
 }
