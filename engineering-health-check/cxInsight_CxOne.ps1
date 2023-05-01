@@ -371,9 +371,11 @@ class Scan {
         $this.sastMetadata.changePercentage = $GetSastMetaDataResult.changePercentage
         $this.sastMetadata.queryPreset = $GetSastMetaDataResult.queryPreset
 
-        # We wrap the right hand side in @() to force an array even when
-        # there is only one language
-        $this.sastMetadata.languages = @($GetSastMetaDataMetricsResult.scannedFilesPerLanguage.psobject.properties | foreach-object { $_.name })
+        if ($GetSastMetaDataMetricsResult.totalScannedFileCount > 0) {
+            # We wrap the right hand side in @() to force an array even when
+            # there is only one language
+            $this.sastMetadata.languages = @($GetSastMetaDataMetricsResult.scannedFilesPerLanguage.psobject.properties | foreach-object { $_.name })
+        }
     }
 }
 
