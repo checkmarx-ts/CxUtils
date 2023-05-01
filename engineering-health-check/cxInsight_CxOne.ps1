@@ -319,11 +319,13 @@ class Scan {
         $this.sourceType = $scan.sourceType
         $this.sourceOrigin = $scan.sourceOrigin
 
-        if ($scan.engines -contains "sast") {
-            $this.getSastMetadata($client, $scan.id)
-        }
+        if ($this.status -ne "Failed") {
+            if ($scan.engines -contains "sast") {
+                $this.getSastMetadata($client, $scan.id)
+            }
 
-        $this.getScanResults($client, $scan.id)
+            $this.getScanResults($client, $scan.id)
+        }
     }
 
     getScanResults($client, $scanId) {
