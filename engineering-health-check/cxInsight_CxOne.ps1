@@ -273,6 +273,8 @@ class SastMetadata {
     [double]$changePercentage
     [string]$queryPreset
     # Scan metadata metrics
+    [int]$totalScannedFilesCount
+    [int]$totalScannedLoc
     [object]$languages
 }
 
@@ -371,6 +373,8 @@ class Scan {
         $this.sastMetadata.changePercentage = $GetSastMetaDataResult.changePercentage
         $this.sastMetadata.queryPreset = $GetSastMetaDataResult.queryPreset
 
+        $this.sastMetadata.totalScannedFilesCount = $GetSastMetaDataMetricsResult.totalScannedFilesCount
+        $this.sastMetadata.totalScannedLoc = $GetSastMetaDataMetricsResult.totalScannedLoc
         if ($GetSastMetaDataMetricsResult.totalScannedFileCount > 0) {
             # We wrap the right hand side in @() to force an array even when
             # there is only one language
