@@ -377,7 +377,7 @@ class Scan {
 
         $this.sastMetadata.totalScannedFilesCount = $GetSastMetaDataMetricsResult.totalScannedFilesCount
         $this.sastMetadata.totalScannedLoc = $GetSastMetaDataMetricsResult.totalScannedLoc
-        if ($GetSastMetaDataMetricsResult.totalScannedFileCount > 0) {
+        if ($GetSastMetaDataMetricsResult.totalScannedFilesCount -gt 0) {
             # We wrap the right hand side in @() to force an array even when
             # there is only one language
             $this.sastMetadata.languages = @($GetSastMetaDataMetricsResult.scannedFilesPerLanguage.psobject.properties | foreach-object { $_.name })
