@@ -9,7 +9,12 @@ The script also optionally collects and generates a summary of the result data f
 
 
 ## cxInsight_X_X.ps1 usage
-Open powershell and enter the following replacing X_X with the correct version
+Powershell execution policies on the local machine may prevent the execution of the Engineering Health Check powershell scripts. 
+Open Powershell as an administrator and execute the following to ublock execution of the Checkmarx scripts. This unblocks the specified scripts only and does not update the current execution policies.
+```
+Unblock-File -Path ./cxInsight*.ps1
+```
+Next, enter the following replacing X_X with the correct version
 ```
 ./cxInsight_X_X.ps1
 ```
