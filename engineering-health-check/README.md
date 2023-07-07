@@ -14,10 +14,10 @@ Open PowerShell and enter the following command
 
 * At the prompt, enter the API key for the Checkmarx One tenant.
 
-The `cxInsight_CxOne.ps1` script accepts the following command line option:
+The `cxInsight_CxOne.ps1` script accepts the following command line options:
 
 | Option | Requires Argument | Default | Description |
-|--------|-------------------|-------------|
+|--------|-------------------|---------|-------------|
 | `-ApiKey` | Yes | None | The ApiKey |
 | `-DaySpan` | Yes | 90 |The number of days' of data to collect |
 | `-EndDate` | Yes | The current date | The end date of the period for which to collect data |
