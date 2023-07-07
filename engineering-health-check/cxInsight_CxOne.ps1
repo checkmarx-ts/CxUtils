@@ -320,7 +320,8 @@ class Scan {
         $this.sourceOrigin = $scan.sourceOrigin
 
         if ($this.status -ne "Failed") {
-            if ($scan.engines -contains "sast") {
+            if (($scan.statusDetails -contains "sast")`
+                -and ($scan.statusDetails.sast -eq "Completed")) {
                 $this.getSastMetadata($client, $scan.id)
             }
 
