@@ -12,7 +12,26 @@ Open PowerShell and enter the following command
 .\cxInsight_CxOne.ps1
 ```
 
-* Enter the API key for the Checkmarx One tenant.
+* At the prompt, enter the API key for the Checkmarx One tenant.
+
+The `cxInsight_CxOne.ps1` script accepts the following command line option:
+
+| Option | Requires Argument | Default | Description |
+|--------|-------------------|-------------|
+| `-ApiKey` | Yes | None | The ApiKey |
+| `-DaySpan` | Yes | 90 |The number of days' of data to collect |
+| `-EndDate` | Yes | The current date | The end date of the period for which to collect data |
+| `-ExclProjectName` | No | False | If specified, the project name is not included in the extracted data |
+| `-Limit` | Yes | 200 | The number of items to retrieve in each API call |
+| `-ScanId` | Yes | The scan identifier | If this option is specified, only data for the specified scan is retrieved, and the output is written to the console |
+| `-StartDate` | Yes | 90 days before the current date | The start date of the period for which to collect data |
+
+The `cxInsight_CxOne.ps1` script also accepts the following standard PowerShell command line options.
+
+| Option | Requires Argument | Default | Description |
+|--------|-------------------|---------|-------------|
+| `-Debug` | No | N/A | Enable debug messages. **Note:** this will cause the decoded API Key and the bearer token to be printed. |
+| `-Verbose` | No | N/A | Enable verbose messages. |
 
 To get more information about the usage, use the `Get-Help` command:
 ```
