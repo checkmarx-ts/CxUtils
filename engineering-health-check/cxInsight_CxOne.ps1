@@ -226,7 +226,7 @@ class CxOneClient {
 
     [object] GetScan($scanId) {
 
-        $ApiPath = "/scans/{$scanId}"
+        $ApiPath = "/scans/${scanId}"
         $scans = $this.InvokeObjectApi($ApiPath)
         return $scans
     }
