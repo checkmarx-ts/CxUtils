@@ -23,23 +23,23 @@ Update
     C:\Users\Administrator\Desktop\ModifyPreset.ps1 [-update] -baseURI <String> [-teamNameFilter <String[]>] -currentPreset <String> -newPreset <String> [<CommonParameters>]
 
 ## Notes
-Version:*Tabspace*3.0
+Version: 3.0
 
-Date:*Tabspace*28/07/2023
+Date: 28/07/2023
 
-Written by:*Tabspace*Michael Fowler
+Written by: Michael Fowler
 
 Contact:*Tabspace*michael.fowler@checkmarx.com
 
 ## Change Log
 Version    Detail
 -----------------
-1.0*Tabspace*Original version
+1.0   Original version
 
-2.0*Tabspace*Removed username and password parameters and replaced with credentials   
-*Tabspace*Added Team filters to filter results by arrays of Team IDs or Team Names
+2.0   Removed username and password parameters and replaced with credentials    
+      Added Team filters to filter results by arrays of Team IDs or Team Names
            
-3.0*Tabspace*Added logic to handle additional values introduced in API v4 and stop these being overridden         
+3.0   Added logic to handle additional values introduced in API v4 and stop these being overridden         
 
 ## Parameters
 ```
