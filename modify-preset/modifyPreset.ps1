@@ -13,18 +13,18 @@ The script prompts for a CxSAST username and password. If your environment does 
 
 Usage
 Help
-    C:\Users\Administrator\Desktop\ModifyPreset.ps1 [-help] [<CommonParameters>]
+    .\Desktop\ModifyPreset.ps1 [-help] [<CommonParameters>]
     
 Reporting
-    C:\Users\Administrator\Desktop\ModifyPreset.ps1 [-filePath <String>] -baseURI <String> [-teamNameFilter <String[]>] [<CommonParameters>]
-    C:\Users\Administrator\Desktop\ModifyPreset.ps1 [-filePath <String>] -baseURI <String> [-teamIdFilter <Int32[]>] [<CommonParameters>]    
+    .\ModifyPreset.ps1 [-filePath <String>] -baseURI <String> [-teamNameFilter <String[]>] [<CommonParameters>]
+    .\ModifyPreset.ps1 [-filePath <String>] -baseURI <String> [-teamIdFilter <Int32[]>] [<CommonParameters>]    
 
 Update   
-    C:\Users\Administrator\Desktop\ModifyPreset.ps1 [-update] -baseURI <String> [-teamIdFilter <Int32[]>] -currentPreset <String> -newPreset <String> [<CommonParameters>]  
-    C:\Users\Administrator\Desktop\ModifyPreset.ps1 [-update] -baseURI <String> [-teamNameFilter <String[]>] -currentPreset <String> -newPreset <String> [<CommonParameters>]
+    .\ModifyPreset.ps1 [-update] -baseURI <String> [-teamIdFilter <Int32[]>] -currentPreset <String> -newPreset <String> [<CommonParameters>]  
+    .\ModifyPreset.ps1 [-update] -baseURI <String> [-teamNameFilter <String[]>] -currentPreset <String> -newPreset <String> [<CommonParameters>]
 
 .Notes
-Version:     2.0
+Version:     3.0
 Date:        28/07/2023
 Written by:  Michael Fowler
 Contact:     michael.fowler@checkmarx.com
@@ -35,6 +35,7 @@ Version    Detail
 1.0        Original version
 2.0        Removed username and password parameters and replaced with credentials
            Added Team filters to filter results by arrays of Team IDs or Team Names  
+3.0        Added logic to handle additional values introduced in API v4 and stop these being overridden
   
 .PARAMETER help
 Display help
@@ -125,6 +126,11 @@ class Project {
     [array]$EmailFailedScan
     [array]$EmailBeforeScan
     [array]$EmailAfterScan
+
+    #Used for v4 API only
+    [string]$RunOnlyWhenNewResults
+    [string]$RunOnlyWhenNewResultsMinSeverity
+    [string]$PostScanActionArguments
 }
 
 #------------------------------------------------------------------------------------------------------------------------------------------
@@ -159,7 +165,7 @@ Function private:CreateHeader {
     Write-Verbose "Authentication Completed"
     
     return @{
-        accept = "application/json; version=1.0"
+        accept = "application/json"
         Authorization = "Bearer $access_token"
     }
 }
@@ -259,22 +265,32 @@ Function private:GetProjectScanSettings {
     )
 
     Write-Verbose "Getting Scan Settings"
+    $v4 = $false
 
     foreach ($p in $projects) {
         $uri = $baseURI + "/cxrestapi/help/sast/scanSettings/" + $p.ProjectId
         $scanSttings = Invoke-RestMethod -Uri $uri -Method GET -Headers $header
-  
+ 
         $p.PresetId = $scanSttings.preset.id
         $p.PresetName = $presets[$scanSttings.preset.id]
         $p.EngineConfigurationId = $scanSttings.engineConfiguration.id  
-        $p.postScanActionName = $scanSttings.postScanActionName
-        $p.postScanActionId = $scanSttings.postScanAction.id   
+        $p.PostScanActionName = $scanSttings.postScanActionName
+        $p.PostScanActionId = $scanSttings.postScanAction.id   
         $p.EmailFailedScan = $scanSttings.emailNotifications.failedScan
         $p.EmailBeforeScan = $scanSttings.emailNotifications.beforeScan
         $p.EmailAfterScan = $scanSttings.emailNotifications.afterScan
+
+        if ($scanSttings.postScanActionConditions) {
+            if (-NOT $v4) { $v4 = $true }
+            $p.RunOnlyWhenNewResults = $scanSttings.postScanActionConditions.runOnlyWhenNewResults
+            $p.RunOnlyWhenNewResultsMinSeverity = $scanSttings.postScanActionConditions.runOnlyWhenNewResultsMinSeverity
+            $p.PostScanActionArguments = $scanSttings.postScanActionArguments
+        }
     }
 
+
     Write-Verbose "Scan Settings returned"
+    return $v4
 }
 
 #------------------------------------------------------------------------------------------------------------------------------------------
@@ -302,6 +318,9 @@ Function private:CreateProjectsReport {
             "Email Failed Scan" = ($_.EmailFailedScan) -join ';'
             "Email Before Scan" = ($_.EmailBeforeScan) -join ';'
             "Email After Scan" = ($_.EmailAfterScan) -join ';'
+            "Run Only When New Results (v4 API)" = $_.RunOnlyWhenNewResults
+            "Run Only When New Results Min Severity (v4 API)" = $_.RunOnlyWhenNewResultsMinSeverity
+            "Post Scan Action Arguments (v4 API)" = $_.PostScanActionArguments
         }
     }
     $projectOutput | Export-Csv -Path $filepath -NoTypeInformation
@@ -313,7 +332,8 @@ Function private:UpdateProjectPreset {
         [HashTable]$header, 
         [System.Object]$projects, 
         [HashTable]$presets, 
-        [Int64]$newPresetId
+        [Int64]$newPresetId,
+        [bool]$v4
     )
 
     Write-Verbose "Updating projects"
@@ -333,8 +353,16 @@ Function private:UpdateProjectPreset {
                     "beforeScan" = $p.EmailBeforeScan
                     "afterScan" = $p.EmailAfterScan
                 }
-            } | ConvertTo-Json
-            $return = Invoke-RestMethod -Uri $uri -Method POST -Headers $header -Body $body -ContentType "application/json"
+            } 
+            if ($v4) {
+                $body.Add("postScanActionConditions", @{
+                    "runOnlyWhenNewResults" = $p.RunOnlyWhenNewResults
+                    "runOnlyWhenNewResultsMinSeverity" = $p.RunOnlyWhenNewResultsMinSeverity
+                })
+                $body.Add("postScanActionArguments", $p.PostScanActionArguments)
+            }
+
+            $return = Invoke-RestMethod -Uri $uri -Method PUT -Headers $header -Body ($body | ConvertTo-Json) -ContentType "application/json"
             
             Write-Verbose "Project $($p.ProjectName) projectName preset updated to $newPreset"
             $updateCount++
@@ -362,9 +390,9 @@ $header = CreateHeader
 $presets, $newPresetId = GetPresets $header
 $teams = GetTeams $header
 $projects = GetProjects $header $projects $teams
-GetProjectScanSettings $header $projects $presets
+$v4 = GetProjectScanSettings $header $projects $presets
 if ($update) {
-    $updateCount = UpdateProjectPreset $header $projects $presets $newPresetId
+    $updateCount = UpdateProjectPreset $header $projects $presets $newPresetId $v4
     Write-Output "$updateCount projects updated"
 }
 else {

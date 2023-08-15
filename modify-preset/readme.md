@@ -1,5 +1,5 @@
 # Synopsis
-Used to update a exisiting preset with a new one across all projects
+Used to update a existing preset with a new one across all projects
 
 # Description
 This script will produce a report of the Scan settings for all projects as a 
@@ -24,16 +24,23 @@ Update
 
 ## Notes
 Version:     2.0
+
 Date:        28/07/2023
+
 Written by:  Michael Fowler
+
 Contact:     michael.fowler@checkmarx.com
 
 ## Change Log
 Version    Detail
 -----------------
 1.0        Original version
+
 2.0        Removed username and password parameters and replaced with credentials
-           Added Team filters to filter results by arrays of Team IDs or Team Names  
+
+           Added Team filters to filter results by arrays of Team IDs or Team Names
+           
+3.0        Added logic to handle additional values introduced in API v4 and stop these being overridden         
 
 ## Parameters
 ```
