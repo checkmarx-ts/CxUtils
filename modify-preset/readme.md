@@ -36,7 +36,7 @@ Version    Detail
 -----------------
 1.0        Original version
 
-2.0        Removed username and password parameters and replaced with credentials
+2.0        Removed username and password parameters and replaced with credentials   
            Added Team filters to filter results by arrays of Team IDs or Team Names
            
 3.0        Added logic to handle additional values introduced in API v4 and stop these being overridden         
