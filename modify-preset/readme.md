@@ -25,11 +25,11 @@ Update
 ## Notes
 Version: 3.0
 
-Date: 28/07/2023
+Date:       28/07/2023
 
 Written by: Michael Fowler
 
-Contact:*Tabspace*michael.fowler@checkmarx.com
+Contact:    michael.fowler@checkmarx.com
 
 ## Change Log
 Version    Detail
