@@ -32,18 +32,15 @@ Written by: Michael Fowler
 Contact:    michael.fowler@checkmarx.com
 
 ## Change Log
-Version    Detail
------------------
 1.0   Original version
 
-2.0   Removed username and password parameters and replaced with credentials    
+2.0   Removed username and password parameters and replaced with credentials. 
       Added Team filters to filter results by arrays of Team IDs or Team Names
-           
+         
 3.0   Added logic to handle additional values introduced in API v4 and stop these being overridden         
 
 ## Parameters
 ```
-
 .PARAMETER help
 Display help
 
@@ -83,5 +80,4 @@ Is mandatory when update is used and will prompt when not specified
 .PARAMETER newPreset
 The preset which will replace the current preset
 Is mandatory when update is used and will prompt when not specified
-
 ```
