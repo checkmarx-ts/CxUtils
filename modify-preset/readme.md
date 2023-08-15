@@ -23,7 +23,7 @@ Update
     C:\Users\Administrator\Desktop\ModifyPreset.ps1 [-update] -baseURI <String> [-teamNameFilter <String[]>] -currentPreset <String> -newPreset <String> [<CommonParameters>]
 
 ## Notes
-Version:     2.0
+Version:     3.0
 
 Date:        28/07/2023
 
