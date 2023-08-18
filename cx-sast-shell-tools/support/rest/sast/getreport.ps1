@@ -8,7 +8,9 @@ param(
     [Parameter(Mandatory=$true)]
     [String]$projectName,
     [Parameter(Mandatory=$true)]
-    [String]$outputPath
+    [String]$outputPath,
+    [Parameter(Mandatory=$true)]
+    [String]$report_type
 )
 
 . "$PSScriptRoot/../../rest_util.ps1"
@@ -21,7 +23,7 @@ $teamName = $teamName -replace "/", "\"
 Write-Debug $teamName
 $directory = [String]::Format("{0}\{1}", $outputPath, $teamName )
 $date = Get-Date -Format "ddMMyyyy"
-$fullpath = [String]::Format("{0}\{1}_{2}.pdf", $directory, $projectName, $date )
+$fullpath = [String]::Format("{0}\{1}_{2}.{3}", $directory, $projectName, $date, $report_type )
 $pathExists = Test-Path -Path $directory
 Write-Debug $fullpath
 

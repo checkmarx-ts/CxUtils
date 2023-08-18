@@ -2,11 +2,17 @@ param(
     [Parameter(Mandatory = $true)]
     [hashtable]$session,
     [Parameter(Mandatory = $true)]
-    [String]$scan_id
+    [String]$scan_id,
+    [Parameter(Mandatory = $false)]
+    [string]$report_type
 )
 
 $templatepath = "$PSScriptRoot"
 Import-LocalizedData -BaseDirectory $templatepath -FileName CxReportTemplate.psd1 -BindingVariable ReportTemplate
+
+if ($report_type) {
+    $ReportTemplate.reportType = $report_type
+}
 
 $soap_path = "/cxwebinterface/Portal/CxWebService.asmx"
 

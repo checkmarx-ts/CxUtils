@@ -25,6 +25,8 @@
     .PARAMETER dbg
         (Optional Flag) Runs in debug mode and prints verbose information to the screen while processing. 
 
+    .PARAMETER report_type
+        (Optional) Specifies the report type (CSV, PDF, RTF or XML).
 #>
 param(
     [Parameter(Mandatory = $true)]
@@ -33,13 +35,21 @@ param(
     [String]$username,
     [Parameter(Mandatory = $true)]
     [String]$password,
-    [Switch]$dbg
+    [Switch]$dbg,
+    [Parameter(Mandatory = $false)]
+    [string]$report_type = "PDF"
 )
 
 . "$PSScriptRoot/support/debug.ps1"
 
 setupDebug($dbg.IsPresent)
 
+$valid_report_types = @("CSV", "PDF", "RTF", "XML")
+if (! $valid_report_types.Contains($report_type)) {
+    Write-Error "$report_type is not a supported report type"
+    Write-Error "Valid report types are $($valid_report_types -join `", `")"
+    exit
+}
 
 $session = &"$PSScriptRoot/support/rest/sast/login.ps1" $sast_url $username $password -dbg:$dbg.IsPresent
 
@@ -79,7 +89,7 @@ $projects | % {
         Write-Output $scans
 
         #generate the report
-        $report = &"$PSScriptRoot/support/soap/generate_report.ps1" $session $scans.id
+        $report = &"$PSScriptRoot/support/soap/generate_report.ps1" $session $scans.id $report_type
         $report_index.Add($scans.id, $report)
     } else {
         Write-Debug "No scans found for project $($_.id))"
@@ -122,6 +132,6 @@ $report_index.Keys | %{
     Write-Output "Downloading report for $teamName\$projectName"
 
 
-    &"$PSScriptRoot/support/rest/sast/getreport.ps1" $session $reportid $teamName $projectName $outputPath
+    &"$PSScriptRoot/support/rest/sast/getreport.ps1" $session $reportid $teamName $projectName $outputPath $report_type.ToLower()
 
 }
