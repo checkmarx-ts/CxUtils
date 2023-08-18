@@ -27,6 +27,9 @@
 
     .PARAMETER report_type
         (Optional) Specifies the report type (CSV, PDF, RTF or XML).
+
+    .PARAMETER report_teams
+        (Optional) Only generate reports for projects belonging to the specified teams
 #>
 param(
     [Parameter(Mandatory = $true)]
@@ -37,7 +40,9 @@ param(
     [String]$password,
     [Switch]$dbg,
     [Parameter(Mandatory = $false)]
-    [string]$report_type = "PDF"
+    [string]$report_type = "PDF",
+    [Parameter(Mandatory = $false)]
+    [string[]]$report_teams
 )
 
 . "$PSScriptRoot/support/debug.ps1"
@@ -68,10 +73,27 @@ Write-Output "Fetching teams"
 $teams = &"$PSScriptRoot/support/rest/sast/teams.ps1" $session
 Write-Output "$($teams.Length) teams fetched - elapsed time $($(Get-Date).Subtract($timer))"
 $team_index = New-Object 'System.Collections.Generic.Dictionary[string,string]'
-$teams | % { 
+$team_name_index = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+$teams | % {
     $team_index.Add($_.id, $_.fullName)
+    $team_name_index.Add($_.fullName, $_.id)
     Write-Debug $_ 
 } 
+
+$report_team_ids = New-Object 'System.Collections.Generic.List[int]'
+$report_teams | % {
+    if ( ! $_.StartsWith("/") ) {
+        $_ = "/" + $_
+    }
+    if ( $team_name_index.ContainsKey($_) ) {
+        $report_team_ids.Add($team_name_index[$_])
+    } else {
+        Write-Error "${_}: invalid team"
+    }
+}
+
+Write-Debug "Report teams: $report_teams"
+Write-Debug "Report team IDs: $report_team_ids"
 
 Write-Output "Scans section starting"
 
@@ -80,19 +102,24 @@ $scan_index = New-Object 'System.Collections.Generic.Dictionary[string,string]'
 $prj_index = New-Object 'System.Collections.Generic.Dictionary[string,string]'
 
 $projects | % {
-    
-    $scans = &"$PSScriptRoot/support/rest/sast/scans.ps1" $session $_.id
-    if ($scans) {
-        $scan_index.Add($scans.id, $scans.owningTeamId)
-        $prj_index.Add($scans.id, $scans.project.name)
 
-        Write-Output $scans
-
-        #generate the report
-        $report = &"$PSScriptRoot/support/soap/generate_report.ps1" $session $scans.id $report_type
-        $report_index.Add($scans.id, $report)
+    if ( $report_teams -and (! $report_team_ids.Contains($_.teamId)) ) {
+        Write-Debug "Skipping project $($_.name) (in team $($_.teamId))"
     } else {
-        Write-Debug "No scans found for project $($_.id))"
+
+        $scans = &"$PSScriptRoot/support/rest/sast/scans.ps1" $session $_.id
+        if ($scans) {
+            $scan_index.Add($scans.id, $scans.owningTeamId)
+            $prj_index.Add($scans.id, $scans.project.name)
+
+            Write-Output $scans
+
+            #generate the report
+            $report = &"$PSScriptRoot/support/soap/generate_report.ps1" $session $scans.id $report_type
+            $report_index.Add($scans.id, $report)
+        } else {
+            Write-Debug "No scans found for project $($_.id))"
+        }
     }
 }
 
