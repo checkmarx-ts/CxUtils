@@ -99,20 +99,35 @@ class CxOneClient {
         $bits = $this.IamBaseUrl.Split("/")
         $this.Tenant = $bits[5]
         $hostname = $bits[2]
-        $bits = $hostname.Split(".")
-        switch ($bits.Length) {
-            3 {
-                $this.Instance = "us"
-                $this.ApiBaseUrl = "https://ast.checkmarx.net/api"
+        # If the IAM base URL ends with "ast.checkmarx.net", we assume
+        # that we are dealing with a multi-tenant instance and derive
+        # the API URL accordingly. For single-tenant instances, we
+        # assume that the API URL will be the same as the IAM URL.
+        Write-Debug "Hostname is $hostname"
+        if ($hostname.EndsWith("iam.checkmarx.net")) {
+            Write-Verbose "Assuming a multi-tenant instance"
+            $bits = $hostname.Split(".")
+            switch ($bits.Length) {
+                3 {
+                    $this.Instance = "us"
+                    $this.ApiBaseUrl = "https://ast.checkmarx.net/api"
+                }
+                4 {
+                    $this.Instance = $bits[0]
+                    $this.ApiBaseUrl = "https://" + $this.Instance + ".ast.checkmarx.net/api"
+                }
+                default {
+                    Write-Error $hostname + ": unexpected hostname format" -ErrorAction Stop
+                }
             }
-            4 {
-                $this.Instance = $bits[0]
-                $this.ApiBaseUrl = "https://" + $this.Instance + ".ast.checkmarx.net/api"
-            }
-            default {
-                Write-Error $hostname + ": unexpected hostname format" -ErrorAction Stop
-            }
+        } else {
+            Write-Verbose "Assuming a single-tenant instance"
+            $this.ApiBaseUrl = "https://" + $hostname + "/api"
         }
+
+        Write-Debug "IAM base URL: $($this.IamBaseUrl)"
+        Write-Debug "API base URL: $($this.ApiBaseUrl)"
+
         $this.Connect()
     }
 
