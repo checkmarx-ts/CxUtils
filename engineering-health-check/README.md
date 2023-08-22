@@ -24,6 +24,7 @@ The `cxInsight_CxOne.ps1` script accepts the following command line options:
 | `-ExclProjectName` | No | False | If specified, the project name is not included in the extracted data |
 | `-Limit` | Yes | 200 | The number of items to retrieve in each API call |
 | `-ScanId` | Yes | The scan identifier | If this option is specified, only data for the specified scan is retrieved, and the output is written to the console |
+| `-Quiet` | No | False | If specified, a completion message will not be printed when the script finishes |
 | `-StartDate` | Yes | 90 days before the current date | The start date of the period for which to collect data |
 
 The `cxInsight_CxOne.ps1` script also accepts the following standard PowerShell command line options.

@@ -15,6 +15,8 @@ The end date of the date range you would like to collect data (Format: yyyy-mm-D
 Exclude the project name from the output
 .PARAMETER limit
 The maximum number of objects to retrieve in a single API call (defaults to 200)
+.PARAMETER quiet
+Don't print completion message when script finishes
 .PARAMETER scanId
 Return the data for the specified scan
 .EXAMPLE
@@ -41,7 +43,9 @@ param (
     [switch]
     $exclProjectName,
     [int]$limit = 200,
-    [string]$scanId
+    [string]$scanId,
+    [switch]
+    $quiet
 )
 
 Set-StrictMode -Version 1.0
@@ -425,5 +429,11 @@ if ($scanId) {
     if ($PSVersionTable.PSVersion.Major -gt 4) {
         Compress-Archive -Path $files -DestinationPath ".\data.zip" -Force
         Remove-Item -Path $files
+        if ( ! $quiet) {
+            Read-Host -Prompt "The script was successful. Please send the 'data.zip' file in this directory to your Checkmarx Engineer. Press Enter to exit"
+        }
+    }
+    elseif ( ! $quiet) {
+        Read-Host -Prompt "The script was successful. Please send the ${files} file(s) in this directory to your Checkmarx Engineer. Press Enter to exit"
     }
 }
