@@ -97,6 +97,8 @@ class CxOneClient {
         $this.JwtData = Parse-JWTtoken $ApiKey
         $this.IamBaseUrl = $this.JwtData.iss
         $bits = $this.IamBaseUrl.Split("/")
+        $scheme = $bits[0] # Note that this includes the : after the
+                           # scheme (e.g., "https:").
         $this.Tenant = $bits[5]
         $hostname = $bits[2]
         # If the IAM base URL ends with "ast.checkmarx.net", we assume
@@ -110,11 +112,11 @@ class CxOneClient {
             switch ($bits.Length) {
                 3 {
                     $this.Instance = "us"
-                    $this.ApiBaseUrl = "https://ast.checkmarx.net/api"
+                    $this.ApiBaseUrl = "$scheme//ast.checkmarx.net/api"
                 }
                 4 {
                     $this.Instance = $bits[0]
-                    $this.ApiBaseUrl = "https://" + $this.Instance + ".ast.checkmarx.net/api"
+                    $this.ApiBaseUrl = "$scheme//" + $this.Instance + ".ast.checkmarx.net/api"
                 }
                 default {
                     Write-Error $hostname + ": unexpected hostname format" -ErrorAction Stop
@@ -122,7 +124,7 @@ class CxOneClient {
             }
         } else {
             Write-Verbose "Assuming a single-tenant instance"
-            $this.ApiBaseUrl = "https://" + $hostname + "/api"
+            $this.ApiBaseUrl = "$scheme//" + $hostname + "/api"
         }
 
         Write-Debug "IAM base URL: $($this.IamBaseUrl)"
