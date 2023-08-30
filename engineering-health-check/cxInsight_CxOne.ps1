@@ -42,7 +42,7 @@ param (
     [Parameter(Mandatory=$False)]
     [switch]
     $exclProjectName,
-    [int]$limit = 200,
+    [int]$limit = 1000,
     [string]$scanId,
     [switch]
     $quiet
