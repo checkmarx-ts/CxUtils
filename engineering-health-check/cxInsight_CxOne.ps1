@@ -225,7 +225,7 @@ class CxOneClient {
                     Write-Host "Received a 404 response for ${uri}"
                 }
                 default {
-                    Write-Error "Received a ${statusCode} response for ${uri}"
+                    Write-Error "Received a ${statusCode} response for ${uri}" -ErrorAction stop
                 }
             }
         }
