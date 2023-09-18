@@ -1,7 +1,7 @@
 <#
 
     .SYNOPSIS
-        This script iterates projects in the SAST system and generates PDF reports for each scan using a user-defined template.
+        This script iterates projects in the SAST system and generates reports for each scan using a user-defined template.
 
     .DESCRIPTION
         The functionality is the same as manually generating a scan report using the scan report generation button 
@@ -11,7 +11,7 @@
         the report.  Some of these items can be saved as a template so that they do not need to be selected for every
         report.  There are several options, however, that can not be persisted as a template and must be selected each time.
 
-        The file support/soap/CxReportTemplate.psd1 can be edited to create a template that is used to generate each PDF report.
+        The file support/soap/CxReportTemplate.psd1 can be edited to create a template that is used to generate each report.
 
     .PARAMETER sast_url
         The URL to the CxSAST instance.
@@ -25,6 +25,11 @@
     .PARAMETER dbg
         (Optional Flag) Runs in debug mode and prints verbose information to the screen while processing. 
 
+    .PARAMETER report_type
+        (Optional) Specifies the report type (CSV, PDF, RTF or XML). If not specified, PDF reports are generated.
+
+    .PARAMETER report_teams
+        (Optional) Only generate reports for projects belonging to the specified teams
 #>
 param(
     [Parameter(Mandatory = $true)]
@@ -33,13 +38,23 @@ param(
     [String]$username,
     [Parameter(Mandatory = $true)]
     [String]$password,
-    [Switch]$dbg
+    [Switch]$dbg,
+    [Parameter(Mandatory = $false)]
+    [string]$report_type = "PDF",
+    [Parameter(Mandatory = $false)]
+    [string[]]$report_teams
 )
 
 . "$PSScriptRoot/support/debug.ps1"
 
 setupDebug($dbg.IsPresent)
 
+$valid_report_types = @("CSV", "PDF", "RTF", "XML")
+if (! $valid_report_types.Contains($report_type)) {
+    Write-Error "$report_type is not a supported report type"
+    Write-Error "Valid report types are $($valid_report_types -join `", `")"
+    exit
+}
 
 $session = &"$PSScriptRoot/support/rest/sast/login.ps1" $sast_url $username $password -dbg:$dbg.IsPresent
 
@@ -58,10 +73,27 @@ Write-Output "Fetching teams"
 $teams = &"$PSScriptRoot/support/rest/sast/teams.ps1" $session
 Write-Output "$($teams.Length) teams fetched - elapsed time $($(Get-Date).Subtract($timer))"
 $team_index = New-Object 'System.Collections.Generic.Dictionary[string,string]'
-$teams | % { 
+$team_name_index = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+$teams | % {
     $team_index.Add($_.id, $_.fullName)
+    $team_name_index.Add($_.fullName, $_.id)
     Write-Debug $_ 
 } 
+
+$report_team_ids = New-Object 'System.Collections.Generic.List[int]'
+$report_teams | % {
+    if ( ! $_.StartsWith("/") ) {
+        $_ = "/" + $_
+    }
+    if ( $team_name_index.ContainsKey($_) ) {
+        $report_team_ids.Add($team_name_index[$_])
+    } else {
+        Write-Error "${_}: invalid team"
+    }
+}
+
+Write-Debug "Report teams: $report_teams"
+Write-Debug "Report team IDs: $report_team_ids"
 
 Write-Output "Scans section starting"
 
@@ -70,19 +102,24 @@ $scan_index = New-Object 'System.Collections.Generic.Dictionary[string,string]'
 $prj_index = New-Object 'System.Collections.Generic.Dictionary[string,string]'
 
 $projects | % {
-    
-    $scans = &"$PSScriptRoot/support/rest/sast/scans.ps1" $session $_.id
-    if ($scans) {
-        $scan_index.Add($scans.id, $scans.owningTeamId)
-        $prj_index.Add($scans.id, $scans.project.name)
 
-        Write-Output $scans
-
-        #generate the report
-        $report = &"$PSScriptRoot/support/soap/generate_report.ps1" $session $scans.id
-        $report_index.Add($scans.id, $report)
+    if ( $report_teams -and (! $report_team_ids.Contains($_.teamId)) ) {
+        Write-Debug "Skipping project $($_.name) (in team $($_.teamId))"
     } else {
-        Write-Debug "No scans found for project $($_.id))"
+
+        $scans = &"$PSScriptRoot/support/rest/sast/scans.ps1" $session $_.id
+        if ($scans) {
+            $scan_index.Add($scans.id, $scans.owningTeamId)
+            $prj_index.Add($scans.id, $scans.project.name)
+
+            Write-Output $scans
+
+            #generate the report
+            $report = &"$PSScriptRoot/support/soap/generate_report.ps1" $session $scans.id $report_type
+            $report_index.Add($scans.id, $report)
+        } else {
+            Write-Debug "No scans found for project $($_.id))"
+        }
     }
 }
 
@@ -122,6 +159,6 @@ $report_index.Keys | %{
     Write-Output "Downloading report for $teamName\$projectName"
 
 
-    &"$PSScriptRoot/support/rest/sast/getreport.ps1" $session $reportid $teamName $projectName $outputPath
+    &"$PSScriptRoot/support/rest/sast/getreport.ps1" $session $reportid $teamName $projectName $outputPath $report_type.ToLower()
 
 }
