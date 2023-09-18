@@ -1,7 +1,7 @@
 <#
 
     .SYNOPSIS
-        This script iterates projects in the SAST system and generates PDF reports for each scan using a user-defined template.
+        This script iterates projects in the SAST system and generates reports for each scan using a user-defined template.
 
     .DESCRIPTION
         The functionality is the same as manually generating a scan report using the scan report generation button 
@@ -11,7 +11,7 @@
         the report.  Some of these items can be saved as a template so that they do not need to be selected for every
         report.  There are several options, however, that can not be persisted as a template and must be selected each time.
 
-        The file support/soap/CxReportTemplate.psd1 can be edited to create a template that is used to generate each PDF report.
+        The file support/soap/CxReportTemplate.psd1 can be edited to create a template that is used to generate each report.
 
     .PARAMETER sast_url
         The URL to the CxSAST instance.
@@ -26,7 +26,7 @@
         (Optional Flag) Runs in debug mode and prints verbose information to the screen while processing. 
 
     .PARAMETER report_type
-        (Optional) Specifies the report type (CSV, PDF, RTF or XML).
+        (Optional) Specifies the report type (CSV, PDF, RTF or XML). If not specified, PDF reports are generated.
 
     .PARAMETER report_teams
         (Optional) Only generate reports for projects belonging to the specified teams
