@@ -19,6 +19,7 @@ Most of the extension capability is intended to be available for Checkmarx emplo
 | Name | Description |
 |---|---|
 | SAST-Create-Report | This script iterates projects in the SAST system and generates PDF reports for each scan using a user-defined template. |
+| SAST-Create-CSV-Report | This script iterates projects in the SAST system for the teams provided and generates a single CSV report containing all the latest scan result details along with team path and project name. |
 | SAST-Dump-All-Queries | Dumps all CxQL queries currently in the system. |
 | SAST-Find-OSA-Lib | Searches all OSA scans for libraries with a name matching a supplied pattern |
 | SAST-Migrate-Project | Used to migrate project configurations from one instance of CxSAST to a new instance of CxSAST. |
