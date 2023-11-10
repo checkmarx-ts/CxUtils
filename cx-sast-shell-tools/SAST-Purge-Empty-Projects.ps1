@@ -24,7 +24,7 @@
     .PARAMETER limit
         Defaults to 0.  Sets the limit of the number of projects to delete.
 
-        .PARAMETER dbg
+    .PARAMETER dbg
         (Optional Flag) Runs in debug mode and prints verbose information to the screen while processing. 
 
     .INPUTS
