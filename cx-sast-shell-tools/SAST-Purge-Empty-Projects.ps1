@@ -24,7 +24,7 @@
     .PARAMETER limit
         Defaults to 0.  Sets the limit of the number of projects to delete.
 
-        .PARAMETER dbg
+    .PARAMETER dbg
         (Optional Flag) Runs in debug mode and prints verbose information to the screen while processing. 
 
     .INPUTS
@@ -70,7 +70,7 @@ function IndexTeams
 
 $session = &"$PSScriptRoot/support/rest/sast/login.ps1" $sast_url $username $password -dbg:$dbg.IsPresent
 
-$data = &"$PSScriptRoot/support/odata/GetScanCountByProject.ps1" -session $session
+$data = &"$PSScriptRoot/support/odata/GetProjectsWithNoScans.ps1" -session $session
 
 $teams = IndexTeams (&"$PSScriptRoot/support/rest/sast/teams.ps1" -session $session)
 
