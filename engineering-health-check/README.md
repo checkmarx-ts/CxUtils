@@ -66,3 +66,27 @@ Note that it is not possible to use the credentials of a SAML user.
 ## Permissions
 
 The user whose credentials are used to run the `cxInsight_X_X.ps1` script must be assigned a role that has the Sast API permission (needed as the script uses the CxSAST OData API). This is the only permission required.
+
+## Scans Created When Branching Projects
+
+When a project is branched in CxSAST, a duplicate scan record is made
+of the last scan completed before the branching. This means that, if a
+project was both scanned and branched during the period for which the
+enginerring health check data was extracted, the resultant
+`scan-data.json` file will contain two entries for the same scan.
+
+The `split_branch_scans.ps1` script can be used to split the
+`scan-data.json` file into two files, one containing the /base/ scans,
+and the other containing the /branched/ scans. These files will be
+named `scan-data-base.json` and `scan-data-branch.json`
+respectively. The recors in the latter file will include an additional
+property, `OrigScanId`, which gives the number of the corresponding
+scan in the /base/ file.
+
+### Usage
+
+The `split_branch_scans.ps1` script expects the name of the file
+containing the original scan data to be passed on the command line:
+
+```
+PS C:\...\ehc> .\split_branch_scans.ps1 -FileName scan-data.json
