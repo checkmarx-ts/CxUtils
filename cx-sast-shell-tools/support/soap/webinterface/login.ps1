@@ -4,7 +4,10 @@ param(
     [String]$password
 )
 
-
+# Escape &, < and > characters in the password. As the password occurs
+# as character data, we do not need to escape single or double
+# quotation marks.
+$password = $password -replace "&", "&amp;" -replace "<", "&lt;" -replace ">", "&gt;"
 
 $soap_path = "/cxwebinterface/Portal/CxWebService.asmx"
 
