@@ -50,6 +50,13 @@ param (
 
 Set-StrictMode -Version 1.0
 
+# We need PowerShell version 7 or higher (technically version 6 or
+# higher) as we use the -AsHashTable option to ConvertFrom-Json.
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    Write-Error "This script requires PowerShell 7 or higher."
+    exit
+}
+
 # See https://www.michev.info/Blog/Post/2140/decode-jwt-access-and-id-tokens-via-powershell
 function Parse-JWTtoken {
     [cmdletbinding()]
@@ -177,6 +184,13 @@ class CxOneClient {
                 Write-Warning 'InvokeApi() returned `$null. Results may be incomplete.'
                 break
             }
+            if ( $null -eq $response.$resultsProperty ) {
+                if ($response.GetType().Name -eq "String") {
+                    Write-Debug "InvokeApi"
+                }
+                Write-Warning 'InvokeApi() returned an invalid response. Results may be incomplete'
+                break
+            }
             $retrieved = $response.$resultsProperty.length
             Write-Debug "Retrieved ${retrieved} items"
             if ($response.$resultsProperty.length -eq 0 -and $response.totalCount -gt 0) {
@@ -218,6 +232,7 @@ class CxOneClient {
         try {
             $response = Invoke-RestMethod $uri -Method GET -Headers $headers
         } catch {
+            Write-Host Caught $_.Exception.Message
             $statusCode = $_.Exception.Response.StatusCode.value__
             switch ($statusCode) {
                 401 {
@@ -230,6 +245,23 @@ class CxOneClient {
                 }
                 default {
                     Write-Error "Received a ${statusCode} response for ${uri}" -ErrorAction stop
+                }
+            }
+        }
+
+        if ($response -eq $null) {
+            throw "InvokeApi: `$response is `$null"
+        } else {
+            $typeName = $response.GetType().Name
+            switch ($typeName) {
+                "PSCustomObject" {
+                    # no-op
+                }
+                "String" {
+                    $response = $response | ConvertFrom-Json -AsHashTable
+                }
+                default {
+                    throw "Invoke-RestMethod returned object of type $typeName"
                 }
             }
         }
