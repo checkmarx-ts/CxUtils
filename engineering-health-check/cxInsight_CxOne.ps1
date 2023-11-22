@@ -233,6 +233,9 @@ class CxOneClient {
             $response = Invoke-RestMethod $uri -Method GET -Headers $headers
         } catch {
             Write-Host Caught $_.Exception.Message
+            if ( $_.Exception.InnerException ) {
+                Write-Host "Inner exception: $($_.Exception.InnerException)"
+            }
             $statusCode = $_.Exception.Response.StatusCode.value__
             switch ($statusCode) {
                 401 {
