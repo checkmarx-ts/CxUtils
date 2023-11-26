@@ -1,53 +1,45 @@
 ﻿<#
 
     .SYNOPSIS
-        This script iterates projects in the SAST system and generates reports for each scan using a user-defined template.
+        This script creates a CSV report of all the latest scans for the projects belonging to the the teams requested.  
+        The format is the same as the CSV generated for a single scan with the addition of columns for "Team Path" and "Project Name".
 
     .DESCRIPTION
-        The functionality is the same as manually generating a scan report using the scan report generation button 
-        in the UI for each individual scan.  
-
-        When generating a scan report, an option UI appears allowing the selection of items to include in 
-        the report.  Some of these items can be saved as a template so that they do not need to be selected for every
-        report.  There are several options, however, that can not be persisted as a template and must be selected each time.
-
-        The file support/soap/CxReportTemplate.psd1 can be edited to create a template that is used to generate each report.
+        The functionality is the same as manually generating a CSV scan report using the scan report generation button 
+        in the UI for each individual scan, but the data is combined to create a single CSV with additional columns for team and project.
 
     .PARAMETER sast_url
-        The URL to the CxSAST instance.
+        The URL to the CxSAST instance. For example, https://sast.xyz.com
+
+    .PARAMETER overwrite_existing_report
+        (Optional Flag) if present it will overwrite the existing report (with the same name - today's date stamp) if one exists.
+        If the flag is not provided and a file exists, a prompt will appear to ask to overwrite (Y) or append (N).
 
     .PARAMETER dbg
         (Optional Flag) Runs in debug mode and prints verbose information to the screen while processing. 
 
-    .PARAMETER report_type
-        (Optional) Specifies the report type (CSV, PDF, RTF or XML). If not specified, PDF reports are generated.
-
     .FILE INPUT .\ReportTeams.txt
-        (Optional file) The teams to be included in the report.  If empty or no file is supplied then all teams will be used as default.
+        (Mandatory file) The teams to be included in the report.
 
     .CREDENTIALS 
         Store credentials as "Windows Credentials" in Credential Manger under the key "CxSASTAPI" for the account used to run this script.
         It is requried to install the CredentialMangager module using the command:
             Install-Module -Name "CredentialManager"
+
 #>
 param(
     [Parameter(Mandatory = $true)]
     [System.Uri]$sast_url,
-    [Switch]$dbg,
-    [Parameter(Mandatory = $false)]
-    [string]$report_type = "PDF"
+    [Switch]$overwrite_existing_report,
+    [Switch]$dbg
 )
+
+#Set-ExecutionPolicy Bypass -scope Process -Force
+cd $PSScriptRoot
 
 . "$PSScriptRoot/support/debug.ps1"
 
 setupDebug($dbg.IsPresent)
-
-$valid_report_types = @("CSV", "PDF", "RTF", "XML")
-if (! $valid_report_types.Contains($report_type)) {
-    Write-Error "$report_type is not a supported report type"
-    Write-Error "Valid report types are $($valid_report_types -join `", `")"
-    exit
-}
 
 ######## Checkmarx Config #########################################################
 Write-Host "Getting stored credentials"
@@ -59,15 +51,19 @@ $password = $credentialsSource.Password
 Write-Debug "username ${username}"
 ###################################################################################
 
-$session = &"$PSScriptRoot/support/rest/sast/login.ps1" $sast_url $username $password -dbg:$dbg.IsPresent
+$report_type = "CSV"
 
 if (Test-Path .\ReportTeams.txt) {
     $report_teams = Get-Content -Path .\ReportTeams.txt
-    Write-Output "Creating ${report_type} reports for the latest scan for projects in the following teams: ${report_teams}"
+    Write-Output "Creating report for the following teams: ${report_teams}"
 } 
 else {
-    Write-Output "ReportTeams.txt not found - will produce ${report_type} report for the latest scan for projects in all teams"
+    Write-Output "ReportTeams.txt not found - create the file with a team path on each line for the teams to be included in the report"
+    exit
 }
+
+
+$session = &"$PSScriptRoot/support/rest/sast/login.ps1" $sast_url $username $password -dbg:$dbg.IsPresent
 
 $timer = $(Get-Date)
 Write-Output "Fetching projects"
@@ -79,7 +75,18 @@ $projects | % { Write-Debug $_ }
 $session = &"$PSScriptRoot/support/rest/sast/login.ps1" -existing_session $session -dbg:$dbg.IsPresent
 
 $timer = $(Get-Date)
+$date = Get-Date -Format "ddMMyyyy"
 $outputPath = $PSScriptRoot + "\Output"
+$reportOutputPath = [String]::Format("{0}\CxSAST_Scan_Data_{1}.{2}", $outputPath, $date, $report_type.ToLower() )
+if (Test-Path $reportOutputPath) {
+    if($overwrite_existing_report)
+    {
+        Remove-Item $reportOutputPath -verbose -Force
+    }
+    else {
+        Remove-Item $reportOutputPath -verbose -Force -Confirm
+    }
+}
 
 Write-Output "Fetching teams"
 $teams = &"$PSScriptRoot/support/rest/sast/teams.ps1" $session
@@ -92,11 +99,7 @@ $teams | % {
     Write-Debug $_ 
 } 
 
-if($report_teams -eq $null) {
-    $report_teams = $team_name_index.Keys
-}
-
-
+#$report_team_ids = New-Object 'System.Collections.Generic.List[int]'
 $report_teams | % {
     if ( ! $_.StartsWith("/") ) {
         $_ = "/" + $_
@@ -175,8 +178,20 @@ $report_teams | % {
 
 
             &"$PSScriptRoot/support/rest/sast/getreport.ps1" $session $reportid $teamName $projectName $outputPath $report_type.ToLower()
+
+            $directory = [String]::Format("{0}\{1}", $outputPath, $teamName )
+            $filepath = [String]::Format("{0}\{1}_{2}.{3}", $directory, $projectName, $date, $report_type.ToLower() )
+            $data = Import-CSV $filepath
+            $directory = $outputPath
+            $data | Select-Object *, @{n=”Team Path”;e={$teamName}}, @{n=”Project Name”;e={$projectName}} | Export-CSV $reportOutputPath -Append -NoTypeInformation
         }
     } else {
         Write-Error "${_}: invalid team"
     }
 }
+
+#Clean up - remove the team folders and individual report files
+$teamRootFolder = $outputPath + "/CxServer"
+if (Test-Path $teamRootFolder) {
+    Remove-Item $teamRootFolder -Recurse -verbose -Force
+} 
