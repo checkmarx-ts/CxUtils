@@ -67,6 +67,11 @@ param(
     $exclAll
     )
 
+if ( ! ($cx_sast_server -match "^https?://") ) {
+    Write-Error "SAST server URL must start with http:// or https://"
+    exit
+}
+
 if ( ! ( $results -or $exclresults -or $exclAll ) ) {
     Write-Error "Either -Results, -ExclResults or -ExclAll must be provided"
     exit
