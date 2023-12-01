@@ -42,7 +42,7 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$report_type = "PDF",
     [Parameter(Mandatory = $false)]
-    [string[]]$report_teams
+    [string[]]$report_teams = @()
 )
 
 . "$PSScriptRoot/support/debug.ps1"
