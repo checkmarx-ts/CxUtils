@@ -92,6 +92,16 @@ function Parse-JWTtoken {
     return $tokobj
 }
 
+class CxOneClientException : Exception {
+    [string] $Category
+    [int]$Code
+
+    CxOneClientException($message, $Category, $Code) : base($message) {
+        $this.Category = $Category
+        $this.Code = $Code
+    }
+}
+
 class CxOneClient {
     [string]$ApiBaseUrl
     [string]$ApiKey
@@ -229,6 +239,7 @@ class CxOneClient {
 
     [object] InvokeApi($uri, $method, $headers) {
         $response = $null
+        $statusCode = $null
         try {
             $response = Invoke-RestMethod $uri -Method GET -Headers $headers
         } catch {
@@ -244,7 +255,12 @@ class CxOneClient {
                     $response = Invoke-RestMethod $uri -Method GET -Headers $headers
                 }
                 404 {
-                    Write-Host "Received a 404 response for ${uri}"
+                    Write-Warning "Received a 404 response for ${uri}"
+                    throw [CxOneClientException]::new(
+                        "Received a 404 response for ${uri}",
+                        "HTTP Status",
+                        404
+                    )
                 }
                 default {
                     Write-Error "Received a ${statusCode} response for ${uri}" -ErrorAction stop
@@ -253,7 +269,11 @@ class CxOneClient {
         }
 
         if ($response -eq $null) {
-            throw "InvokeApi: `$response is `$null"
+            throw [CxOneClientException]::new(
+                "InvokeApi: `$response is `$null",
+                "General",
+                0
+            )
         } else {
             $typeName = $response.GetType().Name
             switch ($typeName) {
@@ -264,7 +284,11 @@ class CxOneClient {
                     $response = $response | ConvertFrom-Json -AsHashTable
                 }
                 default {
-                    throw "Invoke-RestMethod returned object of type $typeName"
+                    throw [CxOneClientException]::new(
+                        "Invoke-RestMethod returned object of type $typeName",
+                        "General",
+                        0
+                    )
                 }
             }
         }
@@ -381,7 +405,19 @@ class Scan {
 
         if ($this.status -ne "Failed") {
             if ($this.statusDetails.sast -eq "Completed") {
-                $this.getSastMetadata($client, $scan.id)
+                # Sometimes, for some reason, the SAST metadata is not
+                # available. We don't want this to cause the script to
+                # fail.
+                try {
+                    $this.getSastMetadata($client, $scan.id)
+                } catch [CxOneClientException] {
+                    if (($_.Exception.Category -ne "HTTP Status") -Or
+                        ($_.Exception.Code -ne 404)) {
+                            throw $_
+                        } else {
+                            Write-Warning "Ignoring 404 response retrieving metadata for scan $($scan.id)."
+                        }
+                }
             }
 
             $this.getScanResults($client, $scan.id)
