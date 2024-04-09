@@ -17,6 +17,8 @@ Exclude the project name from the output
 The maximum number of objects to retrieve in a single API call (defaults to 200)
 .PARAMETER quiet
 Don't print completion message when script finishes
+.PARAMETER retries
+The number of times to retry a failed API invocation
 .PARAMETER scanId
 Return the data for the specified scan
 .EXAMPLE
@@ -43,6 +45,7 @@ param (
     [switch]
     $exclProjectName,
     [int]$limit = 1000,
+    [int]$retries = 3,
     [string]$scanId,
     [switch]
     $quiet
@@ -109,12 +112,14 @@ class CxOneClient {
     [string]$Instance
     [object]$JwtData
     [int]$limit
+    [int]$retries
     [string]$Tenant
     [string]$AccessToken
 
-    CxOneClient([string]$ApiKey, [int]$limit) {
+    CxOneClient([string]$ApiKey, [int]$limit, [int]$retries) {
         $this.ApiKey = $ApiKey
         $this.limit = $limit
+        $this.retries = $retries
         $this.JwtData = Parse-JWTtoken $ApiKey
         $this.IamBaseUrl = $this.JwtData.iss
         $bits = $this.IamBaseUrl.Split("/")
@@ -204,7 +209,7 @@ class CxOneClient {
             $retrieved = $response.$resultsProperty.length
             Write-Debug "Retrieved ${retrieved} items"
             if ($response.$resultsProperty.length -eq 0 -and $response.totalCount -gt 0) {
-                Write-Host "Warning: invoking ${uriWithOffset} returned 0 results"
+                Write-Warning "Invoking ${uriWithOffset} returned 0 results"
                 break
             }
             $count += $retrieved
@@ -240,32 +245,36 @@ class CxOneClient {
     [object] InvokeApi($uri, $method, $headers) {
         $response = $null
         $statusCode = $null
-        try {
-            $response = Invoke-RestMethod $uri -Method GET -Headers $headers
-        } catch {
-            Write-Host Caught $_.Exception.Message
-            if ( $_.Exception.InnerException ) {
-                Write-Host "Inner exception: $($_.Exception.InnerException)"
+        for ($tries = 0; $tries -lt $this.retries; $tries++) {
+            try {
+                Start-Sleep $tries
+                $response = Invoke-RestMethod $uri -Method GET -Headers $headers
+                break
+            } catch {
+                Write-Warning "Caught exception: $($_.Exception.Message)"
+                if ( $_.Exception.InnerException ) {
+                    Write-Host "Inner exception: $($_.Exception.InnerException)"
+                }
+                $statusCode = $_.Exception.Response.StatusCode.value__
+                switch ($statusCode) {
+                    401 {
+                        Write-Verbose "Received a 401 response. Reconnecting..."
+                        $this.Connect()
+                        Write-Host "Updating Authorization header."
+                        $headers["Authorization"] = "Bearer $($this.AccessToken)"
+                    }
+                    404 {
+                        # There is no point in retrying if we get a 404 response
+                        Write-Warning "Received a 404 response for ${uri}"
+                        throw [CxOneClientException]::new(
+                            "Received a 404 response for ${uri}",
+                            "HTTP Status",
+                            404
+                        )
+                    }
+                }
             }
-            $statusCode = $_.Exception.Response.StatusCode.value__
-            switch ($statusCode) {
-                401 {
-                    Write-Verbose "Received a 401 response. Reconnecting..."
-                    $this.Connect()
-                    $response = Invoke-RestMethod $uri -Method GET -Headers $headers
-                }
-                404 {
-                    Write-Warning "Received a 404 response for ${uri}"
-                    throw [CxOneClientException]::new(
-                        "Received a 404 response for ${uri}",
-                        "HTTP Status",
-                        404
-                    )
-                }
-                default {
-                    Write-Error "Received a ${statusCode} response for ${uri}" -ErrorAction stop
-                }
-            }
+            Write-Warning "Retrying..."
         }
 
         if ($response -eq $null) {
@@ -481,7 +490,7 @@ class Scan {
     }
 }
 
-$client = [CxOneClient]::new($ApiKey, $limit)
+$client = [CxOneClient]::new($ApiKey, $limit, $retries)
 if ($scanId) {
     $GetScanResult = $client.GetScan($scanId)
     $scan = [Scan]::new($client, $GetScanResult, $exclProjectName)
