@@ -6,16 +6,16 @@ Write-Host "`nStart: ${startTime}"
    
 $domainSource = "https://<Source URL>"
 $usernameSource = "username or $credentialsSource.username"
-$passwordSource = "passowrd or $credentialsSource.password"
-$projectIdSourceArray = @(18, 21, 243)
+$passwordSource = "password or $credentialsSource.password"
+$projectIdSourceArray = @(1,3,5)
   
 ######## Dest Checkmarx Config ########
 #$credentialsDest = Get-StoredCredential -Target "CxTest" –AsCredentialObject
   
 $domainDest = "https://<Destination URL>"
-$usernameDest = "username or $credentialsDest.username"
-$passwordDest = "password of $credentialsDest.password" 
-$projectIdDestArray = @(4, 56, 90)
+$usernameDest = "username or $credentialsSource.username"
+$passwordDest = "password or $credentialsSource.password" 
+$projectIdDestArray = @(2,4,62,4,6)
   
 ######## What to Update ? - Config ########
  
@@ -25,7 +25,7 @@ $updateState = $true
 $updateAssignee = $true
  
 ######## Results Update Rate - Config ########
-$resultsProcessPrintRate = 5 #Print Every 5% the Progress of comparing results
+$resultsProcessPrintRate = 25 #Print Every 5% the Progress of comparing results
 $resultsUpdateRate = 100 #Update 100 Results at Once
  
 ################ DO NOT EDIT THE CODE BELOW ################
@@ -197,7 +197,7 @@ function RemoveDiacritics([System.String] $text){
     $normalized = $text.Normalize([System.Text.NormalizationForm]::FormD)
     $newString = New-Object -TypeName System.Text.StringBuilder
 
-    $normalized.ToCharArray() | ForEach{
+    $normalized.ToCharArray() | ForEach-Object{
         if ([Globalization.CharUnicodeInfo]::GetUnicodeCategory($psitem) -ne [Globalization.UnicodeCategory]::NonSpacingMark)
         {
             [void]$newString.Append($psitem)
@@ -230,6 +230,7 @@ function getResultsToUpdate($urlSource, $namespace, $tokenSource, $tokenDest, $p
                         $comments = $comments.Split("ÿ")
                         if($comments.Count -eq 1){
                             $comments = $comments.Replace(' ??', "ÿ").Split("ÿ")
+                            
                         }
                         foreach($comment in $comments){
                             if($comment.Length -gt 0){
@@ -285,9 +286,12 @@ function getResultsToUpdate($urlSource, $namespace, $tokenSource, $tokenDest, $p
     }
     return $rsdList
 }
+###work from here
 ######## Update Results ########
 function updateResults($url, $token, $list, $listLength, $count){
-    $listXml = ""
+    $listXmlArray = @()
+    $cutoffDate = [datetime]::Parse("July 15, 2024")
+
     For ($i=0; $i -lt $list.Length; $i++){
       $item = $list[$i]
       $scanId = $item.scanId
@@ -301,63 +305,57 @@ function updateResults($url, $token, $list, $listLength, $count){
       $projectId = $item.projectId
       if($item.Remarks){
         $remarks = $item.Remarks.Replace("<", "").Replace(">", "")
+       
       }
       else{
         $remarks= ""
       }
-      $listXml += "<ResultStateData><scanId>${scanId}</scanId><PathId>${pathId}</PathId><projectId>${projectId}</projectId><Remarks>${remarks}</Remarks><ResultLabelType>${resultLabelType}</ResultLabelType><data>${data}</data></ResultStateData>"
+      
+      # Extract date from the remarks or data
+      $datePattern = "\[(?:\w+,\s)?(?<date>\w+\s\d{1,2},\s\d{4})(?:\s\d{1,2}:\d{2}\s[APM]{2})?\]"
+      $dateMatch = [regex]::Match($remarks, $datePattern)
+      if (-not $dateMatch.Success) {
+        $dateMatch = [regex]::Match($data, $datePattern)
+      }
+
+      if ($dateMatch.Success) {
+        $itemDate = [datetime]::Parse($dateMatch.Groups['date'].Value)
+        if ($itemDate -lt $cutoffDate) {
+          continue
+        }
+      }
+
+      $listXmlArray += "<ResultStateData><scanId>${scanId}</scanId><PathId>${pathId}</PathId><projectId>${projectId}</projectId><Remarks>${remarks}</Remarks><ResultLabelType>${resultLabelType}</ResultLabelType><data>${data}</data></ResultStateData>"
     }
 
-    $payload = $openSoapEnvelope +'<UpdateSetOfResultState xmlns="http://Checkmarx.com">
-                      <sessionID></sessionID>
-                      <resultsStates>' + $listXml + '</resultsStates>
-                    </UpdateSetOfResultState>' + $closeSoapEnvelope
+    # Reverse the listXmlArray
+    $listXmlArray = $listXmlArray | Sort-Object -Descending
 
-    $headers = getHeaders $token "UpdateSetOfResultState"
-    
-    [xml]$res = (Invoke-WebRequest $url -Method POST -Body $payload -Headers $headers)
-    
-    $res1 = $res.Envelope.Body.UpdateSetOfResultStateResponse.UpdateSetOfResultStateResult
+    foreach ($listXml in $listXmlArray) {
+        $payload = $openSoapEnvelope +'<UpdateSetOfResultState xmlns="http://Checkmarx.com">
+                          <sessionID></sessionID>
+                          <resultsStates>' + $listXml + '</resultsStates>
+                        </UpdateSetOfResultState>' + $closeSoapEnvelope
 
-    if($res1.IsSuccesfull){
-        $percentage = [math]::Round($count*100.00/$listLength,2)
-        Write-Host "`t5.1.1 - Updated ${percentage}% (${count}/${listLength})"
-    } 
-    else {
-        Write-Host "`t5.1.1 - Error Updating : " $res1.ErrorMessage
-        exit 5
+        $headers = getHeaders $token "UpdateSetOfResultState"
+        
+        [xml]$res = (Invoke-WebRequest $url -Method POST -Body $payload -Headers $headers)
+        
+        $res1 = $res.Envelope.Body.UpdateSetOfResultStateResponse.UpdateSetOfResultStateResult
+       
+
+        if($res1.IsSuccesfull){
+            $percentage = [math]::Round($count*100.00/$listLength,2)
+            Write-Host "`t5.1.1 - Updated ${percentage}% (${count}/${listLength})"
+        } 
+        else {
+            Write-Host "`t5.1.1 - Error Updating : " $res1.ErrorMessage
+            exit 5
+        }
+
+        $count++
     }
 }
-
-function updateData ($updateComments, $updateSeverity, $updateState, $updateAssignee) {
-	
-	Write-Host "5 - Comparing Results"
-	$list = getResultsToUpdate $urlSource $namespace $tokenSource $tokenDest $projectLastScanSource $projectLastScanDest $resultsSource $resultsDest $queriesSource $queriesDest $updateComments $updateSeverity $updateState $updateAssignee
-
-	Write-Host "6 - Total Updates Required: " $list.Length
-	if($list.Length -ne 0){
-		Write-Host "`t6.1 - Updating..."
-		$smallList = @()
-		$count = 0
-		$listLength = $list.Length
-		foreach($elem in $list){
-			$smallList += $elem
-			if($smallList.Length -eq $resultsUpdateRate){
-				$count += $resultsUpdateRate
-				updateResults $urlDest $tokenDest $smallList $listLength $count
-				$smallList = @()
-			}
-		}
-		if($smallList.Length -gt 0){
-			$count += $smallList.Length
-			updateResults $urlDest $tokenDest $smallList $listLength $count
-			$smallList = @()
-		}
-	} else {
-		Write-Host "7 - Nothing to Update"
-	}
-}
-
 
 $urlSource = getUrl $domainSource
 $urlDest = getUrl $domainDest
