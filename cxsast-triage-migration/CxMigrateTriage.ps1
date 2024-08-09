@@ -15,7 +15,7 @@ $projectIdSourceArray = @(1,3,5)
 $domainDest = "https://<Destination URL>"
 $usernameDest = "username or $credentialsSource.username"
 $passwordDest = "password or $credentialsSource.password" 
-$projectIdDestArray = @(2,4,62,4,6)
+$projectIdDestArray = @(2,4,6)
   
 ######## What to Update ? - Config ########
  
