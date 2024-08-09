@@ -286,11 +286,11 @@ function getResultsToUpdate($urlSource, $namespace, $tokenSource, $tokenDest, $p
     }
     return $rsdList
 }
-###work from here
 ######## Update Results ########
 function updateResults($url, $token, $list, $listLength, $count){
     $listXmlArray = @()
-    $cutoffDate = [datetime]::Parse("July 15, 2024")
+    ###change date here if needed
+    $cutoffDate = [datetime]::Parse("July 5, 1994")
 
     For ($i=0; $i -lt $list.Length; $i++){
       $item = $list[$i]
@@ -305,7 +305,7 @@ function updateResults($url, $token, $list, $listLength, $count){
       $projectId = $item.projectId
       if($item.Remarks){
         $remarks = $item.Remarks.Replace("<", "").Replace(">", "")
-       
+        Write-Host $remarks
       }
       else{
         $remarks= ""
