@@ -1,0 +1,12 @@
+Version: 1.0.0
+CompanyName: Checkmarx
+FileDescription: CxInventory
+InternalName: CxInventory
+LegalCopyright: © Checkmarx. All rights reserved.
+OriginalFilename: cxinventory.exe
+ProductName: PS - Migration and discovery toolset
+Translation:
+  - langID: 0
+    charsetID: 1200
+  - langID: 1033
+    charsetID: 1252

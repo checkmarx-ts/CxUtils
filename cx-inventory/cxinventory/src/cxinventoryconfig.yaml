@@ -1,0 +1,30 @@
+verbose: true
+sast:
+    url: https://sast.domain.net
+    username: sast-username
+    password: sast-password
+    proxy_url: 
+    proxy_username: 
+    proxy_password:    
+cxone:
+    url: https://eu.ast.checkmarx.net
+    acl: https://eu.iam.checkmarx.net
+    tenant: cxone-tenant-name
+    apikey: cxone-api-key
+    clientid: ast-app
+    granttype: refresh_token
+    proxy_url: 
+    proxy_username: 
+    proxy_password:    
+sca:
+    url: https://api-sca.checkmarx.net
+    acl: https://platform.checkmarx.net
+    tenant: tenant_name
+    username: user_name
+    password: user_pass
+    proxy_url: 
+    proxy_username: 
+    proxy_password:    
+filter:
+    projects:
+
