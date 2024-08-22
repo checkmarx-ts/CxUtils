@@ -306,7 +306,7 @@ class CxOneClient {
 
     [object] GetProjects() {
         $ApiPath = "/projects"
-        $projects = $this.InvokeArrayApi($ApiPath, "projects")
+        $projects = $this.InvokeArrayApi($ApiPath, "projects", $true)
         return $projects
     }
 
