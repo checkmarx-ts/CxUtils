@@ -1,0 +1,3 @@
+[submodule "ts-inventory"]
+	path = ts-inventory
+	url = https://github.com/cxpsemea/ts-inventory.git
