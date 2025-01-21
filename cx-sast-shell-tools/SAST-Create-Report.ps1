@@ -30,6 +30,9 @@
 
     .PARAMETER report_teams
         (Optional) Only generate reports for projects belonging to the specified teams
+
+    .PARAMETER pause
+        (Optional) Pause for this many seconds between report requests
 #>
 param(
     [Parameter(Mandatory = $true)]
@@ -42,7 +45,9 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$report_type = "PDF",
     [Parameter(Mandatory = $false)]
-    [string[]]$report_teams = @()
+    [string[]]$report_teams = @(),
+    [Parameter(Mandatory = $false)]
+    [int]$pause = 5
 )
 
 . "$PSScriptRoot/support/debug.ps1"
@@ -117,6 +122,10 @@ $projects | % {
             #generate the report
             $report = &"$PSScriptRoot/support/soap/generate_report.ps1" $session $scans.id $report_type
             $report_index.Add($scans.id, $report)
+            # If we send too many report generation requests at more or less
+            # the same time, we can overload the JobsManager. So we pause
+            # between requests.
+            Start-Sleep -Seconds $pause
         } else {
             Write-Debug "No scans found for project $($_.id))"
         }
