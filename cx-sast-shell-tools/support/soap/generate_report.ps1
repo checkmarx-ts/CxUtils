@@ -37,7 +37,7 @@ $xml_template = @"
                   <chec:All>{3}</chec:All>
                   <chec:IDs>
                      <!--Zero or more repetitions:-->
-                     <chec:long>{4}</chec:long>
+                     {4}
                   </chec:IDs>
                </chec:Queries>
                <chec:ResultsSeverity>
@@ -53,7 +53,7 @@ $xml_template = @"
                   
                   <chec:IDs>
                      <!--Zero or more repetitions:-->
-                     <chec:long>{11}</chec:long>
+                     {11}
                   </chec:IDs>
                </chec:ResultsState>
                
@@ -62,7 +62,7 @@ $xml_template = @"
                   
                   <chec:IDs>
                      <!--Zero or more repetitions:-->
-                     <chec:long>{13}</chec:long>
+                     {13}
                   </chec:IDs>
                </chec:DisplayCategories>
                
@@ -71,7 +71,7 @@ $xml_template = @"
                   
                   <chec:IDs>
                      <!--Zero or more repetitions:-->
-                     <chec:long>{15}</chec:long>
+                     {15}
                   </chec:IDs>
                   
                   <chec:Usernames>
@@ -120,23 +120,44 @@ $xml_template = @"
 </soapenv:Envelope>
 "@.ToString()
 
+function Convert-IdstoXml {
+   param (
+      [array]$idsList
+   )
+
+   if ($idsList -isnot [System.Array]) {
+      $idsList = @($idsList)
+   }
+
+   $result = ($idsList | ForEach-Object {
+      "<chec:long>$_</chec:long>"
+   }) -join "`n"
+
+   return $result
+   
+}
+
+$xml_queries_ids = Convert-IdstoXml -idsList $ReportTemplate.queries.ids
+$xml_resultState_ids = Convert-IdstoXml -idsList $ReportTemplate.resultState.ids
+$xml_displayCategories_ids = Convert-IdstoXml -idsList $ReportTemplate.displayCategories.ids
+$xml_resultsAssignedTo_ids = Convert-IdstoXml -idsList $ReportTemplate.resultsAssignedTo.ids
 $body = [String]::Format($xml_template, 
                         $session.soap_session.sessionID, 
                         $ReportTemplate.reportType,
                         $scan_id,
                         $ReportTemplate.queries.all,
-                        $ReportTemplate.queries.ids,
+                        $xml_queries_ids,
                         $ReportTemplate.resultSeverity.all,
                         $ReportTemplate.resultSeverity.high,
                         $ReportTemplate.resultSeverity.medium,
                         $ReportTemplate.resultSeverity.low,
                         $ReportTemplate.resultSeverity.info,
                         $ReportTemplate.resultState.all,
-                        $ReportTemplate.resultState.ids,
+                        $xml_resultState_ids,
                         $ReportTemplate.displayCategories.all,
-                        $ReportTemplate.displayCategories.ids,
+                        $xml_displayCategories_ids,
                         $ReportTemplate.resultsAssignedTo.all,
-                        $ReportTemplate.resultsAssignedTo.ids,
+                        $xml_resultsAssignedTo_ids,
                         $ReportTemplate.resultsAssignedTo.usernames,
                         $ReportTemplate.resultsPerVuln.all,
                         $ReportTemplate.resultsPerVuln.max,
@@ -160,7 +181,6 @@ $body = [String]::Format($xml_template,
                         $ReportTemplate.resultsDisplayOption.link2online,
                         $ReportTemplate.resultsDisplayOption.resultsDescription,
                         $ReportTemplate.resultsDisplayOption.snippetsMode)
-
 
 $response = &"$PSScriptRoot/soap_request.ps1" $session $body $soap_url $soap_action
 
