@@ -23,6 +23,10 @@ This script will collect Scan Information that includes data about: Projects, Pr
     If provided, the team name will be excluded from the scan results.
 .PARAMETER ExclAll
     If provided, the project name and the team name will be excluded from the scan results, and the result data will not be retrieved.
+.PARAMETER ReplacePresetName
+    If provided, the script will replace all custom (non-OOTB) PresetName with a masked name like "HIDDEN001", "HIDDEN002", etc.
+.PARAMETER HideEngineUri
+    If provided, the script will hide the EngineServerId by replacing it with "HIDDEN".
 .PARAMETER verbose
     If provided, the script will retrieve print activity messages
 .EXAMPLE
@@ -35,6 +39,10 @@ This script will collect Scan Information that includes data about: Projects, Pr
     C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server http://localhost -results
 .EXAMPLE
     C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server http://localhost -exclall
+.EXAMPLE
+    C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server http://localhost -replacepresetname
+.EXAMPLE
+    C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server http://localhost -hideengineuri
 .NOTES
     Author: Checkmarx
     Date:   April 13, 2020
@@ -64,7 +72,13 @@ param(
     $exclTeamName,
     [Parameter(Mandatory=$False)]
     [switch]
-    $exclAll
+    $exclAll,
+    [Parameter(Mandatory=$False)]
+    [switch]
+    $replacePresetName,
+    [Parameter(Mandatory=$False)]
+    [switch]
+    $hideEngineUri
     )
 
 if ( ! ($cx_sast_server -match "^https?://") ) {
@@ -189,10 +203,35 @@ function getScanOdata {
     $outputFile = ".\scan-data.json"
     Write-Verbose "Retrieving scan data"
 
-    $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$select=Id,ProjectId,${ProjectName}OwningTeamId,${TeamName}ProductVersion,EngineServerId,Origin,PresetName,ScanRequestedOn,QueuedOn,EngineStartedOn,EngineFinishedOn,ScanCompletedOn,ScanDuration,FileCount,LOC,FailedLOC,TotalVulnerabilities,High,Medium,Low,Info,IsIncremental,IsLocked,IsPublic&`$expand=ScannedLanguages(`$select=LanguageName),Project(`$select=EngineConfigurationId;`$expand=EngineConfiguration)&`$filter=ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z"
+    $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$select=Id,ProjectId,${ProjectName}OwningTeamId,${TeamName}ProductVersion,EngineServerId,Origin,PresetId,PresetName,ScanRequestedOn,QueuedOn,EngineStartedOn,EngineFinishedOn,ScanCompletedOn,ScanDuration,FileCount,LOC,FailedLOC,TotalVulnerabilities,High,Medium,Low,Info,IsIncremental,IsLocked,IsPublic&`$expand=ScannedLanguages(`$select=LanguageName),Project(`$select=EngineConfigurationId;`$expand=EngineConfiguration)&`$filter=ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z"
     try {
         $response = odata -Uri $Url -OutFile $outputFile
         [void]$fileList.Add($outputFile)
+
+        if ($replacePresetName) {
+            $jsonContent = Get-Content -Path $outputFile -Raw | ConvertFrom-Json
+            $customPresetMap = @{}
+            $count = 0
+            foreach ($scan in $jsonContent.value) {
+                if ($scan.PresetId -ge 100000) {
+                    if (-not $customPresetMap.ContainsKey($scan.PresetId)) {
+                        $count++
+                        $newName = "HIDDEN" + $count.ToString("000")
+                        $customPresetMap[$scan.PresetId] = $newName
+                    }
+                    $scan.PresetName = $customPresetMap[$scan.PresetId]
+                }
+            }
+            $jsonContent | ConvertTo-Json -Compress -Depth 4 | Set-Content -Path $outputFile
+        }
+
+        if ($hideEngineUri) {
+            $jsonContent = Get-Content -Path $outputFile -Raw | ConvertFrom-Json
+            foreach ($scan in $jsonContent.value) {
+                $scan.EngineServerId = "HIDDEN"
+            }
+            $jsonContent | ConvertTo-Json -Compress -Depth 4 | Set-Content -Path $outputFile
+        }
     }
     catch {
         Write-Host "Exception:" $_ -ForegroundColor "Red"
@@ -326,6 +365,15 @@ function getEngineData {
     try {
         $response = odata -Uri $Url -OutFile $outputFile
         [void]$fileList.Add($outputFile)
+
+        if ($hideEngineUri) {
+            $jsonContent = Get-Content -Path $outputFile -Raw | ConvertFrom-Json
+            foreach ($engine in $jsonContent) {
+                $engine.uri = "HIDDEN"
+                $engine.link.uri = "HIDDEN"
+            }
+            $jsonContent | ConvertTo-Json -Compress -Depth 4 | Set-Content -Path $outputFile
+        }
     }
     catch {
         Write-Host "Exception:" $_ -ForegroundColor "Red"
