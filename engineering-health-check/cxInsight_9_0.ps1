@@ -23,6 +23,10 @@ This script will collect Scan Information that includes data about: Projects, Pr
     If provided, the team name will be excluded from the scan results.
 .PARAMETER ExclAll
     If provided, the project name and the team name will be excluded from the scan results, and the result data will not be retrieved.
+.PARAMETER ReplacePresetName
+    If provided, the script will replace non-default PresetName with "HIDDEN".
+.PARAMETER HideEngineUri
+    If provided, the script will hide the EngineServerId by replacing it with "HIDDEN".
 .PARAMETER verbose
     If provided, the script will retrieve print activity messages
 .EXAMPLE
@@ -35,6 +39,10 @@ This script will collect Scan Information that includes data about: Projects, Pr
     C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server http://localhost -results
 .EXAMPLE
     C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server http://localhost -exclall
+.EXAMPLE
+    C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server http://localhost -replacepresetname
+.EXAMPLE
+    C:\PS> .\cxInsight_9_0.ps1 -cx_sast_server http://localhost -hideengineuri
 .NOTES
     Author: Checkmarx
     Date:   April 13, 2020
@@ -64,8 +72,25 @@ param(
     $exclTeamName,
     [Parameter(Mandatory=$False)]
     [switch]
-    $exclAll
-    )
+    $exclAll,
+    [Parameter(Mandatory=$False)]
+    [switch]
+    $replacePresetName,
+    [Parameter(Mandatory=$False)]
+    [switch]
+    $hideEngineUri
+)
+
+# List of default presets
+$defaultPresets = @(
+    "All", "Android", "Apple Secure Coding Guide", "ASA Mobile Premium", "ASA Premium", "ASA Premium_ExpPath",
+    "Base Preset", "Checkmarx Default", "Checkmarx Express", "CWE top 25", "Error handling", "FISMA",
+    "High and Medium", "High and Medium and Low", "HIPAA", "ISO/IEC TS 17961 2013/2016", "JSSEC", "MISRA_C",
+    "MISRA_C_2012", "MISRA_CPP", "Mobile", "MOIS(KISA) Secure Coding 2021", "NIST", "ONDE", "ONDE_ANGULAR",
+    "OWASP ASVS", "OWASP Mobile TOP 10 - 2016", "OWASP TOP 10 - 2010", "OWASP TOP 10 - 2013",
+    "OWASP TOP 10 - 2017", "OWASP TOP 10 - 2021", "OWASP TOP 10 API", "OWASP TOP 10 API 2023", "PCI",
+    "PCI 4.0", "SANS top 25", "SEI CERT", "STIG", "Symfony", "Top Tier", "WordPress", "XS", "XSS and SQLi only"
+)
 
 if ( ! ($cx_sast_server -match "^https?://") ) {
     Write-Error "SAST server URL must start with http:// or https://"
@@ -127,10 +152,10 @@ function getOAuth2Token() {
     }
 
     $cxargs = @{
-        Uri = "${serverRestEndpoint}auth/identity/connect/token"
-        Method = "Post"
-        Body = $body
-        ContentType =  "application/x-www-form-urlencoded"
+        Uri         = "${serverRestEndpoint}auth/identity/connect/token"
+        Method      = "Post"
+        Body        = $body
+        ContentType = "application/x-www-form-urlencoded"
     }
     if ($bypassProxy) {
         $cxargs.NoProxy = $true
@@ -144,7 +169,7 @@ function getOAuth2Token() {
         Write-Host "Exception:" $_
         Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
         Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
-		Write-Host "Unable to retrieve Checkmarx AC Token"
+        Write-Host "Unable to retrieve Checkmarx AC Token"
         exit(-1)
     }
 
@@ -164,9 +189,9 @@ function odata() {
         Authorization = $token
     }
     $cxargs = @{
-        Uri = $Uri
+        Uri     = $Uri
         Headers = $headers
-        Method = "Get"
+        Method  = "Get"
     }
     if ($AllowUnencryptedAuthenticationresults) {
         $cxargs.AllowUnencryptedAuthentication = $true
@@ -193,6 +218,24 @@ function getScanOdata {
     try {
         $response = odata -Uri $Url -OutFile $outputFile
         [void]$fileList.Add($outputFile)
+
+        if ($replacePresetName) {
+            $jsonContent = Get-Content -Path $outputFile -Raw | ConvertFrom-Json
+            foreach ($scan in $jsonContent.value) {
+                if (-not ($defaultPresets -contains $scan.PresetName)) {
+                    $scan.PresetName = "HIDDEN"
+                }
+            }
+            $jsonContent | ConvertTo-Json -Compress -Depth 4 | Set-Content -Path $outputFile
+        }
+
+        if ($hideEngineUri) {
+            $jsonContent = Get-Content -Path $outputFile -Raw | ConvertFrom-Json
+            foreach ($scan in $jsonContent.value) {
+                $scan.EngineServerId = "HIDDEN"
+            }
+            $jsonContent | ConvertTo-Json -Compress -Depth 4 | Set-Content -Path $outputFile
+        }
     }
     catch {
         Write-Host "Exception:" $_ -ForegroundColor "Red"
@@ -241,7 +284,7 @@ function getResultOData {
                 if ( -not $projects.ContainsKey($projectId) ) {
                     $projects[$projectId] = @{
                         LastScanId = ${lastScanId}
-                        Results = @{}
+                        Results    = @{}
                     }
                 }
 
@@ -257,14 +300,14 @@ function getResultOData {
         $newProjects = @()
         Foreach ( $projectId in $projects.Keys ) {
             $project = @{
-                ProjectId = $projectId
+                ProjectId  = $projectId
                 LastScanId = $projects.$projectId.LastScanId
-                Results = @()
+                Results    = @()
             }
             Foreach ( $stateName in $projects.$projectId.Results.Keys ) {
                 $result = @{
                     StateName = $stateName
-                    Count = $projects.$projectId.Results.$stateName
+                    Count     = $projects.$projectId.Results.$stateName
                 }
                 $project.Results += $result
             }
@@ -326,6 +369,15 @@ function getEngineData {
     try {
         $response = odata -Uri $Url -OutFile $outputFile
         [void]$fileList.Add($outputFile)
+
+        if ($hideEngineUri) {
+            $jsonContent = Get-Content -Path $outputFile -Raw | ConvertFrom-Json
+            foreach ($engine in $jsonContent) {
+                $engine.uri = "HIDDEN"
+                $engine.link.uri = "HIDDEN"
+            }
+            $jsonContent | ConvertTo-Json -Compress -Depth 4 | Set-Content -Path $outputFile
+        }
     }
     catch {
         Write-Host "Exception:" $_ -ForegroundColor "Red"
@@ -338,8 +390,7 @@ function getEngineData {
     }
 }
 
-try
-{
+try {
     $files = [System.Collections.ArrayList]::new()
     getScanOdata $files
     getEngineData $files
@@ -357,8 +408,7 @@ try
         Read-Host -Prompt "The script was successful. Please send the ${files} file(s) in this directory to your Checkmarx Engineer. Press Enter to exit"
     }
 }
-catch
-{
+catch {
     Write-Host "Exception:" $_
     Write-Error $_.Exception.ToString()
     Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
