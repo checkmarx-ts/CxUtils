@@ -125,7 +125,7 @@ class CxOneClient {
         $scheme = $this.IamBaseUrl.Scheme
         $this.Tenant = $this.IamBaseUrl.Segments[-1]
         $hostname = $this.IamBaseUrl.Host
-        # If the IAM base URL ends with "ast.checkmarx.net", we assume
+        # If the IAM base URL ends with "iam.checkmarx.net", we assume
         # that we are dealing with a multi-tenant instance and derive
         # the API URL accordingly. For single-tenant instances, we
         # assume that the API URL will be the same as the IAM URL.
