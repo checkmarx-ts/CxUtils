@@ -106,9 +106,9 @@ class CxOneClientException : Exception {
 }
 
 class CxOneClient {
-    [string]$ApiBaseUrl
+    [System.Uri]$ApiBaseUrl
     [string]$ApiKey
-    [string]$IamBaseUrl
+    [System.Uri]$IamBaseUrl
     [string]$Instance
     [object]$JwtData
     [int]$limit
@@ -121,12 +121,10 @@ class CxOneClient {
         $this.limit = $limit
         $this.retries = $retries
         $this.JwtData = Parse-JWTtoken $ApiKey
-        $this.IamBaseUrl = $this.JwtData.iss
-        $bits = $this.IamBaseUrl.Split("/")
-        $scheme = $bits[0] # Note that this includes the : after the
-                           # scheme (e.g., "https:").
-        $this.Tenant = $bits[5]
-        $hostname = $bits[2]
+        $this.IamBaseUrl = [System.Uri]::New($this.JwtData.iss)
+        $scheme = $this.IamBaseUrl.Scheme
+        $this.Tenant = $this.IamBaseUrl.Segments[-1]
+        $hostname = $this.IamBaseUrl.Host
         # If the IAM base URL ends with "ast.checkmarx.net", we assume
         # that we are dealing with a multi-tenant instance and derive
         # the API URL accordingly. For single-tenant instances, we
@@ -138,11 +136,11 @@ class CxOneClient {
             switch ($bits.Length) {
                 3 {
                     $this.Instance = "us"
-                    $this.ApiBaseUrl = "$scheme//ast.checkmarx.net/api"
+                    $this.ApiBaseUrl = [System.Uri]::New("${scheme}://ast.checkmarx.net/api")
                 }
                 4 {
                     $this.Instance = $bits[0]
-                    $this.ApiBaseUrl = "$scheme//" + $this.Instance + ".ast.checkmarx.net/api"
+                    $this.ApiBaseUrl = [System.Uri]::New("${scheme}://" + $this.Instance + ".ast.checkmarx.net/api")
                 }
                 default {
                     Write-Error $hostname + ": unexpected hostname format" -ErrorAction Stop
@@ -150,7 +148,7 @@ class CxOneClient {
             }
         } else {
             Write-Verbose "Assuming a single-tenant instance"
-            $this.ApiBaseUrl = "$scheme//" + $hostname + "/api"
+            $this.ApiBaseUrl = [System.Uri]::New("${scheme}://" + $hostname + "/api")
         }
 
         Write-Debug "IAM base URL: $($this.IamBaseUrl)"
@@ -166,7 +164,7 @@ class CxOneClient {
             refresh_token = $this.ApiKey
         }
         Write-Verbose "Retrieving token..."
-        $uri = $this.IamBaseUrl + "/protocol/openid-connect/token"
+        $uri = "$($this.IamBaseUrl)/protocol/openid-connect/token"
         $resp = Invoke-RestMethod $uri -Method POST -Body $params
         Write-Debug "Response: ${resp}"
         $this.AccessToken = $resp.access_token
