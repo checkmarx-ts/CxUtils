@@ -38,7 +38,7 @@ This script will collect Scan Information that includes data about: Projects, Pr
 .NOTES
     Author: Checkmarx
     Date:   April 13, 2020
-    Updated: July 26, 2022
+    Updated: March 21, 2025
 #>
 
 param(
