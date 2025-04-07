@@ -184,19 +184,17 @@ function odata() {
 function getScanOdata {
     param (
         $fileList,
-        $version
+        [Version]$version
     )
 
     $outputFile = ".\scan-data.json"
     Write-Verbose "Retrieving scan data"
 
-    switch -Wildcard ($version.version) {
-        9.7.* {
-            $Critical = "Critical,"
-        }
-        default {
-            $Critical = ""
-        }
+    # The OData API is annoying: if we request a field that doesn't
+    # exist, it won't fail, it will just return the wrong data.
+    $Critical = ""
+    if (($Version.Major -eq 9) -and ($Version.Minor -ge 7)) {
+        $Critical = "Critical,"
     }
 
     $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$select=Id,ProjectId,${ProjectName}OwningTeamId,${TeamName}ProductVersion,EngineServerId,Origin,PresetName,ScanRequestedOn,QueuedOn,EngineStartedOn,EngineFinishedOn,ScanCompletedOn,ScanDuration,FileCount,LOC,FailedLOC,TotalVulnerabilities,${Critical}High,Medium,Low,Info,IsIncremental,IsLocked,IsPublic&`$expand=ScannedLanguages(`$select=LanguageName),Project(`$select=EngineConfigurationId;`$expand=EngineConfiguration)&`$filter=ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z"
@@ -356,7 +354,6 @@ function getSASTVersion {
     $Url = "${cx_sast_server}/cxrestapi/system/version"
     try {
         $response = odata -Uri $Url
-        Write-Host "SAST version: ${response}"
     }
     catch {
         Write-Host "Exception:" $_ -ForegroundColor "Red"
@@ -370,10 +367,36 @@ function getSASTVersion {
     return $response
 }
 
+class Version {
+    [int]$Major
+    [int]$Minor
+    [int]$Patch
+    [int]$Build
+    [int]$EnginePack
+    [int]$EnginePackPatch
+
+    Version([object]$data) {
+        $this.Major, $this.Minor, $this.Patch, $this.Build = $data.Version -split '\.'
+        # The enginePackVersion property was added to the JSON response in CxSAST 9.5.
+        if ($data.PSObject.Properties.Name -contains "EnginePackVersion") {
+            $_, $_, $this.EnginePack, $this.EnginePackPatch = $data.EnginePackVersion -split '\.'
+        } else {
+            $this.EnginePack = $null
+            $this.EnginePackPatch = $null
+        }
+    }
+
+    [string]ToString() {
+        return "Version[Major=$($this.Major),Minor=$($this.Minor),Patch=$($this.Patch),Build=$($this.Build),EnginePack=$($this.EnginePack),EnginePackPatch=$($this.EnginePackPatch)]"
+    }
+}
+
 try
 {
     $files = [System.Collections.ArrayList]::new()
-    $version = getSASTVersion
+    $data = getSASTVersion
+    $version = [Version]::New($data)
+    Write-Host "$version"
     getScanOdata $files $version
     getEngineData $files
     getLicenseData $files
