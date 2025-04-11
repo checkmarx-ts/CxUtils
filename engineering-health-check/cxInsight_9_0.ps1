@@ -183,13 +183,22 @@ function odata() {
 
 function getScanOdata {
     param (
-        $fileList
+        $fileList,
+        [Version]$version
     )
 
     $outputFile = ".\scan-data.json"
     Write-Verbose "Retrieving scan data"
 
-    $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$select=Id,ProjectId,${ProjectName}OwningTeamId,${TeamName}ProductVersion,EngineServerId,Origin,PresetName,ScanRequestedOn,QueuedOn,EngineStartedOn,EngineFinishedOn,ScanCompletedOn,ScanDuration,FileCount,LOC,FailedLOC,TotalVulnerabilities,Critical,High,Medium,Low,Info,IsIncremental,IsLocked,IsPublic&`$expand=ScannedLanguages(`$select=LanguageName),Project(`$select=EngineConfigurationId;`$expand=EngineConfiguration)&`$filter=ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z"
+    # The OData API is annoying: if we request a field that doesn't
+    # exist, it won't fail, it will just return the wrong data.
+    $Critical = ""
+    if (($Version.Major -eq 9) -and ($Version.Minor -ge 7)) {
+        $Critical = "Critical,"
+    }
+
+    $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$select=Id,ProjectId,${ProjectName}OwningTeamId,${TeamName}ProductVersion,EngineServerId,Origin,PresetName,ScanRequestedOn,QueuedOn,EngineStartedOn,EngineFinishedOn,ScanCompletedOn,ScanDuration,FileCount,LOC,FailedLOC,TotalVulnerabilities,${Critical}High,Medium,Low,Info,IsIncremental,IsLocked,IsPublic&`$expand=ScannedLanguages(`$select=LanguageName),Project(`$select=EngineConfigurationId;`$expand=EngineConfiguration)&`$filter=ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z"
+    Write-Verbose "`$Url: $Url"
     try {
         $response = odata -Uri $Url -OutFile $outputFile
         [void]$fileList.Add($outputFile)
@@ -338,10 +347,57 @@ function getEngineData {
     }
 }
 
+function getSASTVersion {
+
+    Write-Verbose "Retrieving SAST version"
+
+    $Url = "${cx_sast_server}/cxrestapi/system/version"
+    try {
+        $response = odata -Uri $Url
+    }
+    catch {
+        Write-Host "Exception:" $_ -ForegroundColor "Red"
+        Write-Host $_.ScriptStackTrace -ForegroundColor "DarkGray"
+        Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
+        Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+        Write-Host $Url
+        Write-Host "An error has prevented this script from retrieving the system version."
+        return $false
+    }
+    return $response
+}
+
+class Version {
+    [int]$Major
+    [int]$Minor
+    [int]$Patch
+    [int]$Build
+    [int]$EnginePack
+    [int]$EnginePackPatch
+
+    Version([object]$data) {
+        $this.Major, $this.Minor, $this.Patch, $this.Build = $data.Version -split '\.'
+        # The enginePackVersion property was added to the JSON response in CxSAST 9.5.
+        if ($data.PSObject.Properties.Name -contains "EnginePackVersion") {
+            $_, $_, $this.EnginePack, $this.EnginePackPatch = $data.EnginePackVersion -split '\.'
+        } else {
+            $this.EnginePack = $null
+            $this.EnginePackPatch = $null
+        }
+    }
+
+    [string]ToString() {
+        return "Version[Major=$($this.Major),Minor=$($this.Minor),Patch=$($this.Patch),Build=$($this.Build),EnginePack=$($this.EnginePack),EnginePackPatch=$($this.EnginePackPatch)]"
+    }
+}
+
 try
 {
     $files = [System.Collections.ArrayList]::new()
-    getScanOdata $files
+    $data = getSASTVersion
+    $version = [Version]::New($data)
+    Write-Host "$version"
+    getScanOdata $files $version
     getEngineData $files
     getLicenseData $files
     if ($results) {
