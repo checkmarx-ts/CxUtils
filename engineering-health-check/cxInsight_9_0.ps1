@@ -38,12 +38,12 @@ This script will collect Scan Information that includes data about: Projects, Pr
 .NOTES
     Author: Checkmarx
     Date:   April 13, 2020
-    Updated: March 21, 2025
+    Updated: June 11, 2025
 #>
 
 param(
     [Parameter(Mandatory=$true)]
-    [String]$cx_sast_server,
+    [System.URI]$cx_sast_server,
     [int]$day_span = 90,
     [String]$start_date = ((Get-Date).AddDays(-$day_span).ToString("yyyy-MM-dd")),
     [String]$end_date = (Get-Date -format "yyyy-MM-dd"),
@@ -67,9 +67,20 @@ param(
     $exclAll
     )
 
-if ( ! ($cx_sast_server -match "^https?://") ) {
+if (($cx_sast_server.Scheme -ne "http") -and ($cx_sast_server.Scheme -ne "https")) {
     Write-Error "SAST server URL must start with http:// or https://"
     exit
+}
+
+if ($cx_sast_server.PathAndQuery -ne "/") {
+    Write-Host "Truncating path and query (`"$($cx_sast_server.PathAndQuery)`") from SAST server URL"
+    $Builder = [System.URIBuilder]::New(
+        $cx_sast_server.Scheme,
+        $cx_sast_server.Host,
+        $cx_sast_server.Port
+    )
+    $cx_sast_server = [System.URI]::New($Builder)
+    Write-Host "SAST server URL is now $cx_sast_server"
 }
 
 if ( ! ( $results -or $exclresults -or $exclAll ) ) {
@@ -115,7 +126,7 @@ if ( $exclTeamName -or $exclAll ) {
     $teamName = ""
 }
 
-$serverRestEndpoint = $cx_sast_server + "/cxrestapi/"
+$serverRestEndpoint = "${cx_sast_server}/cxrestapi/"
 function getOAuth2Token() {
     $body = @{
         username      = $cxUsername
