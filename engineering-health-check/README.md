@@ -67,6 +67,55 @@ Note that it is not possible to use the credentials of a SAML user.
 
 The user whose credentials are used to run the `cxInsight_X_X.ps1` script must be assigned a role that has the Sast API permission (needed as the script uses the CxSAST OData API). This is the only permission required.
 
+## Troubleshooting
+
+This section contains some tips on troubleshooting the
+`cxInsight_X_X.ps1` script.
+
+### Unable to retrieve Checkmarx AC Token
+
+Sometimes, the `cxInsight_9_0.ps1` script will fail to retrieve the
+access token needed for subsequent API requests. Here an example of
+the script’s output when this happens:
+
+```
+Running Script on Version  5.1.26100.4652
+Exception: The remote server returned an error: (400) Bad Request.
+StatusCode: 400
+StatusDescription: Bad Request
+Unable to retrieve Checkmarx AC Token
+```
+
+The first thing to check is the Access Control trace log on the CxSAST
+manager server. This will be in the `<CxSAST Install
+Path>\Logs\AccessControl\Trace` folder. If the problem is with the
+username, a log message like the following will be present.
+
+```
+2025-07-22 23:27:47.043 [ThreadId: 23] [Warning] [Cx.AccessControl.Infrastructure.IdentityServer.Validators.ResourceOwnerPasswordValidator] Failed to find user with the requested username.
+```
+
+If the problem is with the password, a log message like the following
+will be present.
+
+```
+2025-07-22 23:28:50.833 [ThreadId: 28] [Warning] [Cx.AccessControl.Infrastructure.IdentityServer.Validators.ResourceOwnerPasswordValidator] Failed to validate password for user.
+```
+
+For obvious reasons, the script does not print the credentials to the
+screen. However, if you want to validate that it is indeed using the
+correct credentials, after the following line:
+
+```
+$cxPassword = $cred.GetNetworkCredential().password
+```
+
+Add:
+
+```
+Write-Host "Username: ${cxUsername}, password: ${cxPassword}"
+```
+
 ## Scans Created When Branching Projects
 
 When a project is branched in CxSAST, a duplicate scan record is made
