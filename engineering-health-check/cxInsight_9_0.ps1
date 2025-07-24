@@ -147,6 +147,7 @@ function getOAuth2Token() {
     }
 
     Write-Verbose "Retrieving OAuth2 token"
+    Write-Verbose "Url: $($cxargs.Uri)"
     try {
         $response = Invoke-RestMethod @cxargs
     }
@@ -232,6 +233,7 @@ function getResultOData {
     Write-Verbose "Retrieving result data"
 
     $Url = [System.URI]::New($cx_sast_server, "/cxwebinterface/odata/v1/Projects?`$select=Id,LastScanId")
+    Write-Verbose "`$Url: $Url"
     try {
         $response = odata -Uri $Url
         $projects = @{}
@@ -315,6 +317,7 @@ function getLicenseData {
     Write-Verbose "Retrieving license data"
 
     $Url = [System.URI]::New($cx_sast_server, "/cxrestapi/serverLicenseData")
+    Write-Verbose "`$Url: $Url"
     try {
         $response = odata -Uri $Url -OutFile $outputFile
         [void]$fileList.Add($outputFile)
@@ -342,6 +345,7 @@ function getEngineData {
     Write-Verbose "Retrieving engine data"
 
     $Url = [System.URI]::New($cx_sast_server, "/cxrestapi/sast/engineServers")
+    Write-Verbose "`$Url: $Url"
     try {
         $response = odata -Uri $Url -OutFile $outputFile
         [void]$fileList.Add($outputFile)
@@ -362,6 +366,7 @@ function getSASTVersion {
     Write-Verbose "Retrieving SAST version"
 
     $Url = [System.URI]::New($cx_sast_server, "/cxrestapi/system/version")
+    Write-Verbose "`$Url: $Url"
     try {
         $response = odata -Uri $Url
     }
