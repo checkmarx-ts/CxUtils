@@ -126,7 +126,6 @@ if ( $exclTeamName -or $exclAll ) {
     $teamName = ""
 }
 
-$serverRestEndpoint = "${cx_sast_server}/cxrestapi/"
 function getOAuth2Token() {
     $body = @{
         username      = $cxUsername
@@ -138,7 +137,7 @@ function getOAuth2Token() {
     }
 
     $cxargs = @{
-        Uri = "${serverRestEndpoint}auth/identity/connect/token"
+        Uri = [System.URI]::New($cx_sast_server, "/cxrestapi/auth/identity/connect/token")
         Method = "Post"
         Body = $body
         ContentType =  "application/x-www-form-urlencoded"
@@ -208,7 +207,7 @@ function getScanOdata {
         $Critical = "Critical,"
     }
 
-    $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$select=Id,ProjectId,${ProjectName}OwningTeamId,${TeamName}ProductVersion,EngineServerId,Origin,PresetName,ScanRequestedOn,QueuedOn,EngineStartedOn,EngineFinishedOn,ScanCompletedOn,ScanDuration,FileCount,LOC,FailedLOC,TotalVulnerabilities,${Critical}High,Medium,Low,Info,IsIncremental,IsLocked,IsPublic&`$expand=ScannedLanguages(`$select=LanguageName),Project(`$select=EngineConfigurationId;`$expand=EngineConfiguration)&`$filter=ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z"
+    $Url = [System.URI]::New($cx_sast_server, "/cxwebinterface/odata/v1/Scans?`$select=Id,ProjectId,${ProjectName}OwningTeamId,${TeamName}ProductVersion,EngineServerId,Origin,PresetName,ScanRequestedOn,QueuedOn,EngineStartedOn,EngineFinishedOn,ScanCompletedOn,ScanDuration,FileCount,LOC,FailedLOC,TotalVulnerabilities,${Critical}High,Medium,Low,Info,IsIncremental,IsLocked,IsPublic&`$expand=ScannedLanguages(`$select=LanguageName),Project(`$select=EngineConfigurationId;`$expand=EngineConfiguration)&`$filter=ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z")
     Write-Verbose "`$Url: $Url"
     try {
         $response = odata -Uri $Url -OutFile $outputFile
@@ -232,7 +231,7 @@ function getResultOData {
     $outputFile = ".\result-data.json"
     Write-Verbose "Retrieving result data"
 
-    $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Projects?`$select=Id,LastScanId"
+    $Url = [System.URI]::New($cx_sast_server, "/cxwebinterface/odata/v1/Projects?`$select=Id,LastScanId")
     try {
         $response = odata -Uri $Url
         $projects = @{}
@@ -248,7 +247,7 @@ function getResultOData {
             Write-Progress -Activity "Retrieving Results" -Status "Retrieving result data for scan ${lastScanId} (project ${projectId})"
             Write-Verbose "Retrieving result data for scan ${lastScanId} (project ${projectId})"
 
-            $Url = "${cx_sast_server}/cxwebinterface/odata/v1/Scans?`$filter=Id%20eq%20${lastScanId}%20and%20ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z&`$select=Id&`$expand=Results(`$select=Id,ScanId,ResultId,StateId;`$expand=State)"
+            $Url = [System.URI]::New($cx_sast_server, "/cxwebinterface/odata/v1/Scans?`$filter=Id%20eq%20${lastScanId}%20and%20ScanRequestedOn%20gt%20${start_date}Z%20and%20ScanRequestedOn%20lt%20${end_date}z&`$select=Id&`$expand=Results(`$select=Id,ScanId,ResultId,StateId;`$expand=State)")
             Write-Verbose "URL is ${Url}"
 
             $response = odata -Uri $Url
@@ -315,7 +314,7 @@ function getLicenseData {
     $outputFile = ".\license-data.json"
     Write-Verbose "Retrieving license data"
 
-    $Url = "${cx_sast_server}/cxrestapi/serverLicenseData"
+    $Url = [System.URI]::New($cx_sast_server, "/cxrestapi/serverLicenseData")
     try {
         $response = odata -Uri $Url -OutFile $outputFile
         [void]$fileList.Add($outputFile)
@@ -342,7 +341,7 @@ function getEngineData {
     $outputFile = ".\engine-data.json"
     Write-Verbose "Retrieving engine data"
 
-    $Url = "${cx_sast_server}/cxrestapi/sast/engineServers"
+    $Url = [System.URI]::New($cx_sast_server, "/cxrestapi/sast/engineServers")
     try {
         $response = odata -Uri $Url -OutFile $outputFile
         [void]$fileList.Add($outputFile)
@@ -362,7 +361,7 @@ function getSASTVersion {
 
     Write-Verbose "Retrieving SAST version"
 
-    $Url = "${cx_sast_server}/cxrestapi/system/version"
+    $Url = [System.URI]::New($cx_sast_server, "/cxrestapi/system/version")
     try {
         $response = odata -Uri $Url
     }
