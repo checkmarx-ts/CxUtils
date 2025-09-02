@@ -356,7 +356,7 @@ function getEngineData {
         Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__
         Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
         Write-Host $Url
-        Write-Host "An error has prevented this script from collecting license data."
+        Write-Host "An error has prevented this script from collecting engine data."
         return $false
     }
 }
