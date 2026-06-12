@@ -20,7 +20,7 @@ services:
 
 
   jira-server:
-    image: atlassian/jira-software:latest
+    image: atlassian/jira-software:latest@sha256:01a591327d2f5a867f41e8a4eebdafbd1950a669eb64110ef044042733e79834
     volumes:
       - jira_data:/var/atlassian/application-data/jira
     dns:
