@@ -1,4 +1,4 @@
-FROM openjdk:8u212-jdk-stretch
+FROM openjdk:8u212-jdk-stretch@sha256:dfa24d97c724814b56b3735fb0b2570576f0dc1036c8060e4913b6b95f1da0aa
 
 RUN apt-get update && \
 apt-get install -y maven gradle && \
