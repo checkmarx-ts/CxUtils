@@ -1,4 +1,4 @@
-FROM docker.pkg.github.com/checkmarx-ts/cxcli-docker/cxcli:latest
+FROM 
 
 RUN yum install -y wget && \
 wget http://repos.fedorapeople.org/repos/dchen/apache-maven/epel-apache-maven.repo -O /etc/yum.repos.d/epel-apache-maven.repo && \
