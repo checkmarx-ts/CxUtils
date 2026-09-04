@@ -65,5 +65,16 @@ if ($bits.Count -gt 1) {
     $BranchScanFileName = $FileName + "-branch"
 }
 
-$BaseScanData | ConvertTo-Json -Depth 4 | Out-File $BaseScanFileName
-$BranchScanData | ConvertTo-Json -Depth 4 | Out-File $BranchScanFileName
+function Out-JSON {
+    param (
+        $FileName,
+        $Data
+    )
+
+    $FilePath = Resolve-Path $FileName
+    $JSON = $Data | ConvertTo-Json -Depth 4
+    [System.IO.File]::WriteAllText($FilePath, $JSON)
+}
+
+Out-JSON $BaseScanFileName $BaseScanData
+Out-JSON $BranchScanFileName $BranchScanData
