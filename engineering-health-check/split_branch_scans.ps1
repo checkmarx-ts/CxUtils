@@ -14,7 +14,7 @@ PS C:\> .\split_branch_scans.ps1 scan-data.json
 .NOTES
 Author : Checkmarx Professional Services
 Date   : 2023-06-30
-Updated: 2023-06-30
+Updated: 2026-09-04
 #>
 param (
     [Parameter(Mandatory=$true)]
