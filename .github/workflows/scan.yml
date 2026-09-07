@@ -1,0 +1,40 @@
+name: Checkmarx Scan
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+jobs:
+  execute-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      statuses: write
+    steps:
+      - name: Fetch Code
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b
+
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: "3.12"
+
+      - name: Setup Python Build Env
+        run: pip3 install virtualenv
+
+      - name: Scan with CxOne++ Action
+        id: cxscan
+        uses: checkmarx-ts/cxone-plusplus-github-action@v2
+        with:
+          cx-tenant: ${{ secrets.CXONE_TENANT }}
+          cx-client-id: ${{ secrets.CXONE_CLIENT_ID }}
+          cx-client-secret: ${{ secrets.CXONE_CLIENT_SECRET }}
+          upload-sarif-file: false
