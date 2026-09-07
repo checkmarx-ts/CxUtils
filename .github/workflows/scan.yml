@@ -32,7 +32,7 @@ jobs:
 
       - name: Scan with CxOne++ Action
         id: cxscan
-        uses: checkmarx-ts/cxone-plusplus-github-action@v2
+        uses: checkmarx-ts/cxone-plusplus-github-action@684484251963387977bdd3aff7f1483ba02f614b
         with:
           cx-tenant: ${{ secrets.CXONE_TENANT }}
           cx-client-id: ${{ secrets.CXONE_CLIENT_ID }}
