@@ -21,7 +21,22 @@ param (
     [string]$FileName
 )
 
-$ScanData = Get-Content $FileName | ConvertFrom-Json
+# From PowerShell 6, the ConvertFrom-Json cmdlet will try to convert
+# strings formatted as timestamps to DateTime values. This causes the
+# value of the $ScanKey variable to be different (and less precise),
+# resulting in different output to PowerShell 5.1.
+#
+# PowerShell 7.5 adds the -DateKind parameter which, when given the
+# value "String", causes ConvertFrom-Json to behave as it did under
+# PowerShell 5.1.
+if ($PSVersionTable.PSVersion.Major -eq 5) {
+    $ScanData = Get-Content $FileName | ConvertFrom-Json
+} elseif (($PSVersionTable.PSVersion.Major -eq 7) -and ($PSVersionTable.PSVersion.Major -ge 5)) {
+    $ScanData = Get-Content $FileName | ConvertFrom-Json -DateKind String
+} else {
+    Write-Error "Only PowerShell versions 5.1 and 7.5 and greater are supported"
+    exit 1
+}
 $ScanKeys = @{}
 $BaseScanData = @{
     '@odata.context' = $ScanData."@odata.context"
