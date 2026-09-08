@@ -22,10 +22,6 @@ jobs:
       contents: read
       pull-requests: write
       statuses: write
-    env:
-      CX_TENANT: ${{ secrets.CXONE_TENANT }}
-      CX_CLIENT_ID: ${{ secrets.CXONE_CLIENT_ID }}
-      CX_CLIENT_SECRET: ${{ secrets.CXONE_CLIENT_SECRET }}
     steps:
       - name: Fetch Code
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b
@@ -38,4 +34,4 @@ jobs:
           cx-client-id: ${{ secrets.CXONE_CLIENT_ID }}
           cx-client-secret: ${{ secrets.CXONE_CLIENT_SECRET }}
           upload-sarif-file: false
-          cx-cli-additional-params: --scan-types scs --git-commit-history false --scs-engines secret-detection
+          cx-cli-additional-params: --scan-types scs --git-commit-history false --scs-engines secret-detection --scs-repo-url "${{ github.server_url }}/${{ github.repository }}" --scs-repo-token "${{ secrets.GITHUB_TOKEN }}"
