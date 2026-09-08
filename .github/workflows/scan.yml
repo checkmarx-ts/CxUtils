@@ -26,15 +26,6 @@ jobs:
       - name: Fetch Code
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b
 
-      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
-        with:
-          python-version: "3.12"
-
-      - name: Setup Python Build Env
-        run: |
-          pip config set global.index-url https://:${{ secrets.ECHO_LIBRARIES_ACCESS_KEY }}@pypi.echohq.com/simple
-          pip install virtualenv
-
       - name: Scan with CxOne++ Action
         id: cxscan
         uses: checkmarx-ts/cxone-plusplus-github-action@684484251963387977bdd3aff7f1483ba02f614b
@@ -43,3 +34,4 @@ jobs:
           cx-client-id: ${{ secrets.CXONE_CLIENT_ID }}
           cx-client-secret: ${{ secrets.CXONE_CLIENT_SECRET }}
           upload-sarif-file: false
+          additional-scan-params: --scan-types scs
