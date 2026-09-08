@@ -22,6 +22,10 @@ jobs:
       contents: read
       pull-requests: write
       statuses: write
+    env:
+      CX_TENANT: ${{ secrets.CXONE_TENANT }}
+      CX_CLIENT_ID: ${{ secrets.CXONE_CLIENT_ID }}
+      CX_CLIENT_SECRET: ${{ secrets.CXONE_CLIENT_SECRET }}
     steps:
       - name: Fetch Code
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b
