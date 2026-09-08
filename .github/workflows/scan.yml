@@ -36,4 +36,4 @@ jobs:
           cx-client-id: ${{ secrets.CXONE_CLIENT_ID }}
           cx-client-secret: ${{ secrets.CXONE_CLIENT_SECRET }}
           upload-sarif-file: false
-          cx-cli-additional-params: --scan-types scs --git-commit-history false --scs-engines secret-detection
+          additional-scan-params: --scan-types scs --git-commit-history false --scs-engines secret-detection
